@@ -25,12 +25,13 @@ Start at the top. Each document assumes the ones above it.
 | 5 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 6 and 7 |
 | 6 | [superpowers/specs/2026-07-28-makerlord-design.md](superpowers/specs/2026-07-28-makerlord-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
 | 7 | [superpowers/specs/2026-07-29-front-door-design.md](superpowers/specs/2026-07-29-front-door-design.md) | **The design spec** for stages 1-4, the front door | With or before the stage-6 spec |
-| 8 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
-| 9 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
-| 10 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 11 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 12 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 13 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 8 | [superpowers/specs/2026-07-29-tool-surface-design.md](superpowers/specs/2026-07-29-tool-surface-design.md) | **The design spec** for the tool core, CLI and MCP server | Before building any agent |
+| 9 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
+| 10 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
+| 11 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 12 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 13 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 14 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
 
 ## The one-paragraph version
 
