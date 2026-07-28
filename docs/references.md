@@ -164,6 +164,86 @@ weakest there, despite being the gentler on-ramp on Adafruit hardware.
 
 ---
 
+## Production toolchain
+
+Stages 4–5 of the arc. All open source, all driven by CLI or file formats per
+[decisions.md D23](decisions.md).
+
+### `kicad-cli` — the production output path ✅ *verified 2026-07-29*
+
+- https://docs.kicad.org/9.0/en/cli/cli.html
+
+**Fully headless**, and covers the entire production path:
+
+| Command | Produces |
+|---|---|
+| `sch export netlist` | Netlist in various formats |
+| `sch export bom` | Bill of materials |
+| `sch erc` | Electrical rule check |
+| `pcb drc` | Design rule check |
+| `pcb export gerbers` | Fab files, one layer per file |
+| `pcb export step` | 3D board model |
+
+> This is why we don't need an MCP server for exports. Every one of these runs
+> in CI and is reproducible.
+
+### KiCad IPC API — **schematics not supported** ✅ *verified 2026-07-29*
+
+- https://dev-docs.kicad.org/en/apis-and-binding/ipc-api/for-addon-developers/index.html
+
+In KiCad 9.0 the IPC API is **implemented only in the PCB editor** — not the
+schematic editor, not the library editors. A stable protobuf interface that
+survives internal refactors, unlike the older SWIG bindings.
+
+> **Consequence:** any tool claiming programmatic *schematic* editing on KiCad 9
+> is manipulating `.kicad_sch` s-expression files directly. Which means it's
+> competing with us simply writing the file.
+
+### `mixelpixx/KiCAD-MCP-Server` — evaluated, not adopted ✅ *verified 2026-07-29*
+
+- https://github.com/mixelpixx/KiCAD-MCP-Server
+
+Drives KiCad via MCP for schematic editing, placement, routing, DRC/ERC, plus
+JLCPCB catalogue and Freerouting integration. Requires KiCad 9.0+, Node 18+,
+Python 3.11+. Active — 753 commits, 1.7k stars.
+
+**Not adopted**, for three reasons: it puts state outside our model and makes
+output non-reproducible; KiCad 9's IPC API doesn't do schematics anyway; and its
+README names a Rust rewrite ("Konnect") as the next generation, making the
+current implementation transitional.
+
+**Revisit for:** interactive PCB layout refinement, where a human is in the loop
+regardless. See [decisions.md D23](decisions.md).
+
+### ngspice — simulation ✅ *verified 2026-07-29*
+
+- https://ngspice.sourceforge.io/
+- **Licence:** GPL · **Stable release 46**, March 2026
+
+Mixed-signal SPICE simulator descended from Spice3f5, Cider and Xspice.
+**Input is command-line or file based — it has no schematic entry**, which suits
+us exactly, since we already hold the netlist. Recent versions add the KLU
+solver and OpenVAF/OSDI for Verilog-A models.
+
+### CadQuery — enclosures and 3D ⚠️ *reported*
+
+- https://pythonhosted.org/cadquery/intro.html
+
+Parametric CAD as Python. **Built to be used as a library with no GUI**, so it
+suits server pipelines. OCCT kernel — NURBS, splines, and **STEP import/export**.
+
+**Chosen over OpenSCAD** despite LLMs generating OpenSCAD more reliably, because
+OpenSCAD cannot export parametric STEP — disqualifying for production. **Chosen
+over FreeCAD** because FreeCAD is a GUI-scripting hybrid and heavier to
+automate. See [decisions.md D24](decisions.md).
+
+### Freerouting — autorouting ❌ *unverified*
+
+Java CLI autorouter, commonly paired with KiCad. **Confirm licence, current
+version, and CLI invocation before use.**
+
+---
+
 ## Browser hardware access
 
 ### Web Serial API ✅ *verified 2026-07-28*

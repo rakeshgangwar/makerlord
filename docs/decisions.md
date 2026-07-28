@@ -304,6 +304,102 @@ first plan. That's a real trade, and a deliberate one.
 
 ---
 
+## D22 — Scope expands to the full idea→production arc
+*2026-07-29* · **Supersedes three earlier non-goals**
+
+The product covers five stages: idea → simulate → prototype → product →
+production. PCB layout, manufacturing outputs, and simulation are now **in
+scope**; earlier drafts excluded all three.
+
+**Why it doesn't break anything:** D2 said one model, everything else a
+projection. Five stages is five projections. The model grows *facets*
+(SPICE models, KiCad refs, 3D geometry) rather than changing shape.
+
+**Why the wedge doesn't move:** stages 4–5 are largely solved by mature
+open-source tools that need driving. Stage 3 — safe physical prototyping with
+real verification — is the part nobody has built. **Build the wedge first.**
+
+**Consequence:** the part library becomes the centre of gravity, and the
+curation cost per part rises. See D25.
+
+**Not superseded:** the DC solver stays. It predicts multimeter readings for
+the gate and must be fast and always-available; ngspice answers a different
+question ("does this design work?"). Collapsing them would be a mistake.
+
+---
+
+## D23 — CLI and file formats over MCP and GUI automation
+*2026-07-29*
+
+Every stage drives open-source tools, **preferring command-line interfaces and
+documented file formats**. MCP servers and GUI automation are a last resort.
+
+**Why:** the principle already running through the design — *discovery may be
+fallible, verification must be deterministic.* A tool driven by files can be
+tested in CI, diffed, and reproduced. An agent clicking through a GUI cannot.
+`kicad-cli pcb drc` is a compiler for boards; an agent driving the KiCad GUI is
+a stochastic process with no audit trail.
+
+**The enabling finding:** `kicad-cli` is fully headless and covers the entire
+production path — `sch export netlist`, `sch erc`, `pcb drc`,
+`pcb export gerbers`, `pcb export step`, `sch export bom`. ngspice is likewise
+CLI-and-netlist driven, with no schematic entry of its own — which suits us,
+since we already hold the netlist.
+
+**Rejected:** adopting `mixelpixx/KiCAD-MCP-Server` as the integration path.
+Two reasons beyond the above — KiCad 9's IPC API does not support the schematic
+editor at all (PCB only), so schematic work there is file manipulation we could
+do ourselves; and its README names a Rust rewrite as the next generation, making
+the current implementation transitional.
+
+**Remaining niche for MCP:** interactive PCB layout refinement, where a human is
+in the loop anyway. Real, but narrow, and not needed for exports.
+
+---
+
+## D24 — CadQuery for 3D, despite the harder codegen
+*2026-07-29*
+
+Enclosures and 3D models are generated with CadQuery — a Python library with no
+GUI dependency, built on the OCCT kernel.
+
+**Rejected — OpenSCAD:** LLMs write it more reliably, and that's a genuine
+advantage. But **OpenSCAD cannot export parametric STEP**, which is
+disqualifying for anything heading to production or into a mechanical CAD
+workflow.
+
+**Rejected — FreeCAD:** full GUI-and-scripting hybrid, heavier to automate in a
+pipeline.
+
+**Consequence:** codegen is harder, so it gets the same treatment as firmware —
+generate, then verify by execution, and retry on failure. The script either
+produces valid geometry or it doesn't.
+
+---
+
+## D25 — The KiCad mapping is the keystone overlay
+*2026-07-29*
+
+Each curated part accumulates facets:
+
+```
+geometry               ← free from Fritzing
+safety profile         ← hand-authored (the bottleneck)
+SPICE model            ← partly free; some .fzp files carry <spice> blocks
+KiCad symbol+footprint ← mapped, one per part
+3D model               ← FREE, once the footprint is mapped
+```
+
+**Why this matters:** a single mapping — part → KiCad symbol + footprint —
+unlocks PCB layout, 3D visualisation, *and* manufacturing output at once,
+because KiCad's footprint libraries ship STEP models. That's far better leverage
+than three independent overlays, and it makes the expanded scope affordable.
+
+**Consequence:** the curated set is the schedule. Every stage of the arc is
+gated on how many parts have been fully mapped, not on how much code exists.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

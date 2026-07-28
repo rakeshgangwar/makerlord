@@ -22,15 +22,31 @@ Start at the top. Each document assumes the ones above it.
 
 ## The one-paragraph version
 
-Every eCAD tool assumes a seated designer with free hands. This one doesn't —
-its users are standing at a bench with a breadboard, both hands occupied. The
-architecture follows from one decision: **a single structured circuit model is
-the source of truth, and every artefact — schematic, breadboard view, build
-steps, BOM, firmware pin map — is a projection of it.** That's what makes safety
-computable rather than decorative, because you cannot run a design-rule check on
-an image. Deterministic rules adjudicate; the language model only explains.
+A maker has an idea and wants to end up with something manufacturable. Today
+that means crossing four tool boundaries, losing information at every handoff,
+and nothing anywhere checks *"is the circuit in front of me safe to switch on?"*
+CircuitKing is one continuous path — **idea → simulate → prototype → product →
+production** — built on a single decision: **one structured circuit model is the
+source of truth, and every artefact is a projection of it.** That's what makes
+correctness computable rather than decorative, because you cannot run a
+design-rule check on an image. At every stage the language model proposes and
+something deterministic disposes.
 
-## Status
+## The arc, and where each stage stands
+
+| # | Stage | Deterministic arbiter | State |
+|---|---|---|---|
+| 1 | **Idea** — intent to circuit | our rule engine | Planned (Slices 0–1) |
+| 2 | **Test digitally** — simulate | ngspice | Not yet specced |
+| 3 | **Prototype** — breadboard, gated | the student's multimeter | Planned (Slices 0–1) ★ |
+| 4 | **Product** — schematic, PCB, enclosure | `kicad-cli erc/drc` | Not yet specced |
+| 5 | **Production** — Gerbers, BOM, STEP | DFM + fab validation | Not yet specced |
+
+★ **Stage 3 is the wedge.** Stages 4–5 are largely solved by mature open-source
+tools that need driving; safe physical prototyping with real verification is the
+part nobody has built. Build it first.
+
+## Slice status
 
 | Slice | Scope | State |
 |---|---|---|
@@ -42,5 +58,7 @@ an image. Deterministic rules adjudicate; the language model only explains.
 | 3 | Firmware — codegen, compile sandbox | Spec only |
 | 4 | Photo verification | Spec only |
 | 5 | Wide domains — drone/robot power budgeting | Spec only |
+| — | Simulation, PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-Nothing is built yet. The design and the plan for Slices 0–1 are complete.
+Nothing is built yet. The design and the plan for Slices 0–1 are complete; the
+production half of the arc is agreed in principle and not yet specified.
