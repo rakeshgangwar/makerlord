@@ -177,6 +177,48 @@ rejected. See [decisions.md D12](decisions.md).
 
 ---
 
+## PCB and production
+
+**Schematic vs netlist** — a netlist is *what connects to what*; a schematic is
+a **drawing** of it. ⚠️ Importing a netlist into KiCad gives you a PCB, **not a
+schematic** — nothing reconstructs a drawing from connectivity. Hence D27.
+
+**Ratsnest** — the straight "airwires" pcbnew draws between pads that a netlist
+says should connect, before they're routed as copper.
+
+**Footprint** *(KiCad sense)* — the physical land pattern on a PCB: pads, silk,
+courtyard. ⚠️ Not the same as our breadboard **footprint** (hole offsets).
+
+**Hierarchical sheet** — a schematic split into sub-sheets by functional block.
+Makes auto-layout tractable: a 6-component sheet can be placed well by
+convention; a 50-component page cannot.
+
+**ERC / DRC** — electrical rule check (schematic) and design rule check (board).
+Run headless via `kicad-cli sch erc` / `pcb drc`. The deterministic arbiters for
+stage 4.
+
+**DFM** — design for manufacture. Whether a fab can actually build it —
+trace widths, annular rings, minimum spacing.
+
+**Gerber** — the fab file format, one file per layer. Plus drill files, a BOM,
+and pick-and-place for assembly.
+
+**STEP** — the parametric CAD interchange format. What mechanical CAD accepts.
+
+**VRML / WRL** — a *mesh* format for rendering. ⚠️ Cannot go into a STEP export.
+KiCad footprints often reference only WRL, so `--subst-models` is required or
+your board exports with no components on it, silently.
+
+**GLB** — web-renderable 3D. Useful for showing a board in the browser with no
+plugin.
+
+**STL** — mesh format for 3D printing. The enclosure output for makers.
+
+**Standoff** — the pillar holding a PCB off the enclosure floor, aligned to the
+board's mounting holes.
+
+---
+
 ## External
 
 **eCAD** — electronic computer-aided design. KiCad, Altium, Flux.

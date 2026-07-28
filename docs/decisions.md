@@ -400,6 +400,104 @@ gated on how many parts have been fully mapped, not on how much code exists.
 
 ---
 
+## D26 — Target the KiCad netlist, via SKiDL
+*2026-07-29*
+
+KiCad stays as the eCAD target. The question was *what layer to write into it*,
+and the answer is the **netlist**, using SKiDL as the format adapter.
+
+**Why KiCad at all:** the alternatives (Horizon EDA, LibrePCB) have cleaner
+internals but a fraction of the library ecosystem — and **the library ecosystem
+is what matters, not the tool.** Plus headless `kicad-cli`, GPL, and universal
+fab acceptance.
+
+**Why the netlist layer:** it's the stable interface — the s-expression schematic
+format changed at KiCad 6 — and we already hold a netlist. SKiDL supports KiCad
+5–9 and absorbs that version churn for us, while being a *netlist generator, not
+a decision-maker*.
+
+**Rejected — atopile.** Its compiler "solves constraints, picks parts, runs
+checks." Those are decisions our rule engine already made, so building on it
+creates two sources of truth that can disagree — the same objection as D23. It's
+also more an adjacent competitor than a component: code-defined electronics for
+engineers who write code, not makers with breadboards.
+
+**Rejected — writing `.kicad_pcb` s-expressions directly.** Maximum control,
+maximum brittleness, no upside over the netlist path.
+
+---
+
+## D27 — Generate KiCad schematics, using hierarchical sheets
+*2026-07-29*
+
+The export produces an editable `.kicad_sch`, not just a netlist — so makers can
+continue the design in KiCad.
+
+**The problem this has to beat:** a netlist gives you a PCB but *not* a drawing,
+and schematic auto-layout is close to unsolved. Machine-placed schematics are
+routinely bad enough that engineers redraw them.
+
+**The approach:** **hierarchical sheets, one per functional block.** A
+50-component single page cannot be auto-laid-out well; a 6-component sheet can,
+by convention — power at top, ground at bottom, signal flow left to right,
+decoupling caps beside their IC. KiCad supports this natively and it's how real
+designs are organised. Our model already knows the blocks because the agent
+designed in them.
+
+**Why it's cheaper than it looks:** Slice 1's UI needs a schematic renderer,
+which needs a layout engine. The same engine serves both outputs —
+
+```
+circuit model → semantic layout engine → ┬→ our SVG renderer
+                                          └→ .kicad_sch writer
+```
+
+One algorithm, two serialisers. The KiCad schematic and the in-app schematic
+then look like the same drawing, which helps the student crossing between them.
+
+**Dependency:** `kicad-sch-api` for s-expression writing. ❌ Unverified —
+confirm maturity before committing.
+
+---
+
+## D28 — 3D: components and board are free; the enclosure is the work
+*2026-07-29*
+
+"3D models" means three different things and they have very different costs:
+
+| What | Source | Cost |
+|---|---|---|
+| Component models | KiCad `packages3d` ships STEP + WRL | **Free** once the footprint is mapped |
+| Populated board | `kicad-cli pcb export step` (also GLB, STL, BREP, PLY) | **Free** |
+| Enclosure | CadQuery (D24) | **The actual work** |
+
+**This confirms D25** — the footprint mapping really does unlock PCB, 3D, and
+manufacturing simultaneously.
+
+**GLB export is worth noting for the UI:** web-renderable, so a 3D view of the
+student's board needs no external viewer or plugin.
+
+⚠️ **Gotcha:** KiCad footprints often reference *only* the VRML file, and VRML is
+a mesh format, not CAD — it cannot be included in a STEP export. `--subst-models`
+substitutes the STEP file matching the VRML base name. **Without that flag the
+STEP export is a bare board with no components, and it fails silently.**
+
+**Where the real value is — the enclosure is another projection:**
+
+```
+PCB ──► board outline
+        mounting hole positions
+        connector positions + heights   ──► CadQuery enclosure
+        tallest component                    (STEP for CAD, STL to print)
+```
+
+Cutouts positioned from actual footprint locations, standoffs at real mounting
+holes, internal height from the tallest part. **This is what nobody does well.**
+The PCB path is well-trodden; the ECAD→MCAD handoff is where people still lose
+days. And for a maker with a 3D printer it closes the loop with no fab at all.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

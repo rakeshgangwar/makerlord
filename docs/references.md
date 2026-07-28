@@ -225,6 +225,54 @@ Mixed-signal SPICE simulator descended from Spice3f5, Cider and Xspice.
 us exactly, since we already hold the netlist. Recent versions add the KLU
 solver and OpenVAF/OSDI for Verilog-A models.
 
+### SKiDL — netlist generation, our KiCad adapter ⚠️ *reported*
+
+- https://devbisme.github.io/skidl/ · https://github.com/devbisme/skidl
+
+Python module describing circuit interconnection, performing ERC, and emitting
+netlists. **Supports KiCad 5–9** with version-specific modules, absorbing the
+s-expression format change introduced at KiCad 6.
+
+**Chosen as the export adapter** (D26) because it's a netlist *generator*, not a
+decision-maker — all design decisions stay in our rule engine.
+
+### `kicad-sch-api` — schematic file writing ❌ *unverified*
+
+- Discussed: https://forum.kicad.info/t/kicad-sch-api-python-library-for-kicad-schematic-manipulation/65363
+
+Python library for reading and writing `.kicad_sch` files. The likely dependency
+for D27's schematic generation, since KiCad 9's IPC API doesn't cover the
+schematic editor. **Confirm maturity and format coverage before committing.**
+
+### atopile — evaluated, not adopted ⚠️ *reported*
+
+- https://atopile.io/ · https://github.com/atopile/atopile
+
+Code-first EDA: circuits described in `.ato` files (Python-inspired DSL), with a
+compiler that selects components, validates constraints, and generates a KiCad
+project. Version 0.16, active.
+
+**Not adopted** — its compiler picks parts and solves constraints, which are
+decisions our rule engine already makes. Building on it creates two sources of
+truth. It's also better understood as an **adjacent competitor** than a
+component: code-defined electronics for engineers who write code, aimed at a
+different user than a maker with a breadboard.
+
+### KiCad `packages3d` — component 3D models ⚠️ *reported*
+
+- https://kicad.github.io/packages3d/ · https://www.kicad.org/libraries/download/
+
+Official 3D model library. Ships **STEP and WRL** for most components.
+
+> ⚠️ **Silent-failure gotcha:** footprints often reference *only* the VRML file,
+> and VRML is a mesh format that cannot be included in a STEP export. Pass
+> `--subst-models` to `kicad-cli pcb export step` so it substitutes the STEP
+> file matching each VRML base name. Without it you get a bare board with no
+> components — and no error.
+
+`kicad-cli pcb export step` also emits **GLB, STL, BREP, XAO, PLY, IDF and
+VRML**. GLB is web-renderable, so an in-browser 3D board view needs no plugin.
+
 ### CadQuery — enclosures and 3D ⚠️ *reported*
 
 - https://pythonhosted.org/cadquery/intro.html

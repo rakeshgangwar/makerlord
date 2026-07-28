@@ -144,6 +144,11 @@ hard:
 5. **Continuity across the arc.** The breadboard you verified becomes the
    schematic, which becomes the PCB, which becomes the enclosure — with no
    re-entry and nothing lost at a handoff.
+6. **The ECAD→MCAD handoff.** The enclosure is *derived from the board* —
+   cutouts at real connector positions, standoffs at real mounting holes,
+   internal height from the tallest component. The PCB path is well-trodden;
+   this handoff is where people still lose days, and for a maker with a 3D
+   printer it closes the loop with no fab at all.
 
 ## Where the wedge is
 
