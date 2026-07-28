@@ -659,6 +659,76 @@ accumulating throughout rather than assembled at the end.
 
 ---
 
+## D34 — A project is a git repository, hosted and clonable
+*2026-07-29*
+
+Each project is a **real git repo that we host and the maker can clone.** Not
+rows in a database, and not local-only.
+
+```
+server-hosted repo (canonical)
+   ├── web app commits to it        → browser-only makers never clone
+   └── maker clones / pushes        → power users work in their own tools
+```
+
+**We do not reimplement sync or conflict resolution.** Git already solved it.
+The web app refuses to write a diverged tree and says "pull first"; it never
+force-pushes.
+
+**Why git:**
+- Revision control is a **production requirement** — v1 board vs v2 board.
+- `git diff` on a netlist is a genuinely useful review.
+- Branches are design alternatives: *"try it with an ESP32-C3"* is a branch.
+- The `history` facet from D29 wants to **be** git history.
+- The maker keeps their work if we disappear.
+- Everything downstream is already files.
+
+**Two departures from software habit:**
+
+1. **Commit the build outputs.** Software gitignores `build/`. Here, *"what
+   exactly did I send to the fab?"* is a debugging, warranty and compliance
+   question. This makes tags load-bearing — `v1.0-fab` marks the exact commit
+   whose gerbers were ordered.
+2. **Git LFS from day one** for `**/*.step`, `**/*.stl`, `**/*.glb`. MB-scale
+   files, and the repo gets fat fast otherwise.
+
+**Rejected — server-side state with zip export:** revision control becomes a
+feature we reimplement badly, and the maker's ownership is weaker.
+
+**Useful coincidence:** cloning locally happens at the same moment as the KiCad
+ownership handoff (D35). Stage ⑨ is where the maker takes the wheel in both
+senses. It also buys offline bench work.
+
+---
+
+## D35 — Explicit one-way ownership handoff at the PCB
+*2026-07-29*
+
+```
+we own       →  netlist, schematic generation, initial placement
+handoff ⑨    →  the maker opens KiCad
+they own     →  layout, routing, refinements
+we then only →  re-verify (DRC) and offer netlist updates that preserve
+                placement, the way KiCad's update-from-schematic already works
+```
+
+**The tool leads, hands over, then verifies.** Not automation forever.
+
+**Rejected — regenerate and warn on overwrite:** keeps one source of truth, and
+will destroy hours of routing at least once. Hostile.
+
+**Rejected — round-trip sync:** best experience when it works, and notoriously
+fragile. **Silent corruption of a design someone is about to pay to fabricate is
+an unacceptable failure mode.**
+
+**Consequence:** the handoff must be stated in the UI at the moment it happens,
+or it reads as the tool breaking. Same pattern applies to `main.cpp` (scaffold
+generated, logic theirs) and `enclosure.py`. `pins.h` is the deliberate
+exception — always generated, never hand-edited, because that is what stops code
+and circuit drifting.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

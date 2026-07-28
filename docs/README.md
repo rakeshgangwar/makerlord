@@ -14,13 +14,14 @@ Start at the top. Each document assumes the ones above it.
 |---|---|---|---|
 | 1 | [vision.md](vision.md) | What we're building and why it's different | First. Everything else serves this. |
 | 2 | [roadmap.md](roadmap.md) | **The 17-stage journey**, sequenced into four phases | Right after the vision |
-| 3 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 4 and 5 |
-| 4 | [superpowers/specs/2026-07-28-circuitking-design.md](superpowers/specs/2026-07-28-circuitking-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
-| 5 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
-| 6 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 7 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 8 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 9 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 3 | [user-journey.md](user-journey.md) | What it feels like to use — surfaces, files, postures | To understand the product as a user |
+| 4 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 5 and 6 |
+| 5 | [superpowers/specs/2026-07-28-circuitking-design.md](superpowers/specs/2026-07-28-circuitking-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
+| 6 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
+| 7 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 8 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 9 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 10 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
 
 ## The one-paragraph version
 
