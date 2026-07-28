@@ -26,12 +26,20 @@ Start at the top. Each document assumes the ones above it.
 | 6 | [superpowers/specs/2026-07-28-makerlord-design.md](superpowers/specs/2026-07-28-makerlord-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
 | 7 | [superpowers/specs/2026-07-29-front-door-design.md](superpowers/specs/2026-07-29-front-door-design.md) | **The design spec** for stages 1-4, the front door | With or before the stage-6 spec |
 | 8 | [superpowers/specs/2026-07-29-tool-surface-design.md](superpowers/specs/2026-07-29-tool-surface-design.md) | **The design spec** for the tool core, CLI and MCP server | Before building any agent |
-| 9 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
-| 10 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
-| 11 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 12 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 13 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 14 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 9 | [superpowers/specs/2026-07-29-acp-host-design.md](superpowers/specs/2026-07-29-acp-host-design.md) | **The design spec** for `maker-bridge` and the ACP host | After the tool surface |
+| 10 | [superpowers/specs/2026-07-29-agent-runtime-design.md](superpowers/specs/2026-07-29-agent-runtime-design.md) | **The design spec** for our own agent — loop, context, personas | After the ACP host |
+| 11 | [superpowers/specs/2026-07-29-ui-design.md](superpowers/specs/2026-07-29-ui-design.md) | **The design spec** for the web app, all 17 stages | Before building the front end |
+| 12 | [superpowers/specs/2026-07-29-simulation-design.md](superpowers/specs/2026-07-29-simulation-design.md) | **The design spec** for stage ⑤, ngspice | With Phase 2 |
+| 13 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
+| 14 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
+| 15 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 16 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 17 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 18 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+
+Rows 6–12 are the seven design specs. Rows 6–8 and 9–11 are the two clusters
+you'll read together: **the stages** (prototype, front door) and **the layers**
+(tools, ACP host, agent runtime, UI).
 
 ## The one-paragraph version
 
@@ -53,9 +61,12 @@ stop after Phase 1 and you still have a good product.
 | Phase | Covers | State |
 |---|---|---|
 | **1 — Design it and build it safely** | Idea, feasibility, requirements, architecture, prototype | **Fully specced and planned** — 37 TDD tasks across two plans |
-| **2 — Make it actually work** | Simulate, firmware, guided debug | Spec only |
+| **2 — Make it actually work** | Simulate, firmware, guided debug | **Simulate specced**; firmware and debug spec-sketched |
 | **3 — Make it real** | PCB, enclosure, fabricate | Spec only |
 | **4 — Make it a product** | Cost, first article, test, compliance, docs, production | Vision only |
+
+The **agent layer and the UI cut across all four phases** and are specced
+independently — rows 8–11. They are what any phase is driven through.
 
 ★ **The prototype stage is the wedge.** Most other stages are largely solved by
 mature tools that need driving; safe physical prototyping with real verification
@@ -68,14 +79,16 @@ Phase 1 is genuinely good.
 |---|---|---|
 | 0 | Foundation — ETL, part model, safety overlay | Planned |
 | 1 | Core engine — netlist, rules, gate, build sequence | Planned |
-| 1 (UI) | Renderers, agent loop, three modes | Not yet specced |
-| 1b | Phone companion | Not yet specced |
+| 1 (UI) | Renderers, four postures, finding surface | **Specced** — needs a plan |
+| 1b | Phone companion | **Specced** — it is the app, responsive |
 | 2 | Sourcing — BOM, distributor APIs | Spec only |
 | 3 | Firmware — codegen, compile sandbox | Spec only |
 | 4 | Photo verification | Spec only |
 | 5 | Wide domains — drone/robot power budgeting | Spec only |
-| — | Simulation, PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
+| — | Simulation | **Specced** — needs a plan |
+| — | PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-Nothing is built yet. **Phase 1 is fully specced and planned** — two specs and
-two plans, 37 TDD tasks. The production half of the arc is agreed in principle
-and not yet specified.
+Nothing is built yet. **Seven design specs exist; two have implementation
+plans.** Phase 1 is fully specced and planned — 37 TDD tasks. The agent layer,
+the UI and simulation are specced and await plans. The production half of the
+arc is agreed in principle and not yet specified.

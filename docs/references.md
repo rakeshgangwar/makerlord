@@ -325,17 +325,69 @@ version, and CLI invocation before use.**
 
 ## Browser hardware access
 
-### Web Serial API ✅ *verified 2026-07-28*
+### Web Serial API ⚠️ *browser matrix disputed — re-verify before the UI plan*
 
 - ESP Web Tools: https://esphome.github.io/esp-web-tools/
 - esptool-js: https://github.com/espressif/esptool-js
 
-**Desktop only.** Chrome/Edge/Firefox on desktop; *not implemented on Android
-Chrome*; absent on iOS.
+**Desktop only.** *Not implemented on Android Chrome; absent on iOS.* That part
+is not in question and it is what decided the device architecture: flashing
+cannot happen on a phone, while the camera and bench ergonomics want one.
 
-> This single constraint decided the device architecture. Flashing cannot happen
-> on a phone, while the camera and bench ergonomics want one — hence desktop
-> primary with a thin phone companion. See spec §8.3.
+> ⚠️ **Contradiction to resolve.** This entry was recorded on 2026-07-28 as
+> "Chrome/Edge/Firefox on desktop." The UI spec (D39) assumes **Chromium only** —
+> Chrome, Edge, Opera — with Firefox and Safari needing the bridge, on the
+> understanding that Mozilla's standards position on Web Serial is negative and
+> the API was never shipped. **One of these is wrong and the difference is
+> load-bearing**: it decides whether the bridge is a fallback for a minority or
+> the default path for a large share of makers.
+>
+> Check `caniuse.com/web-serial` and Mozilla's standards-positions repo before
+> writing the UI implementation plan. If Firefox does support it, the bridge
+> install prompt in UI spec §11 narrows to Safari alone.
+
+---
+
+## Agent protocols
+
+### Agent Client Protocol (ACP) ⚠️ *reported — method names unverified*
+
+- https://agentclientprotocol.com/
+- Open standard, JetBrains and Zed collaborating
+
+JSON-RPC 2.0 over the agent's stdio. Our understanding of the surface —
+`initialize`, `session/new` with an `mcpServers` parameter, `session/prompt`,
+`session/update` notifications, `session/request_permission` — drives the
+[ACP host spec](superpowers/specs/2026-07-29-acp-host-design.md) §4 and **has not
+been checked against the published protocol.**
+
+The architecture does not depend on exact spellings; the normalisation layer
+absorbs drift. **One capability does matter**: if an agent cannot accept MCP
+servers at session creation, we refuse to use it, because a toolless agent can
+only produce prose about a circuit it cannot see.
+
+### ACP adapter binaries ❌ *unverified*
+
+The built-in probe table names adapters for Claude Code, Codex and Gemini CLI.
+**Exact package and binary names are unconfirmed** and the adapter ecosystem is
+young enough that they move. A stale entry costs a failed probe and a "not
+found" — no crash, but a silently degraded feature. Confirm each against its
+project before the table ships.
+
+---
+
+## Web application stack
+
+All four ❌ *unverified* — chosen on characteristics, versions not pinned.
+
+| Choice | For | Note |
+|---|---|---|
+| **SvelteKit** | The app shell and all UI | D41. React is the stated fallback |
+| **three.js** | GLB rendering at stage ⑩ | Board and enclosure, no plugin |
+| **Playwright** | End-to-end, no LLM in the loop | Drives the golden script with a browser on top |
+| **Vitest** | Units, renderers, golden SVGs | Already implied by the TypeScript monorepo |
+
+Verify licences and current majors before the UI implementation plan.
 
 ---
 
@@ -347,6 +399,9 @@ Chrome*; absent on iOS.
 | [decisions.md](decisions.md) | Decision log — including options rejected and why |
 | [spec §4](superpowers/specs/2026-07-28-makerlord-design.md) | How the part library and licence split are structured |
 | [spec §10](superpowers/specs/2026-07-28-makerlord-design.md) | Firmware toolchain reasoning in full |
+| [ACP host spec](superpowers/specs/2026-07-29-acp-host-design.md) | Where each ACP assumption is relied on |
+| [UI spec §12](superpowers/specs/2026-07-29-ui-design.md) | Why SvelteKit, and what a switch to React would cost |
+| [simulation spec](superpowers/specs/2026-07-29-simulation-design.md) | How ngspice is driven, and the model-provenance ceiling |
 
 ---
 

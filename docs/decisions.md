@@ -204,10 +204,15 @@ plausible non-existent call. **The compiler is the arbiter, not the web page.**
 ---
 
 ## D14 — Desktop primary, phone as thin companion
-*2026-07-28*
+*2026-07-28* · **partially revised by [D39](#d39--the-ui-is-web-first-a-local-bridge-supplies-the-rest)**
 
 **Forced by:** Web Serial is desktop-only — not on Android Chrome, absent on
 iOS. Flashing can't happen on a phone; the camera and bench ergonomics want one.
+
+> **What D39 changed:** "desktop" here meant a desktop *application*. It now
+> means a desktop *browser*. The phone-is-thin conclusion is unchanged and the
+> forcing constraint is unchanged — flashing still cannot happen on a phone. The
+> phone companion is the same web app, responsive, rather than a separate build.
 
 **Consequence:** the phone is a step display, a number pad, and a camera —
 nothing more. Paired by QR at the design→build transition, and **never
@@ -847,6 +852,159 @@ being wrong is expensive *and silent*), **05** (the reader must be able to tell
 verified claims from guesses from the text alone), **07** (answer first, then
 reasoning, then risk), **08** (thirteen behaviours that read as competence).
 Those go into persona prose.
+
+---
+
+## D39 — The UI is web-first; a local bridge supplies the rest
+*2026-07-29*
+
+The product is a web app. **`maker-bridge`**, a small optional local daemon,
+supplies the three things a browser cannot: hosting external ACP agent binaries,
+serial access on browsers without Web Serial, and local clone access.
+
+**Why:** D34 already made the project a hosted git repo and D37 already put the
+native toolchain server-side — KiCad at ~2 GB plus an ESP32 toolchain at ~2–3 GB
+is not a download. Most of the app is therefore a client of things that are
+already remote. And the experiment that most needs running — watching four
+people build a circuit from a written guide (roadmap §7) — needs a URL, not an
+installer.
+
+**Web Serial is a smaller constraint than D14 implied.** It ships in Chromium
+desktop browsers, so a Chrome or Edge maker flashes at stage ⑦ with no install
+at all. The bridge is the fallback for Firefox and Safari, and the path for
+makers who want their own agent, their own clone, or offline bench work.
+
+**Rejected — desktop-first (Tauri):** buys native serial, filesystem and
+toolchain access. Two of those three we deliberately don't want locally, and
+bundling makes the third legally awkward — ngspice and Freerouting are GPL, and
+bundling them into a shipped app triggers distribution obligations that running
+them server-side does not.
+
+**Rejected — both shells from day one:** doubles the surface of the UI spec and
+every spec after it, to serve a preference nobody has yet expressed.
+
+**Consequence:** the ACP host cannot be server-side (the maker's agent licence is
+local) and cannot be in the browser (no process spawning), so it lives in the
+bridge — which is what makes the bridge worth installing at all.
+
+---
+
+## D40 — External agents are equally gated, less well coached
+*2026-07-29*
+
+A BYO agent gets the full 32-tool surface and identical engine-enforced gates.
+It does not get our stage personas, our context accounting, or our prompt
+caching.
+
+**Why this is safe:** the gate is a refused call (D3), not a prompt instruction.
+It holds regardless of which model is driving or what it believes.
+
+**The gap, stated honestly:** an external agent cannot advance the build past a
+live BLOCKER, but it *can* say "that finding looks conservative, just wire it
+up" — and the maker has hands.
+
+**So: findings are rendered by the client from engine data, never from agent
+prose.** The finding strip is populated by `ToolResult` payloads and by the UI's
+own `check_*` calls. The agent does not write it, cannot summarise it, and there
+is no dismiss control anywhere in the DOM. A BLOCKER is on screen whatever the
+agent chose to say about it.
+
+**Rejected — refusing BYO agents entirely:** would protect the coaching quality
+and give up the maker's own subscription, their own model preference, and the
+strongest evidence that our tool surface is genuinely a public API.
+
+**Rejected — a "verified agent" allowlist:** unenforceable, and it implies the
+gates depend on which agent is running. They don't.
+
+**Consequence:** a cross-brain test is mandatory — the golden end-to-end script
+run through a fake ACP agent must produce the same refusals and the same
+`project.json` as the direct-registry run. If it ever fails, the BYO path is
+disabled until it passes.
+
+---
+
+## D41 — SvelteKit for the web app
+*2026-07-29*
+
+**Why:** fine-grained reactivity suits a streaming event feed; SVG is
+first-class rather than something to escape into raw-HTML injection; runtime
+cost stays low for an app rendering large SVGs and a WebGL scene on one page.
+For a solo builder plus agents, less ceremony per component is a real schedule
+effect.
+
+**Rejected — React:** wins on ecosystem depth and on hiring, and remains the
+reasonable alternative. If either becomes the binding constraint this is a
+substitution at the component layer only — the renderers are SVG-and-canvas
+generation over a typed model and are not framework-shaped.
+
+**Consequence:** low. This is the most cheaply reversible decision in the log,
+which is why it gets the shortest entry.
+
+---
+
+## D42 — Simulation covers `.op`, `.tran` and `.ac`. No firmware-in-the-loop.
+*2026-07-29*
+
+Stage ⑤ runs operating point, transient and small-signal AC via ngspice, from
+the netlist we already derive.
+
+**Why these three:** they answer the questions that actually bite makers — will
+this resistor cook, does the rail sag when the radio transmits, is the level
+shifter biased right, does the sensor front-end have the corner frequency the
+requirement asked for.
+
+**The MCU boundary:** we simulate the analogue envelope *around* the
+microcontroller, not the microcontroller. A digital part is a behavioural stub —
+a supply-current sink with declared active and sleep values, I/O pins as voltage
+sources with declared drive. None of the four questions above needs firmware to
+run.
+
+**Rejected — firmware-in-the-loop co-simulation:** the most differentiated thing
+available in this space and by a distance the hardest. A research project, not a
+slice.
+
+**Deferred — Monte Carlo and tolerance analysis:** the obvious v2 and genuinely
+valuable for production, since a design that works at nominal and fails at 5%
+resistor tolerance is common. It multiplies run count by sample count and needs
+tolerance data the corpus doesn't carry yet.
+
+**Consequence:** simulation stays advisory — none of its four tools gate,
+because nothing physical exists yet to be unsafe.
+
+---
+
+## D43 — Simulation results inherit the provenance of their weakest model
+*2026-07-29*
+
+A run's provenance is **the weakest model in the loop, not the average.**
+Manufacturer or curated models can reach BLOCKER; a vendor model of unclear
+origin tops out at WARNING; a generic idealisation or a missing model tops out
+at NOTE.
+
+**Why:** measured electrical coverage of the Fritzing corpus is **2–4%**
+([corpus-findings.md](corpus-findings.md)). Most parts arrive with no SPICE model
+at all. A simulation is exactly as good as its device models, and the worst
+artefact this project could produce is a confident, precise, plotted, wrong
+answer.
+
+Weakest-not-average because the idealised part is precisely where the error will
+be.
+
+**The same rule covers stimulus.** A transient run needs to know what the circuit
+is doing, and that isn't in the netlist. A duty cycle or load step the agent
+guessed is `assumed` and caps the run at NOTE, exactly as an idealised model
+would.
+
+**Rejected — refusing to simulate without full models:** would make the stage
+unavailable for essentially every real project.
+
+**Rejected — simulating and not labelling:** the failure mode this decision
+exists to prevent.
+
+**Consequence:** the good one. **Curating a single part's SPICE model upgrades
+every check that depends on it**, and the provenance badge in the UI is where a
+maker sees that happen. This is the same shape as the front-door spec's severity
+degradation and the general provenance-bounds-severity rule.
 
 ---
 

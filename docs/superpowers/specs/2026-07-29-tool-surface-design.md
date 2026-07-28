@@ -10,8 +10,8 @@ agent runtime — depend on this one and are not covered here.
 | Spec | Covers | Status |
 |---|---|---|
 | **This** | tool core, CLI, MCP server | approved |
-| ACP host | process spawning, JSON-RPC over stdio, session bridging | not written |
-| Agent runtime | the loop, context accounting, personas, compaction | not written |
+| [ACP host](2026-07-29-acp-host-design.md) | the bridge, agent registry, event normalisation | approved |
+| [Agent runtime](2026-07-29-agent-runtime-design.md) | the loop, context accounting, personas, compaction | approved |
 
 Implements the surface sketched in
 [../../ai-implementation.md](../../ai-implementation.md) §2.

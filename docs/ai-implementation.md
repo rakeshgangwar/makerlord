@@ -304,8 +304,19 @@ and the MCP server gives us that more cheaply.
 
 | Item | Status |
 |---|---|
-| `maker` CLI command surface | Not yet specced |
-| MCP server tool schemas | Sketched above; not authored |
-| Stage persona format | Following buzz's pack model; not settled |
-| Compaction vs context editing for long builds | Not evaluated |
-| Metering model for server-side compute (D37) | Open — see Flux ACUs in [references.md](references.md) |
+| `maker` CLI command surface | ✅ [tool-surface spec](superpowers/specs/2026-07-29-tool-surface-design.md) — 32 tools in 9 groups |
+| MCP server tool schemas | ✅ Same spec — one zod schema, four consumers |
+| Stage persona format | ✅ [agent-runtime spec](superpowers/specs/2026-07-29-agent-runtime-design.md) §7 — buzz's pack model, in the project repo |
+| Compaction vs context editing for long builds | ✅ Server-side compaction, gated on context pressure — agent-runtime §5 |
+| Which brain, and how it is spawned | ✅ [ACP host spec](superpowers/specs/2026-07-29-acp-host-design.md) — `maker-bridge`, per-session scoped MCP |
+| Metering model for server-side compute (D37) | **Open** — see Flux ACUs in [references.md](references.md) |
+| Sampled prose evals for personas | **Open** — needs personas to evaluate first |
+| Whether the tool runner permits mid-turn steering | **Open** — verify before laying out `packages/agent` (agent-runtime §2) |
+
+**Sections 1–9 above are the summary; the three agent-layer specs are the
+detail.** Where they disagree, the specs win — they were written later and with
+the decisions in hand.
+
+One correction worth naming: §1's diagram says "MakerLord desktop app." D39 made
+the product web-first, and the ACP host moved into `maker-bridge` for the reason
+that diagram implies but doesn't state — a browser cannot spawn a process.
