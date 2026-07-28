@@ -203,6 +203,46 @@ versioned, diffable, and travels with their project.**
 Loaded by progressive disclosure like everything else: the active stage's
 persona is in context, the others are names.
 
+### The shared spine: fable-guide
+
+All seventeen personas rest on one epistemic spine —
+[`rakeshgangwar/fable-guide`](https://github.com/rakeshgangwar/fable-guide),
+an operator's guide on claims-over-vibes, ground truth over fluency, provenance
+labelling, adversarial self-review, and answer-first delivery.
+
+**It maps onto this architecture almost line for line**, which is why it's the
+right spine rather than a prompt written from scratch:
+
+| fable-guide | MakerLord |
+|---|---|
+| "Claims, not vibes" | `Finding` with a `ruleId`, not prose |
+| "Ground truth outranks you" | Rules adjudicate; the LLM explains (D3) |
+| "Track verified vs guessed" | `RuleFinding` vs `AgentAdvisory` (D4) |
+| "The check is cheaper than the correction" | The measurement gate (D15) |
+| "Attack your conclusion" | The Tier-1 danger corpus |
+| "Answer first, then risk" | Refusals lead with capability (spec §8.11) |
+
+Chapter 00's core move — *route your claims through ground truth and away from
+your own sense of plausibility* — is D2 and D3 stated as epistemics instead of
+architecture.
+
+**Which chapters carry which persona:**
+
+| Chapter | Personas that lean on it |
+|---|---|
+| 03 risk allocation | All — "spend where being wrong is expensive *and silent*" is the safety thesis |
+| 05 known vs guessed | ② feasibility, ⑪ cost modelling — both traffic in estimates |
+| 06 attack your conclusion | ⑧ debug (rival hypotheses), ⑭ test |
+| 07 communication | All — answer-first, and the §8.11 refusal pattern |
+| 08 false competence | All — the anti-patterns are cross-cutting |
+
+**Deliberately not packaged as Claude Code skills.** Skills are task-triggered;
+this is always-on stance, and `superpowers` already covers the overlapping
+chapters (04/09 ≈ `verification-before-completion`, 06 ≈ the code-review pair,
+01 ≈ `brainstorming`). Two overlapping sets competing for the same trigger
+moments is worse than either alone. The uncovered chapters — **03, 05, 07,
+08** — are where the unique value sits, and they belong in persona prose.
+
 ---
 
 ## 7. Two behaviours worth copying verbatim

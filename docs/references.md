@@ -68,6 +68,37 @@ rather than hand-authoring them. **Confirm licence before use.**
 
 ---
 
+## Agent methodology
+
+### fable-guide — the persona spine ✅ *verified 2026-07-29*
+
+- https://github.com/rakeshgangwar/fable-guide
+
+An operator's guide for models: claims-over-vibes, ground truth over fluency,
+provenance labelling, adversarial self-review, answer-first delivery. Twelve
+files, ~14k words, chaptered along a task lifecycle
+(receive → plan → execute → conclude → deliver).
+
+**Adopted as the shared epistemic spine for the stage personas** (D38), not as
+a skill pack. Chapters 03, 05, 07 and 08 carry the value that `superpowers`
+doesn't already cover.
+
+### block/buzz — agent runtime reference ✅ *verified 2026-07-29*
+
+- https://github.com/block/buzz
+
+Nostr-based collaboration platform where agents are first-class members. Not a
+circuit tool, but its agent runtime is unusually well-built and four patterns
+were taken from it (ai-implementation.md): two-measure context accounting,
+progressive disclosure via `load_skill`, the fake-LLM subprocess test harness,
+and treating any ACP binary as interchangeable with your own.
+
+Also the reference point for **rejecting Rust** (D36): `buzz-agent/src/llm.rs`
+is 3,846 lines and `config.rs` 2,709 — the cost of having no first-party
+Anthropic SDK in that language.
+
+---
+
 ## Prior art
 
 ### Flux ✅ *verified 2026-07-28*

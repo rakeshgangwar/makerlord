@@ -812,6 +812,44 @@ the compile-flash-debug loop.
 
 ---
 
+## D38 — fable-guide is the persona spine, not a skill pack
+*2026-07-29*
+
+[`rakeshgangwar/fable-guide`](https://github.com/rakeshgangwar/fable-guide) —
+an operator's guide on claims-over-vibes, ground truth over fluency, provenance
+labelling, adversarial self-review, and answer-first delivery — becomes the
+**shared epistemic spine for all seventeen stage personas**
+(ai-implementation.md §6).
+
+**Why it fits:** it maps onto this architecture almost line for line. "Claims,
+not vibes" is `Finding` with a `ruleId`. "Ground truth outranks you" is D3.
+"Track verified vs guessed" is the `RuleFinding` / `AgentAdvisory` split (D4).
+"The check is cheaper than the correction" is the measurement gate (D15).
+MakerLord is largely this guide instantiated as a product.
+
+**Rejected — packaging it as Claude Code skills:**
+
+1. **Skills are task-triggered; this is always-on stance.** No request says "I
+   need epistemics." Honest descriptions never fire; descriptions that force
+   firing are a system prompt with extra indirection. The precedent is
+   `using-superpowers`, delivered by a SessionStart hook rather than the skill
+   registry, for exactly this reason.
+2. **`superpowers` already covers ~40% of it** — chapters 04/09 ≈
+   `verification-before-completion`, 06 ≈ the code-review pair, 01 ≈
+   `brainstorming`. Two overlapping sets competing for the same trigger moments
+   is worse than either alone.
+3. **Eleven skills would be eleven descriptions competing for attention**, most
+   of which never match. If it were ever packaged, the right shape is *one*
+   skill with the chapters as `references/` supporting files.
+
+**The uncovered chapters are where the value is:** **03** (spend effort where
+being wrong is expensive *and silent*), **05** (the reader must be able to tell
+verified claims from guesses from the text alone), **07** (answer first, then
+reasoning, then risk), **08** (thirteen behaviours that read as competence).
+Those go into persona prose.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the
