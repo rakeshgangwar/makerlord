@@ -15,7 +15,7 @@ circuit; they're the same idea at different layers.
 what connects to what, with no geometry.
 
 ⚑ **Intent netlist** — what the circuit *should* be. Owned by the agent,
-produced from the student's stated goal.
+produced from the maker's stated goal.
 
 ⚑ **Derived netlist** — what the circuit *actually is*, computed from the
 physical layout by union-find over breadboard buses and jumper wires.
@@ -99,7 +99,7 @@ can never overrule a rule."
 | `ADVISORY` | LLM-originated, separate labelled band, **never** gates |
 
 ⚑ **The gate** — the pre-power-up checkpoint. Opens only when no `REFUSE` or
-`BLOCKER` remains and the student has entered the required **measurements**
+`BLOCKER` remains and the maker has entered the required **measurements**
 (never yes/no confirmations).
 
 ⚑ **Tier 1 corpus** — the suite of known-dangerous circuits that must always be

@@ -11,7 +11,7 @@ works; this explains *why it isn't something else.*
 ## D1 — Coach real hardware, not a simulator
 *2026-07-28*
 
-The student holds a physical breadboard. The agent's job is to make the board on
+The maker holds a physical breadboard. The agent's job is to make the board on
 their desk safe, not to model one on screen.
 
 **Rejected:** a virtual sandbox (safe, but says nothing about real hardware);
@@ -60,7 +60,7 @@ dismissal field** — a type-level guarantee, not a prompt instruction.
 The LLM may raise concerns the rule set missed, as `ADVISORY` only.
 
 **Why the visual separation is mandatory:** if an LLM guess renders identically
-to a tested rule, the first false alarm teaches the student that warnings are
+to a tested rule, the first false alarm teaches the maker that warnings are
 noise — and that lesson generalises to the blocker that would have saved their
 board. **Alarm fatigue is the real failure mode of safety tooling.**
 
@@ -240,13 +240,13 @@ principle running through the rest of the design).
 
 ---
 
-## D17 — Student owns the layout; agent owns the netlist
+## D17 — Maker owns the layout; agent owns the netlist
 *2026-07-28*
 
 Parts may be dragged and wires moved freely. Changing *what connects to what*
 goes through conversation.
 
-**Why it's cheap:** a student rearranging the board and a student mis-wiring it
+**Why it's cheap:** a maker rearranging the board and a maker mis-wiring it
 are the *same operation* to the system — a physical layout change, checked
 against intent by machinery that already exists. Direct manipulation is
 therefore safe to allow, which is not usually true of drag-and-drop editors.
@@ -454,7 +454,7 @@ circuit model → semantic layout engine → ┬→ our SVG renderer
 ```
 
 One algorithm, two serialisers. The KiCad schematic and the in-app schematic
-then look like the same drawing, which helps the student crossing between them.
+then look like the same drawing, which helps the maker crossing between them.
 
 **Dependency:** `kicad-sch-api` for s-expression writing. ❌ Unverified —
 confirm maturity before committing.
@@ -476,7 +476,7 @@ confirm maturity before committing.
 manufacturing simultaneously.
 
 **GLB export is worth noting for the UI:** web-renderable, so a 3D view of the
-student's board needs no external viewer or plugin.
+maker's board needs no external viewer or plugin.
 
 ⚠️ **Gotcha:** KiCad footprints often reference *only* the VRML file, and VRML is
 a mesh format, not CAD — it cannot be included in a STEP export. `--subst-models`
@@ -502,7 +502,7 @@ days. And for a maker with a 3D printer it closes the loop with no fab at all.
 ## D29 — The product is a whole-journey assistant, not a circuit tool
 *2026-07-29* · **Reframes the product**
 
-CircuitKing is a **complete assistant for the maker's journey from idea to real
+MakerLord is a **complete assistant for the maker's journey from idea to real
 product** — seventeen stages, mapped in [roadmap.md](roadmap.md). Not an AI
 circuit coach that also exports files.
 

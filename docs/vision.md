@@ -72,7 +72,7 @@ This scales to the whole arc. Every stage has a deterministic verifier:
 |---|---|
 | Design | Our rule engine — 8+ tested safety rules |
 | Simulate | ngspice — does it actually work? |
-| Prototype | The student's multimeter, against predicted values |
+| Prototype | The maker's multimeter, against predicted values |
 | Product | `kicad-cli sch erc` and `pcb drc` |
 | Production | DFM checks and fab-house validation |
 
@@ -175,11 +175,11 @@ small; the broad work is integration that can be added incrementally.
 
 ## What success looks like
 
-**Near term.** A student describes what they want, gets a checked circuit and a
+**Near term.** A maker describes what they want, gets a checked circuit and a
 build sequence, and the gate catches a mistake that would have cost them a
 component. That moment is the product.
 
-**Medium term.** That same student clicks through to a real schematic, a routed
+**Medium term.** That same maker clicks through to a real schematic, a routed
 PCB, and an enclosure that fits it — without learning KiCad first.
 
 **Long term.** Someone takes a hobby project to a hundred-unit production run

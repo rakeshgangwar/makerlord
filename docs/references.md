@@ -314,8 +314,8 @@ Chrome*; absent on iOS.
 |---|---|
 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus, with reproduction commands |
 | [decisions.md](decisions.md) | Decision log — including options rejected and why |
-| [spec §4](superpowers/specs/2026-07-28-circuitking-design.md) | How the part library and licence split are structured |
-| [spec §10](superpowers/specs/2026-07-28-circuitking-design.md) | Firmware toolchain reasoning in full |
+| [spec §4](superpowers/specs/2026-07-28-makerlord-design.md) | How the part library and licence split are structured |
+| [spec §10](superpowers/specs/2026-07-28-makerlord-design.md) | Firmware toolchain reasoning in full |
 
 ---
 

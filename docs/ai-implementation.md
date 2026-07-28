@@ -13,15 +13,15 @@ implementation of those.
 The separation is what makes agent choice possible at all:
 
 ```
-CircuitKing desktop app
+MakerLord desktop app
   ├── chat UI, canvas, build mode
   └── spawns an ACP agent process ─────┐   ← ACP: which brain
-        ck-agent (ours, the default)   │
+        maker-agent (ours, the default)   │
         claude-agent-acp               │
         codex-acp                      │
         gemini-cli                     │
                                        ▼   ← MCP: what it can do
-                          ck-mcp — the circuit engine
+                          maker-mcp — the circuit engine
                     parts · rules · netlist · DC solver · build steps
 ```
 
@@ -38,7 +38,7 @@ interchangeable. Copy that posture.
 
 Our tuned agent is the default, so a fourteen-year-old needs no subscription and
 no install. Makers who already have Claude Code, Codex or Gemini can point
-CircuitKing at their own — using their subscription, not our inference budget.
+MakerLord at their own — using their subscription, not our inference budget.
 
 That's the honest trade: our agent gives a better-tuned experience because the
 stage personas are ours; an external agent gives power and control.
@@ -47,7 +47,7 @@ stage personas are ours; an external agent gives power and control.
 
 ## 2. The engine is a CLI and an MCP server, from day one
 
-A `ck` JSON-in/JSON-out CLI plus an MCP wrapper over the same surface. This is
+A `maker` JSON-in/JSON-out CLI plus an MCP wrapper over the same surface. This is
 `buzz-cli`'s pattern, and it buys three things at once:
 
 1. Our agent calls it
@@ -264,7 +264,7 @@ and the MCP server gives us that more cheaply.
 
 | Item | Status |
 |---|---|
-| `ck` CLI command surface | Not yet specced |
+| `maker` CLI command surface | Not yet specced |
 | MCP server tool schemas | Sketched above; not authored |
 | Stage persona format | Following buzz's pack model; not settled |
 | Compaction vs context editing for long builds | Not evaluated |

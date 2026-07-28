@@ -1,10 +1,16 @@
-# CircuitKing — Documentation
+# MakerLord — Documentation
 
 **A complete assistant for the maker's journey, from an idea to a real
 product.** It researches feasibility, turns vague wants into testable
 requirements, designs the circuit, simulates it, walks the maker through a
 safety-gated breadboard build, writes the firmware, turns the result into a PCB
 and an enclosure, and prepares it for manufacture.
+
+> **Project identity.** Renamed from CircuitKing on 2026-07-29 — the old name
+> described a circuit tool, and the product is the whole maker journey.
+> Domains under consideration: **makerlord.io** / **makerlord.dev**.
+> Repo: `github.com/rakeshgangwar/makerlord`. Package scope `@makerlord/*`,
+> CLI `maker`, MCP server `maker-mcp`.
 
 ## Reading order
 
@@ -17,7 +23,7 @@ Start at the top. Each document assumes the ones above it.
 | 3 | [user-journey.md](user-journey.md) | What it feels like to use — surfaces, files, postures | To understand the product as a user |
 | 4 | [ai-implementation.md](ai-implementation.md) | How the agent works — ACP/MCP, tools, context, testing | Before building the agent layer |
 | 5 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 6 and 7 |
-| 6 | [superpowers/specs/2026-07-28-circuitking-design.md](superpowers/specs/2026-07-28-circuitking-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
+| 6 | [superpowers/specs/2026-07-28-makerlord-design.md](superpowers/specs/2026-07-28-makerlord-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
 | 7 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
 | 8 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
 | 9 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
@@ -29,7 +35,7 @@ Start at the top. Each document assumes the ones above it.
 A maker has an idea and wants to end up with something manufacturable. Today
 that means crossing four tool boundaries, losing information at every handoff,
 and nothing anywhere checks *"is the circuit in front of me safe to switch on?"*
-CircuitKing is one continuous path — **idea → simulate → prototype → product →
+MakerLord is one continuous path — **idea → simulate → prototype → product →
 production** — built on a single decision: **one structured circuit model is the
 source of truth, and every artefact is a projection of it.** That's what makes
 correctness computable rather than decorative, because you cannot run a

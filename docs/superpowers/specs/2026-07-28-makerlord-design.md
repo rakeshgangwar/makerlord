@@ -1,7 +1,18 @@
-# CircuitKing — Design Spec
+# MakerLord — Design Spec: the Prototype Stage
 
 **Date:** 2026-07-28
 **Status:** Approved design, pre-implementation
+
+> ⚠️ **Scope: this spec covers stage ⑥ — the safety-gated breadboard build —
+> only.** It was written before the product was reframed as a whole-journey
+> assistant, so its framing reads narrower than MakerLord actually is. That's
+> accurate for what it covers: the prototype stage is the wedge, and this is its
+> design. For the full 17-stage product see [../../roadmap.md](../../roadmap.md).
+>
+> Two sections have since been superseded by entries in
+> [../../decisions.md](../../decisions.md): §1's scope boundaries (mains is now
+> tiered, not refused — D32) and the PCB/manufacturing/simulation exclusions
+> (all now in scope — D22). Both are annotated inline.
 
 ---
 
@@ -14,7 +25,7 @@ tools split badly: simulators (Tinkercad, Falstad) are safe but virtual; eCAD
 tools (Flux, KiCad, EasyEDA) assume you already know what you're doing; LLM chat
 gives confident wiring advice with no way to verify it.
 
-CircuitKing is an AI coach for **real hardware**. Students hold physical
+MakerLord is an AI coach for **real hardware**. Makers hold physical
 breadboards, components, and microcontrollers. The agent designs the circuit,
 draws it in both schematic and breadboard form, walks them through building it
 step by step, and — critically — **gates power-up behind deterministic safety
@@ -266,7 +277,7 @@ field for it is a guarantee; a prompt instruction is a suggestion.
 
 **Advisories must be visually and permanently distinguishable from rules.** If
 an LLM guess renders identically to a tested rule, the first false alarm teaches
-the student that warnings are noise — and that lesson generalizes to the blocker
+the maker that warnings are noise — and that lesson generalizes to the blocker
 that would have saved their board. **Alarm fatigue is the real failure mode of
 safety tooling.** Advisories live in their own labeled band ("Copilot noticed
 something — unverified"), never styled as a blocker, never in the same list.
@@ -310,10 +321,10 @@ geometry rules, so most land with Phase 3 rather than Slice 1:
 
 Advisories are logged with the triggering circuit. Recurring ones get human
 review; those that hold up are promoted into tested rules. The rule set grows
-from real student mistakes rather than from guessing the hazard list upfront.
+from real maker mistakes rather than from guessing the hazard list upfront.
 
 ```
-student circuits → agent advisories → logged → reviewed → new tested rule
+maker circuits → agent advisories → logged → reviewed → new tested rule
                                                               ↓
                                                     gates future builds
 ```
@@ -340,10 +351,10 @@ library. A hallucinated pin name fails as a retriable tool error.
 ### The critical loop detail
 
 **`runChecks()` fires automatically after every mutation, and the agent sees
-results before the student does.** The safety engine is the agent's own
-guardrail, not only a student-facing gate. When the agent forgets a series
+results before the maker does.** The safety engine is the agent's own
+guardrail, not only a maker-facing gate. When the agent forgets a series
 resistor, the rule trips inside the loop and it self-corrects silently. Findings
-surface to the student only when they reflect something about *the student's*
+surface to the maker only when they reflect something about *the maker's*
 build.
 
 ---
@@ -388,7 +399,7 @@ Not a whitelist. **Graceful degradation with an explicit statement of depth:**
 > way, and I can't verify the build. Here's what I can check instead."*
 
 Same logic as the mains boundary, applied to a second axis. More honest than
-either refusing or bluffing, and an ambitious student still gets real help where
+either refusing or bluffing, and an ambitious maker still gets real help where
 the help is real.
 
 ---
@@ -401,7 +412,7 @@ Every eCAD tool — Flux, KiCad, EasyEDA — assumes a **seated designer with fr
 hands and full attention.** That assumption is false for most of this product's
 actual usage.
 
-While building, the student has both hands occupied (wire, tweezers, component),
+While building, the maker has both hands occupied (wire, tweezers, component),
 eyes on the breadboard rather than the screen, possibly a multimeter probe in
 each hand, and the display at arm's length off to one side. Mouse-precision UI
 is simply wrong in that posture.
@@ -440,7 +451,7 @@ measurement entry + Next       everything else
 ```
 
 A step display, a number pad, and a camera. Small enough to stay honest, and it
-maps exactly to the three moments the student is away from the keyboard.
+maps exactly to the three moments the maker is away from the keyboard.
 
 - **Pairing:** QR code shown at the design→build transition. PWA, no app install.
 - **The phone is never required.** Desktop-only works, with webcam fallback for
@@ -451,7 +462,7 @@ maps exactly to the three moments the student is away from the keyboard.
 
 ### 8.4 Ownership boundary: who may edit what
 
-**The student owns the physical layout. The agent owns the intent netlist.**
+**The maker owns the physical layout. The agent owns the intent netlist.**
 
 - Parts may be dragged, wires moved, the board freely rearranged. That mutates
   the *physical layout*, which the derived-netlist diff already checks. Many
@@ -460,7 +471,7 @@ maps exactly to the three moments the student is away from the keyboard.
 - Changing *what connects to what* is a design decision and goes through
   conversation, where the agent can explain consequences before they land.
 
-The elegance: a student **rearranging** the board and a student **mis-wiring**
+The elegance: a maker **rearranging** the board and a maker **mis-wiring**
 the board are the same operation to the system — a physical layout change,
 checked against intent. Direct manipulation is therefore safe and cheap to
 allow, which is not usually true of drag-and-drop editors, and it avoids the
@@ -476,7 +487,7 @@ ask permission to nudge a component.
 ✅  "Continuity mode, red rail to blue rail. What does it read?  [____]"
 ```
 
-The yes/no form is compliance theatre — every student clicks Yes, and worse, it
+The yes/no form is compliance theatre — every maker clicks Yes, and worse, it
 *trains* them that the safety layer is a formality to dismiss. It caps a rigorous
 rule engine with a lie detector that detects nothing.
 
@@ -485,11 +496,11 @@ Asking for the value changes three things at once:
 1. **Faking requires effort and invention**, and because the DC solver predicts
    the expected value, an implausible entry is detectable. `0.2 Ω` where open
    circuit was expected is not a failed checkbox — it is a **caught short**.
-2. **The safety check and the lesson are the same action.** The student learns
+2. **The safety check and the lesson are the same action.** The maker learns
    to use a meter and learns what values to expect. Safety is not a tax on
    learning; it *is* the learning.
 3. It reads as **preflight, not paperwork.** Pilots do not resent checklists.
-   That framing is the whole difference between a tool students respect and one
+   That framing is the whole difference between a tool makers respect and one
    they route around.
 
 ### 8.6 Two gate tiers
@@ -532,7 +543,7 @@ colour, and no shape:
   ╰ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ╯
 ```
 
-A student should be able to tell them apart from across the room, without
+A maker should be able to tell them apart from across the room, without
 reading.
 
 ### 8.8 Onboarding: ask what they own
@@ -553,14 +564,14 @@ the kit box).
 Self-reported skill is unreliable in both directions and being asked to rate
 yourself before building anything feels like a test. Instead: adapt **explanation
 depth**, keep the UI constant, and offer inline *"more detail"* / *"skip the
-explanation"* controls — because expertise is not one-dimensional, and a student
+explanation"* controls — because expertise is not one-dimensional, and a maker
 may be strong on code and shaky on circuits within a single project.
 
 ### 8.9 Pedagogy: an explicit per-project mode
 
 **The central tension: the better the agent is at building the circuit for them,
-the less the student learns.** An agent that silently emits a correct,
-safety-checked design and a hole-by-hole wiring list produces a student who can
+the less the maker learns.** An agent that silently emits a correct,
+safety-checked design and a hole-by-hole wiring list produces a maker who can
 assemble but not design, and who is helpless away from the tool.
 
 Resolution: an **explicit mode toggle**, chosen per project — named by outcome
@@ -575,19 +586,19 @@ Four things stop the toggle from collapsing into the fast path:
 
 1. **Safety blockers explain themselves in both modes.** Every blocker carries
    reasoning and arithmetic, delivered at a moment of genuine stakes — the
-   student's own board. The learning floor is never zero. The rule engine is,
+   maker's own board. The learning floor is never zero. The rule engine is,
    almost accidentally, a curriculum.
 2. **Per project, not per account.** A global setting chosen during onboarding,
-   before the student knows what either option feels like, is the version that
+   before the maker knows what either option feels like, is the version that
    never gets revisited.
 3. **Persistent visible toggle**, not buried in settings.
 4. **Offer the switch at maximum motivation** — not upfront, but when the
-   circuit is dead and the student wants to know why. *"Want me to walk you
+   circuit is dead and the maker wants to know why. *"Want me to walk you
    through finding this yourself?"*
 
 ### 8.10 "It doesn't work" is a first-class entry point
 
-The most common student state, and buried in help by most tools. Here it is a
+The most common maker state, and buried in help by most tools. Here it is a
 permanent, prominent affordance — and it opens a **targeted binary search**, not
 a FAQ, because the system knows the intended netlist, the predicted voltage at
 every node, which build steps were confirmed, and what firmware is running:
@@ -596,7 +607,7 @@ every node, which build steps were confirmed, and what firmware is running:
 > VCC pin."*
 
 Two or three measurements localise most faults. This diagnostic is the payoff for
-everything else in the architecture, and is likely the feature students describe
+everything else in the architecture, and is likely the feature makers describe
 to their friends.
 
 ### 8.11 Refusals lead with capability
@@ -608,7 +619,7 @@ Degradation (Section 7) never opens with the limitation:
 > ✅ *"Here's your power budget, battery sizing, and ESC selection — and here's
 > why I'm not drawing a breadboard for a 60 A system."*
 
-Same information; the student leaves with work in hand rather than a door closed.
+Same information; the maker leaves with work in hand rather than a door closed.
 
 ---
 
@@ -631,7 +642,7 @@ principle:
 
 Each step highlights affected holes in **both views simultaneously** — the
 schematic net and the physical wires light up together. This is where linked
-views earn their keep pedagogically: students learn the translation by watching
+views earn their keep pedagogically: makers learn the translation by watching
 it repeatedly.
 
 ### The gate (step 5)
@@ -639,7 +650,7 @@ it repeatedly.
 Will not open until:
 
 - Every `BLOCKER` finding is resolved
-- Rail-to-rail continuity reads **open** (student enters result — this single
+- Rail-to-rail continuity reads **open** (maker enters result — this single
   check catches the most destructive error class)
 - Polarized parts confirmed oriented
 - Supply voltage measured *before* connection
@@ -739,7 +750,7 @@ verification is deterministic:
 3. ↓ miss → web search               find the library's actual repo
 4. ↓       read ground truth         headers + keywords.txt, NOT prose docs
 5. ⇒ VERIFY BY COMPILING             sandbox build against pinned version
-6. ⇒ promote to curated metadata     next student gets it from tier 1
+6. ⇒ promote to curated metadata     next maker gets it from tier 1
 ```
 
 **The compiler is the arbiter, not the web page.** An API that compiles against
@@ -755,7 +766,7 @@ deterministic scaffold   pin map, includes, library init, setup()/loop() skeleto
 LLM region               application logic, inside explicitly bounded blocks
 ```
 
-**Code must compile before the student sees it.** `arduino-cli` in a sandboxed
+**Code must compile before the maker sees it.** `arduino-cli` in a sandboxed
 container, errors fed back to the agent, up to 3 repair attempts. Handing a
 beginner code that doesn't build is worse than nothing — they can't tell whose
 fault it is. After 3 failed attempts the agent reports the failure and the
@@ -764,7 +775,7 @@ compiler output rather than presenting the code as working.
 ### Flashing
 
 ESP32 and RP2040 flash directly from Chrome via WebSerial / esptool-js. No local
-toolchain install for the student, which matters enormously for this audience.
+toolchain install for the maker, which matters enormously for this audience.
 
 ### Deliberate non-goal: Zephyr
 
@@ -891,7 +902,7 @@ deliberately. It is *not* a single implementation plan.
 
 **Only Slices 0 and 1 should go into the first implementation plan.** Slices 1b
 and 2–5 each warrant their own spec → plan → implementation cycle once the core
-model exists and has been validated against real student use. Treating this whole
+model exists and has been validated against real maker use. Treating this whole
 document as one buildable unit would be a mistake.
 
 ---
@@ -907,7 +918,7 @@ The same shape appears four times. Worth recognizing as a deliberate principle:
 |---|---|---|---|
 | Safety rules | LLM advisory | Human review | Becomes a tested rule |
 | Library APIs | Web search | Sandbox compile | Becomes curated driver metadata |
-| Build correctness | Predicted DC values | Student's measurement | Gate opens |
+| Build correctness | Predicted DC values | Maker's measurement | Gate opens |
 | Photo verify (later) | CV read of board | Diff vs expected layout | Step confirmed |
 
 Anywhere the system is tempted to trust a language model or an external source
