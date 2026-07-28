@@ -174,9 +174,41 @@ structured first-article check: does the board that arrived match the design?
 becomes a check — plus **design for test**: test points on the PCB, a go/no-go
 script, a fixture if the volume justifies it.
 
-### ⑮ Compliance ⚠️
+### ⑮ Compliance ⚠️ — *mostly not a stage*
 
-**New, and the honest limit.** See §6.
+**The single biggest correction to this roadmap.** Compliance is **~80% design
+constraints applied early and ~20% paperwork at the end** ([D33](decisions.md)).
+By the time you reach ⑮ the outcome is already determined; you're only
+discovering it.
+
+Where it actually lives:
+
+| Stage | Constraint |
+|---|---|
+| ④ Architecture | **Prefer pre-certified modules** — radio and power |
+| ⑨ PCB | EMC-aware layout: ground planes, filtering, routing, cable treatment |
+| ⑩ Mechanical | Creepage, ingress, shielding, earth bonding |
+| throughout | The technical file accumulates as decisions are made |
+| ⑮ | Checklist, gap report, test-house guidance |
+
+**Why it bites so hard:** EMC failures are *design* problems, not paperwork
+problems. Radiated emissions come from clock harmonics, switching supplies, poor
+grounding, and cables acting as antennas. Fail the test and you go back to
+layout and lose weeks. This is where most first products fail.
+
+**Three things worth telling every maker:**
+
+1. **Pre-certified modules are the biggest lever.** Most ESP32 modules carry
+   FCC/CE — follow the integration rules on antenna and layout and you inherit
+   the certification. Chosen at architecture time, this cuts the burden by an
+   order of magnitude.
+2. **Pre-compliance is cheap; full compliance is not.** Accredited EMC testing
+   runs roughly £3–10k plus lab days. Near-field probes and a modest spectrum
+   analyser cost hundreds and catch most problems first.
+3. **Most CE marking is self-declared.** You sign the DoC; nobody grants
+   permission. You need evidence, and you accept liability.
+
+See §6 for what we will not claim.
 
 ### ⑯ Document
 
@@ -274,9 +306,20 @@ choose this tool over a point solution in the first place.
 - run a pre-compliance checklist
 - say plainly what needs a test house and roughly what it costs
 
-It **cannot** certify, and must never imply a design is compliant. This gets the
-same treatment as the mains boundary — a stated limit, delivered leading with
-what we *can* do.
+It **cannot** certify, and must never imply a design is compliant. A stated
+limit, delivered leading with what we *can* do.
+
+**Mains — gated, not refused** ([D32](decisions.md)). Tier A (certified AC-DC
+module, the maker's own circuit entirely low-voltage) is recommended outright.
+Tiers B and C open on explicit acknowledgment, and **opening a tier activates a
+stricter rule set** — IPC-2221 clearance and creepage, fusing, earth bonding,
+isolation barrier width, relay ratings, snubbers.
+
+Absolute at every tier, no valve:
+
+- ⛔ **Mains on a breadboard.** No creepage, exposed contacts rated ~1–2 A. The
+  most likely way someone could be killed using this tool.
+- ⛔ **CV verification of mains.** Vision cannot confirm an isolation barrier.
 
 **Other things we won't pretend at:** controlled-impedance and RF layout,
 multi-layer HDI, safety-critical anything, high-volume DFM beyond a few hundred
@@ -314,4 +357,6 @@ and both would reorder priorities if wrong.
 - **A simulator.** ngspice exists.
 - **A fab or a marketplace.** We produce files and hand them over.
 - **Certification services.** Preparation only.
-- **Mains design.** Refusal rule, permanently.
+- **Mains design without the valve open.** Tier A (certified module) is
+  recommended; B and C need explicit opt-in. Mains on a breadboard is refused
+  permanently, at every tier.

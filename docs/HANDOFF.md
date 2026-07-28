@@ -32,7 +32,9 @@ that were rejected and why.
   design-rule check on an image. *(D2)*
 - **Deterministic rules adjudicate safety; the LLM only explains.** `Finding`
   has no suppression field, by design. *(D3, D4)*
-- **Mains AC (>48 V) is a hard-refusal rule**, not a policy note. *(D5)*
+- **Mains is tiered behind a safety valve** (D32), not refused. Tier A
+  (certified AC-DC module) is recommended; B and C need explicit opt-in, and
+  opening a tier ADDS rules. Mains on a breadboard is refused at every tier.
 - **Geometry is imported from Fritzing; electrical limits are hand-authored** —
   only 2–4% of the corpus carries them. *(D6)*
 - **Firmware is Arduino C++ via `arduino-cli`, not PlatformIO.** MicroPython is

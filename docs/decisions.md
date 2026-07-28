@@ -71,7 +71,7 @@ the rule set grows from real mistakes rather than a guessed hazard list.
 ---
 
 ## D5 — Mains AC is out of scope, as a rule not a policy
-*2026-07-28*
+*2026-07-28* · ⚠️ **SUPERSEDED BY [D32](#d32--mains-is-tiered-behind-a-safety-valve-not-refused)**
 
 Any net above 48 V, or any part flagged `hazardClass: mains`, produces `REFUSE`.
 
@@ -79,8 +79,9 @@ Any net above 48 V, or any part flagged `hazardClass: mains`, produces `REFUSE`.
 rules and computer vision are weakest. **Being 95% right about mains is worse
 than being no help at all.**
 
-**Consequence:** encoded as `RULE_OUT_OF_SAFE_ENVELOPE`, tested in the Tier-1
-corpus. The refusal leads with what it *can* still do.
+**Why it was wrong:** refusing doesn't make makers safer — they build it anyway
+with worse information. And it refused the *correct* answer (a certified AC-DC
+module) alongside the dangerous ones. See D32.
 
 ---
 
@@ -564,6 +565,97 @@ someone has sold units.
 
 **Same treatment for:** controlled-impedance and RF layout, multi-layer HDI,
 safety-critical applications, and DFM beyond a few hundred units.
+
+---
+
+## D32 — Mains is tiered behind a safety valve, not refused
+*2026-07-29* · **Supersedes D5**
+
+Mains work is available, gated by an explicit per-project opt-in, in three
+tiers:
+
+| Tier | Covers | Gate |
+|---|---|---|
+| **A** | Certified AC-DC module; maker's own design entirely low-voltage | **None — actively recommended** |
+| **B** | Switching/sensing mains: relays, SSRs, triacs, current sensing | Explicit acknowledgment |
+| **C** | Designing the supply: transformer, rectifier, SMPS primary, isolation barrier | Explicit acknowledgment + heavy warnings |
+
+**Why the blanket refusal was wrong:**
+
+1. **Refusing doesn't make anyone safer.** Someone building a smart plug builds
+   it anyway, from a 2014 forum post. *"Here's how this is done properly, and
+   here's what you must never do"* is strictly safer than silence.
+2. **It refused the correct answer.** The professional solution for most
+   mains-powered maker products is a sealed, agency-certified AC-DC brick with
+   the maker's circuit entirely low-voltage behind it. D5 refused that
+   alongside genuinely dangerous work.
+3. **A product assistant that can't touch mains** can't help with most real
+   consumer electronics.
+
+**The governing principle: opening the valve ADDS rules, it never removes
+them.** Mains mode is not "checks off" — it activates a stricter set that
+doesn't otherwise exist: IPC-2221 clearance and creepage, fusing, earth bonding,
+isolation barrier width, relay contact ratings, snubbers, control-side
+isolation. Today we have none of those *because* we refuse.
+
+### Absolute, at every tier — no valve opens these
+
+- ⛔ **Mains on a breadboard is refused, always.** No creepage distance,
+  contacts rated ~1–2 A, exposed conductors. There is no acceptable version, and
+  it is the most likely way someone could die using this tool.
+- ⛔ **No photo/CV verification of mains.** Computer vision cannot confirm an
+  isolation barrier. Slice 4 stays low-voltage only.
+- ⛔ **We still never certify.** See D31.
+
+**Rejected — competence-gated Tier C** (requiring evidence of an isolation
+transformer or differential probe from the parts inventory). Patronising, and
+trivially defeated by lying.
+
+---
+
+## D33 — Compliance is early design constraints, not a late stage
+*2026-07-29* · **Corrects the roadmap**
+
+Compliance was placed at stage ⑮. That was wrong.
+
+> **Compliance is ~80% design constraints applied early and ~20% paperwork at
+> the end.** By stage ⑮ the outcome is already determined — you're only
+> discovering it.
+
+**Where it actually lives:**
+
+| Stage | Constraint |
+|---|---|
+| ④ Architecture | **Prefer pre-certified modules** — radio and power |
+| ⑨ PCB | EMC-aware layout: ground planes, filtering, trace routing, cable treatment |
+| ⑩ Mechanical | Creepage, ingress, shielding, earth bonding |
+| throughout | Technical file accumulates as decisions are made |
+| ⑮ | Checklist, gap report, test-house guidance |
+
+**The reasoning, which is worth keeping:**
+
+**EMC failures are design problems, not paperwork problems.** Radiated emissions
+come from clock harmonics, switching supplies, poor grounding, and cables acting
+as antennas. Fail the test and you go back to layout and lose weeks. This is
+where most first products fail.
+
+**Pre-certified modules are the biggest lever, and most makers don't know it.**
+A pre-certified radio module (most ESP32 modules carry FCC/CE) lets you inherit
+its certification if you follow its integration rules on antenna and layout.
+Same principle as the certified power supply in D32 Tier A. Choosing these at
+*architecture* time can cut the burden by an order of magnitude.
+
+**Pre-compliance vs full compliance is the most valuable thing to tell a
+maker.** Accredited EMC testing is roughly £3–10k plus lab days. Near-field
+probes and a cheap spectrum analyser cost hundreds and catch most problems
+first.
+
+**Most CE marking is self-declared** — you sign the DoC, nobody grants
+permission. You need evidence and you accept liability. Radio usually needs a
+notified body unless you use a pre-certified module.
+
+**Consequence:** the technical file is a *projection of the project model*,
+accumulating throughout rather than assembled at the end.
 
 ---
 

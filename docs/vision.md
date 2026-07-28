@@ -193,16 +193,29 @@ accidentally, a curriculum.
 
 ## Non-goals
 
-- **Not mains.** Above 48 V the tool declines and explains.
 - **Not a replacement for expertise at the high end.** Controlled impedance,
-  RF layout, compliance testing, multi-layer HDI — the tool should say so rather
-  than bluff.
+  RF layout, multi-layer HDI, safety-critical work — the tool says so rather
+  than bluffs.
 - **Not a parts marketplace.** Sourcing serves the build; it isn't the business.
 - **Not a hosting/fab middleman.** We generate the files and hand them over;
   we don't take a cut of the board run.
 
-> **Superseded non-goals.** Earlier drafts excluded PCB layout, manufacturing
-> outputs, and simulation. All three are now in scope — see
+### Mains: gated, not refused
+
+Earlier drafts refused everything above 48 V. That was wrong — refusing doesn't
+make makers safer, it just sends them to a 2014 forum post, and it refused the
+*correct* answer (a certified AC-DC module) alongside the dangerous ones.
+
+Mains is now **tiered behind a safety valve** ([D32](decisions.md)): Tier A
+(certified module, your circuit entirely low-voltage) is recommended outright;
+Tiers B and C need explicit opt-in. **Opening a tier adds rules rather than
+removing them** — clearance, creepage, fusing, earth bonding, isolation.
+
+Two things no valve opens: **mains on a breadboard**, ever, and **CV
+verification of mains**. And we never certify.
+
+> **Other superseded non-goals.** Earlier drafts also excluded PCB layout,
+> manufacturing outputs, and simulation. All are now in scope — see
 > [decisions.md D22–D25](decisions.md). The DC solver is *not* superseded by
 > ngspice: it predicts multimeter readings for the gate and must stay fast and
 > always-available, while SPICE answers "does this design actually work?"

@@ -25,13 +25,35 @@ checks**.
 Hobbyists and makers, all levels. Ranges from a teenager with an Arduino starter
 kit to an experienced maker building a robot.
 
-### Explicitly out of scope
+### Scope boundaries
 
-- **Mains AC (>48 V).** Encoded as a hard-refusal rule, not a policy document.
-  This is where liability lives and where both analytical checking and computer
-  vision are weakest. Being 95% right about mains is worse than useless.
-- **PCB layout and manufacturing.** This is a learning tool, not an eCAD
-  replacement.
+> ⚠️ **Both original non-goals here have been superseded.** PCB layout and
+> manufacturing are now in scope (docs/decisions.md D22), and mains is gated
+> rather than refused (D32). This section records the current position.
+
+**Mains AC — tiered behind a safety valve, not refused.**
+
+| Tier | Covers | Gate |
+|---|---|---|
+| A | Certified AC-DC module; maker's design entirely low-voltage | none — recommended |
+| B | Switching/sensing mains: relays, SSRs, triacs | explicit opt-in |
+| C | Designing the supply: rectifier, SMPS primary, isolation barrier | explicit opt-in + warnings |
+
+**Opening the valve adds rules; it never removes them.** Mains tiers activate a
+stricter set — IPC-2221 clearance and creepage, fusing, earth bonding, isolation
+barrier width, relay ratings, snubbers, control-side isolation.
+
+**Absolute, at every tier:**
+
+- ⛔ **Mains on a breadboard is refused, always.** No creepage, contacts rated
+  ~1–2 A, exposed conductors. The most likely way someone could be killed using
+  this tool.
+- ⛔ **No CV verification of mains.** Slice 4 stays low-voltage only.
+- ⛔ **We never certify.** Compliance is prepared for, never claimed (D31).
+
+**Still out of scope:** controlled-impedance and RF layout, multi-layer HDI,
+safety-critical applications, and DFM beyond a few hundred units. In each case
+the tool says so and hands over cleanly.
 
 ---
 
@@ -232,7 +254,7 @@ Severity semantics:
 
 | Severity | Effect |
 |---|---|
-| `REFUSE` | Agent stops entirely and explains why. Design does not proceed. Reserved for out-of-envelope requests (mains, >48 V). |
+| `REFUSE` | Agent stops entirely and explains why. Design does not proceed. Reserved for genuinely unacceptable requests — mains on a breadboard, or high voltage with no tier opened. |
 | `BLOCKER` | Design proceeds, but the pre-power-up gate will not open until resolved. |
 | `WARNING` | Surfaced prominently; does not gate. |
 | `NOTE` | Informational, good-practice guidance. |
@@ -264,7 +286,25 @@ something — unverified"), never styled as a blocker, never in the same list.
 | Resistor dissipation over rating | WARNING |
 | Breadboard rail current over ~1–2 A | WARNING |
 | Missing decoupling cap | NOTE |
-| **Any net above 48 V, or a mains-hazard part** | **REFUSE** |
+| **Mains part or net >48 V on a breadboard** | **REFUSE** *(absolute — no tier opens this)* |
+| **Mains part or net >48 V with no tier opened** | **REFUSE** *(offers to open the valve)* |
+
+### Mains rule set — activated by tier, not deactivated
+
+Opening a tier turns *on* rules that don't otherwise exist. These are PCB-level
+geometry rules, so most land with Phase 3 rather than Slice 1:
+
+| Rule | Tier | Severity |
+|---|---|---|
+| Clearance below IPC-2221 for the working voltage | B, C | BLOCKER |
+| Creepage below rating for pollution degree / material group | B, C | BLOCKER |
+| No fuse on the mains input | B, C | BLOCKER |
+| Control side not isolated from mains side | B, C | BLOCKER |
+| Relay/SSR contact rating exceeded by the load | B, C | BLOCKER |
+| Exposed conductive part not earth-bonded | B, C | BLOCKER |
+| Isolation barrier width below standard | C | BLOCKER |
+| Inductive mains load with no snubber | B, C | WARNING |
+| Non-certified supply where a certified module exists | B, C | NOTE |
 
 ### The learning loop
 
