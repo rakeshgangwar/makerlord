@@ -25,11 +25,12 @@ Start at the top. Each document assumes the ones above it.
 | 5 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 6 and 7 |
 | 6 | [superpowers/specs/2026-07-28-makerlord-design.md](superpowers/specs/2026-07-28-makerlord-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
 | 7 | [superpowers/specs/2026-07-29-front-door-design.md](superpowers/specs/2026-07-29-front-door-design.md) | **The design spec** for stages 1-4, the front door | With or before the stage-6 spec |
-| 8 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
-| 9 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 10 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 11 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 12 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 8 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
+| 9 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
+| 10 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 11 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 12 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 13 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
 
 ## The one-paragraph version
 
@@ -50,7 +51,7 @@ stop after Phase 1 and you still have a good product.
 
 | Phase | Covers | State |
 |---|---|---|
-| **1 — Design it and build it safely** | Idea, feasibility, requirements, architecture, prototype | Both specs written; Slices 0–1 planned, front door needs a plan |
+| **1 — Design it and build it safely** | Idea, feasibility, requirements, architecture, prototype | **Fully specced and planned** — 37 TDD tasks across two plans |
 | **2 — Make it actually work** | Simulate, firmware, guided debug | Spec only |
 | **3 — Make it real** | PCB, enclosure, fabricate | Spec only |
 | **4 — Make it a product** | Cost, first article, test, compliance, docs, production | Vision only |
@@ -74,6 +75,6 @@ Phase 1 is genuinely good.
 | 5 | Wide domains — drone/robot power budgeting | Spec only |
 | — | Simulation, PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-Nothing is built yet. Phase 1 is fully specced — the prototype stage has a spec
-and a 25-task plan; the front door has a spec and needs one. The production half
-of the arc is agreed in principle and not yet specified.
+Nothing is built yet. **Phase 1 is fully specced and planned** — two specs and
+two plans, 37 TDD tasks. The production half of the arc is agreed in principle
+and not yet specified.
