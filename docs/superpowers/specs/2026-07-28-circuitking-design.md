@@ -353,7 +353,226 @@ the help is real.
 
 ---
 
-## 8. Build sequence and power-up gate
+## 8. User experience
+
+### 8.1 The premise everything follows from
+
+Every eCAD tool — Flux, KiCad, EasyEDA — assumes a **seated designer with free
+hands and full attention.** That assumption is false for most of this product's
+actual usage.
+
+While building, the student has both hands occupied (wire, tweezers, component),
+eyes on the breadboard rather than the screen, possibly a multimeter probe in
+each hand, and the display at arm's length off to one side. Mouse-precision UI
+is simply wrong in that posture.
+
+The closest solved analogue is not CAD. It is **cooking apps in recipe mode**:
+hands covered in flour, device propped on the counter, large glanceable steps,
+minimal interaction.
+
+### 8.2 Three modes, not one canvas
+
+| Mode | Posture | UI |
+|---|---|---|
+| **Design** | Seated, hands free, thinking | Chat + linked schematic/breadboard canvas. Conventional web app. |
+| **Build** | Standing, hands busy, eyes on board | Full-screen, one step, large type, everything irrelevant dimmed. Chat hidden. |
+| **Bring-up** | Meter in hand, board powered | Measurement entry, MicroPython REPL, diagnostic tree. |
+
+Competing tools have only Mode 1. **Modes 2 and 3 are the entire
+differentiation** — and are therefore where design effort should concentrate,
+which is the opposite of where it naturally wants to go, because Mode 1 is the
+more enjoyable one to build.
+
+### 8.3 Devices: desktop primary, phone companion
+
+Forced by a hard platform constraint: **Web Serial is desktop-only.** Not
+implemented on Android Chrome, absent on iOS. Firmware flashing therefore cannot
+happen on a phone, while the camera and bench-side ergonomics want one.
+
+The phone is a **thin, purpose-built bench instrument, not a mirror** of the
+desktop UI:
+
+```
+PHONE                          DESKTOP
+current step, large type       chat, canvas, schematic
+camera capture                 firmware, flashing, BOM
+measurement entry + Next       everything else
+```
+
+A step display, a number pad, and a camera. Small enough to stay honest, and it
+maps exactly to the three moments the student is away from the keyboard.
+
+- **Pairing:** QR code shown at the design→build transition. PWA, no app install.
+- **The phone is never required.** Desktop-only works, with webcam fallback for
+  photo checks. Gating a build on successful pairing would be a self-inflicted
+  wound.
+- **Sync is state, not UI.** Both clients subscribe to the server-side circuit
+  model. Another dividend of the Section 2 decision.
+
+### 8.4 Ownership boundary: who may edit what
+
+**The student owns the physical layout. The agent owns the intent netlist.**
+
+- Parts may be dragged, wires moved, the board freely rearranged. That mutates
+  the *physical layout*, which the derived-netlist diff already checks. Many
+  layouts validly satisfy one circuit; a rearrangement that still satisfies
+  intent passes silently, and one that breaks intent flags immediately.
+- Changing *what connects to what* is a design decision and goes through
+  conversation, where the agent can explain consequences before they land.
+
+The elegance: a student **rearranging** the board and a student **mis-wiring**
+the board are the same operation to the system — a physical layout change,
+checked against intent. Direct manipulation is therefore safe and cheap to
+allow, which is not usually true of drag-and-drop editors, and it avoids the
+thing that would make the tool insufferable for an experienced maker: having to
+ask permission to nudge a component.
+
+### 8.5 The gate collects data, never consent
+
+**Never ask a yes/no safety question.**
+
+```
+❌  "Did you check continuity across the rails?   [Yes] [No]"
+✅  "Continuity mode, red rail to blue rail. What does it read?  [____]"
+```
+
+The yes/no form is compliance theatre — every student clicks Yes, and worse, it
+*trains* them that the safety layer is a formality to dismiss. It caps a rigorous
+rule engine with a lie detector that detects nothing.
+
+Asking for the value changes three things at once:
+
+1. **Faking requires effort and invention**, and because the DC solver predicts
+   the expected value, an implausible entry is detectable. `0.2 Ω` where open
+   circuit was expected is not a failed checkbox — it is a **caught short**.
+2. **The safety check and the lesson are the same action.** The student learns
+   to use a meter and learns what values to expect. Safety is not a tax on
+   learning; it *is* the learning.
+3. It reads as **preflight, not paperwork.** Pilots do not resent checklists.
+   That framing is the whole difference between a tool students respect and one
+   they route around.
+
+### 8.6 Two gate tiers
+
+A multimeter is **optional**, and its absence weakens the gate *audibly*.
+
+```
+VERIFIED GATE  (meter present)
+  ✓ all BLOCKERs resolved      ✓ rail continuity = open
+  ✓ polarity confirmed         ✓ supply voltage measured
+  ✓ draw within predicted
+
+VISUAL GATE  (no meter) ── confidence: reduced, and stated out loud
+  ✓ all BLOCKERs resolved      ✓ polarity confirmed visually
+  ✓ layout matches expected
+  ✗ cannot detect a short circuit — the most common way boards die
+```
+
+The honest message is also the persuasive one: *"I've checked your design and
+your visible wiring. I can't tell you whether there's a short, which is the most
+likely thing to destroy this board. A cheap multimeter fixes that permanently."*
+This makes a meter the obvious first line of the BOM. An inline USB power meter
+is a cheaper partial substitute for USB-powered builds, showing live current
+draw.
+
+### 8.7 Advisories must never look like blockers
+
+Per Section 5, the two tiers cannot blur. In practice they share no container, no
+colour, and no shape:
+
+```
+┌────────────────────────────────────────┐
+│ ⛔  BLOCKED — LED1 has no current limit │  solid, red, undismissable,
+│     Add a 220 Ω resistor in series      │  gates the step, cites rule ID
+└────────────────────────────────────────┘
+
+  ╭ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ╮
+    💭 Copilot noticed — unverified        dashed, muted, dismissible,
+    Your wires are all red; consider…      never blocks, never red
+  ╰ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ╯
+```
+
+A student should be able to tell them apart from across the room, without
+reading.
+
+### 8.8 Onboarding: ask what they own
+
+The opening question is **not** "what do you want to build?" — intimidating for a
+beginner facing a blank canvas. It is **"what's in your parts bin?"** (or scan
+the kit box).
+
+- Easy to answer, requires no ambition or vocabulary.
+- Everything the agent proposes is then buildable **tonight, with what's on the
+  bench** — enormously more motivating than a design blocked on a week's
+  shipping.
+- It bootstraps the substitution feature, already in the core slice.
+- **It infers skill level without asking.** "An Arduino starter kit" and "a hot
+  air station, bench PSU, and a scope" are not the same person, and neither had
+  to self-classify.
+
+Self-reported skill is unreliable in both directions and being asked to rate
+yourself before building anything feels like a test. Instead: adapt **explanation
+depth**, keep the UI constant, and offer inline *"more detail"* / *"skip the
+explanation"* controls — because expertise is not one-dimensional, and a student
+may be strong on code and shaky on circuits within a single project.
+
+### 8.9 Pedagogy: an explicit per-project mode
+
+**The central tension: the better the agent is at building the circuit for them,
+the less the student learns.** An agent that silently emits a correct,
+safety-checked design and a hole-by-hole wiring list produces a student who can
+assemble but not design, and who is helpless away from the tool.
+
+Resolution: an **explicit mode toggle**, chosen per project — named by outcome
+rather than by effort, because "build it for me" versus "teach me" reads as
+*fast* versus *slow*, and slow always loses.
+
+```
+"Working circuit tonight"      vs      "I want to understand this"
+```
+
+Four things stop the toggle from collapsing into the fast path:
+
+1. **Safety blockers explain themselves in both modes.** Every blocker carries
+   reasoning and arithmetic, delivered at a moment of genuine stakes — the
+   student's own board. The learning floor is never zero. The rule engine is,
+   almost accidentally, a curriculum.
+2. **Per project, not per account.** A global setting chosen during onboarding,
+   before the student knows what either option feels like, is the version that
+   never gets revisited.
+3. **Persistent visible toggle**, not buried in settings.
+4. **Offer the switch at maximum motivation** — not upfront, but when the
+   circuit is dead and the student wants to know why. *"Want me to walk you
+   through finding this yourself?"*
+
+### 8.10 "It doesn't work" is a first-class entry point
+
+The most common student state, and buried in help by most tools. Here it is a
+permanent, prominent affordance — and it opens a **targeted binary search**, not
+a FAQ, because the system knows the intended netlist, the predicted voltage at
+every node, which build steps were confirmed, and what firmware is running:
+
+> *"Measure at the regulator output — expect 3.3 V."* → *"Good. Now the sensor's
+> VCC pin."*
+
+Two or three measurements localise most faults. This diagnostic is the payoff for
+everything else in the architecture, and is likely the feature students describe
+to their friends.
+
+### 8.11 Refusals lead with capability
+
+Degradation (Section 7) never opens with the limitation:
+
+> ❌ *"I can't design a drone."*
+>
+> ✅ *"Here's your power budget, battery sizing, and ESC selection — and here's
+> why I'm not drawing a breadboard for a 60 A system."*
+
+Same information; the student leaves with work in hand rather than a door closed.
+
+---
+
+## 9. Build sequence and power-up gate
 
 Steps are **derived from the layout**, ordered by a rule that is itself a safety
 principle:
@@ -408,7 +627,7 @@ Leading with CV is the classic way to spend six months and ship nothing.
 
 ---
 
-## 9. Firmware
+## 10. Firmware
 
 ### The contract
 
@@ -520,7 +739,7 @@ now.**
 
 ---
 
-## 10. Sourcing
+## 11. Sourcing
 
 A BOM is another projection of the netlist.
 
@@ -550,7 +769,7 @@ publish stable product IDs).
 
 ---
 
-## 11. Testing
+## 12. Testing
 
 Part of the system is nondeterministic; part must never be wrong. Different
 treatment.
@@ -590,7 +809,7 @@ build steps → firmware compiles in CI. The compile gate doubles as a test.
 
 ---
 
-## 12. Slices
+## 13. Slices
 
 ```
 Slice 0  Foundation      fzp ETL, part model, curated ~150-part subset,
@@ -599,6 +818,11 @@ Slice 1  Core       ★    netlist model, union-find derivation, linked
                          schematic + breadboard render, build sequence,
                          safety engine, power-up gate, agent loop,
                          substitution checks
+                         UX: design mode + build mode (desktop), measurement
+                         gate, blocker/advisory separation, parts-bin
+                         onboarding, pedagogy toggle, "it doesn't work" entry
+Slice 1b Phone companion QR pairing, thin bench UI (step / measurement /
+                         camera), model state sync
 Slice 2  Sourcing        BOM projection, DigiKey/Mouser, vendor SKU table
 Slice 3  Firmware        pin-map codegen, arduino-cli compile sandbox,
                          hw/fw cross-check rules, WebSerial flashing,
@@ -610,23 +834,29 @@ Slice 5  Wide domains    layers 1–3 for drone/robot-class projects
 **Slice 1 must be genuinely good** — everything after it is a projection of the
 model it establishes.
 
+**Slice 1b is separable on purpose.** Because the phone is never required
+(§8.3), desktop-only build mode is a complete experience with a webcam fallback.
+Ship the core, then improve bench ergonomics. Note that Slice 4 (photo
+verification) benefits enormously from 1b existing first — a phone camera aimed
+at a breadboard is a far better input than a laptop webcam.
+
 Slices 2 and 3 are swappable. Sourcing is sequenced first, but firmware is the
 more compelling demo and exercises the cross-check rules, arguably the product's
 most novel feature. Decide at the time.
 
 ### Scope of this document vs. scope of the next implementation plan
 
-This document is a **full-vision spec** covering all six slices, written that way
+This document is a **full-vision spec** covering all slices, written that way
 deliberately. It is *not* a single implementation plan.
 
-**Only Slices 0 and 1 should go into the first implementation plan.** Slices 2–5
-each warrant their own spec → plan → implementation cycle once the core model
-exists and has been validated against real student use. Treating this whole
+**Only Slices 0 and 1 should go into the first implementation plan.** Slices 1b
+and 2–5 each warrant their own spec → plan → implementation cycle once the core
+model exists and has been validated against real student use. Treating this whole
 document as one buildable unit would be a mistake.
 
 ---
 
-## 13. Recurring house pattern
+## 14. Recurring house pattern
 
 The same shape appears four times. Worth recognizing as a deliberate principle:
 
