@@ -729,6 +729,89 @@ and circuit drifting.
 
 ---
 
+## D36 — TypeScript core, Python sidecar. Not Rust.
+*2026-07-29*
+
+The engine, CLI, MCP server, web UI and phone companion are **TypeScript**.
+A **Python sidecar** hosts the CAD/eCAD libraries, driven as a subprocess with
+JSON — the same boundary we already use for every native tool (D23).
+
+```
+TypeScript      engine · rules · CLI · MCP server · web UI · phone companion
+     │ subprocess + JSON
+Python sidecar  CadQuery · SKiDL · kicad-sch-api
+     │ subprocess
+Native CLIs     kicad-cli · ngspice · arduino-cli · freerouting
+```
+
+**Rust was considered — `block/buzz` is a well-built Rust agent platform — and
+rejected:**
+
+1. **Our compute is trivial.** Union-find over 420 holes; a few dozen rules over
+   a graph with tens of nodes. There is no performance problem for Rust to
+   solve; our latency is LLM calls and subprocess time.
+2. **The ecosystem pulls the other way.** CadQuery (D24), SKiDL and
+   `kicad-sch-api` (D26/D27) are Python-only. The UI is TypeScript regardless.
+   A Rust core would sit between them, needing a boundary to both.
+3. **There is no first-party Anthropic SDK for Rust.** Buzz pays for this
+   directly: `buzz-agent/src/llm.rs` is **3,846 lines** and `config.rs` 2,709 —
+   a hand-written multi-provider LLM client. That is ~6,500 lines of pure
+   language tax before a single safety rule gets written.
+
+**Where Rust would genuinely have won:** enums and ownership would make D3's
+guarantee (`Finding` has no suppression field) airtight rather than
+conventional. TypeScript `strict` + `readonly` + a type with no such field gets
+most of the way, and it isn't worth a language boundary through the middle of
+the system.
+
+**The real alternative was Python, not Rust** — it wins the toolchain half
+outright and has a first-party SDK. It loses the UI half, which decides it.
+
+---
+
+## D37 — Native tools run server-side by default
+*2026-07-29*
+
+**Headless → our containers. Interactive → the maker's machine.**
+
+| Tool | Runs where | Maker installs |
+|---|---|---|
+| ngspice, arduino-cli + cores, `kicad-cli`, CadQuery, Freerouting | our container | **no** |
+| Flashing (WebSerial) | their browser | **no** |
+| KiCad GUI (stage ⑨) | their machine | yes |
+| Slicer (stage ⑩) | their machine | yes |
+
+**Stages ①–⑧ require nothing installed.** The whole prototype loop — idea
+through firmware and debugging — runs in a browser. A teenager on a Chromebook
+can do all of it. That falls out of the model-as-source-of-truth decision: every
+artefact at those stages is something we compute.
+
+**The two local installs are the maker's, not ours.** They install KiCad because
+they are *taking over the layout* (D35), and a slicer because they are printing
+the STL. Both coincide with cloning locally — one transition, not three.
+
+**Power users who clone can install the toolchain and run it themselves**;
+`scripts/verify-env.sh` already checks for it, and the app degrades honestly
+when a tool is missing.
+
+**Licensing, which is a real constraint and not just a size one:** `kicad-cli`,
+ngspice and Freerouting are **GPL**. Running them server-side triggers no
+distribution obligation. **Bundling them into a shipped desktop app does** — so
+"just ship it all in Tauri" is not the free option it appears to be.
+`arduino-cli`'s exact licence is still ❌ unverified — confirm before any
+bundling decision.
+
+Size would sink bundling regardless: KiCad ~2 GB plus an ESP32 toolchain
+~2–3 GB is not a download.
+
+**The cost this creates:** we pay for the compute. Firmware compiles and
+CadQuery runs are CPU-bound, and a maker iterating firmware can trigger dozens
+of compiles an hour. This is what eventually forces a metering model — the same
+problem Flux answers with ACUs. Server-side compiles also add a round trip to
+the compile-flash-debug loop.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the
