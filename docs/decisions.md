@@ -498,6 +498,75 @@ days. And for a maker with a 3D printer it closes the loop with no fab at all.
 
 ---
 
+## D29 — The product is a whole-journey assistant, not a circuit tool
+*2026-07-29* · **Reframes the product**
+
+CircuitKing is a **complete assistant for the maker's journey from idea to real
+product** — seventeen stages, mapped in [roadmap.md](roadmap.md). Not an AI
+circuit coach that also exports files.
+
+**What changes architecturally:** the circuit model becomes a **project model**
+that accumulates facets — intent, requirements, architecture, circuit, firmware,
+board, mechanical, manufacturing, validation, and **history**. Same principle as
+D2; wider scope.
+
+**Why `history` is listed as a facet:** a complete assistant remembers what was
+tried, what failed, and why a part was chosen. That memory is what makes it a
+companion rather than seventeen disconnected tools, and it can't be
+retro-fitted — it has to be recorded as the project moves.
+
+**The bet, stated plainly:** *continuity beats per-stage excellence.* Every
+stage already has a good point tool. Nobody has a companion that loses nothing
+at a handoff. This bet can lose — a broad tool that's mediocre everywhere loses
+to focused ones — so it requires every stage be good enough and one stage be
+genuinely great. Hence the wedge stays.
+
+**Consequence for scheduling:** four phases, each independently shippable.
+**Do not start Phase 2 until Phase 1 is genuinely good.** Seventeen stages is an
+invitation to build all of them badly.
+
+---
+
+## D30 — Requirements must be numeric before anything downstream
+*2026-07-29*
+
+Stage ③ converts vague wants into measurable requirements:
+
+> *"should last a long time on battery"* → *"≥6 months on 2×AA, one reading per
+> hour, 0–40 °C"*
+
+**Why it's load-bearing rather than nice-to-have:** it's what makes every later
+verification *possible*. You cannot check a power budget against "a long time,"
+and you cannot generate a test plan from an adjective. Numeric requirements are
+the input to the architecture check, the power budget, and the stage-⑭ test
+plan.
+
+**Consequence:** the requirements stage is not a formality to rush past. It is
+where the project becomes computable.
+
+---
+
+## D31 — Compliance is prepared for, never claimed
+*2026-07-29*
+
+The assistant maintains a technical file, applies design rules that help pass
+(filtering, shielding, **certified** power modules rather than designed mains
+circuitry), runs a pre-compliance checklist, and states plainly what needs a
+test house and roughly what it costs.
+
+**It never certifies, and never implies a design is compliant.**
+
+**Why:** same logic as the mains boundary (D5). Being confidently wrong about
+CE or FCC is worse than being no help, and the failure surfaces only after
+someone has sold units.
+
+**Delivery:** lead with what we *can* do, per the refusal pattern in spec §8.11.
+
+**Same treatment for:** controlled-impedance and RF layout, multi-layer HDI,
+safety-critical applications, and DFM beyond a few hundred units.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

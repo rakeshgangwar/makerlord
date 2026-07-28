@@ -1,9 +1,10 @@
 # CircuitKing — Documentation
 
-An AI coach for building real circuits safely. Students hold physical
-breadboards; the agent designs the circuit, draws it as both schematic and
-breadboard, sequences the build step by step, and gates power-up behind
-deterministic safety checks.
+**A complete assistant for the maker's journey, from an idea to a real
+product.** It researches feasibility, turns vague wants into testable
+requirements, designs the circuit, simulates it, walks the maker through a
+safety-gated breadboard build, writes the firmware, turns the result into a PCB
+and an enclosure, and prepares it for manufacture.
 
 ## Reading order
 
@@ -12,13 +13,14 @@ Start at the top. Each document assumes the ones above it.
 | # | Document | What it is | When you need it |
 |---|---|---|---|
 | 1 | [vision.md](vision.md) | What we're building and why it's different | First. Everything else serves this. |
-| 2 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback | Keep open while reading 3 and 4 |
-| 3 | [superpowers/specs/2026-07-28-circuitking-design.md](superpowers/specs/2026-07-28-circuitking-design.md) | **The design spec.** Complete architecture, all 14 sections | Before writing any code |
-| 4 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
-| 5 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 6 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 7 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 8 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 2 | [roadmap.md](roadmap.md) | **The 17-stage journey**, sequenced into four phases | Right after the vision |
+| 3 | [glossary.md](glossary.md) | Domain terms — netlist, bus, `.fzp`, flyback, DFM | Keep open while reading 4 and 5 |
+| 4 | [superpowers/specs/2026-07-28-circuitking-design.md](superpowers/specs/2026-07-28-circuitking-design.md) | **The design spec** for the prototype stage, all 14 sections | Before writing any code |
+| 5 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan, 25 TDD tasks | When you start building |
+| 6 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 7 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 8 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 9 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
 
 ## The one-paragraph version
 
@@ -32,19 +34,22 @@ correctness computable rather than decorative, because you cannot run a
 design-rule check on an image. At every stage the language model proposes and
 something deterministic disposes.
 
-## The arc, and where each stage stands
+## The four phases
 
-| # | Stage | Deterministic arbiter | State |
-|---|---|---|---|
-| 1 | **Idea** — intent to circuit | our rule engine | Planned (Slices 0–1) |
-| 2 | **Test digitally** — simulate | ngspice | Not yet specced |
-| 3 | **Prototype** — breadboard, gated | the student's multimeter | Planned (Slices 0–1) ★ |
-| 4 | **Product** — schematic, PCB, enclosure | `kicad-cli erc/drc` | Not yet specced |
-| 5 | **Production** — Gerbers, BOM, STEP | DFM + fab validation | Not yet specced |
+Full detail in [roadmap.md](roadmap.md). Each phase is independently valuable —
+stop after Phase 1 and you still have a good product.
 
-★ **Stage 3 is the wedge.** Stages 4–5 are largely solved by mature open-source
-tools that need driving; safe physical prototyping with real verification is the
-part nobody has built. Build it first.
+| Phase | Covers | State |
+|---|---|---|
+| **1 — Design it and build it safely** | Idea, feasibility, requirements, architecture, prototype | Slices 0–1 planned; stages 1–4 not yet specced |
+| **2 — Make it actually work** | Simulate, firmware, guided debug | Spec only |
+| **3 — Make it real** | PCB, enclosure, fabricate | Spec only |
+| **4 — Make it a product** | Cost, first article, test, compliance, docs, production | Vision only |
+
+★ **The prototype stage is the wedge.** Most other stages are largely solved by
+mature tools that need driving; safe physical prototyping with real verification
+is the part nobody has built. Build it first — and don't start Phase 2 until
+Phase 1 is genuinely good.
 
 ## Slice status
 

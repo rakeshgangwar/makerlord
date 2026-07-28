@@ -1,28 +1,39 @@
 # Vision
 
-## The arc
+## What this is
 
-A maker has an idea. Today, getting from that idea to something manufacturable
-means crossing four or five tool boundaries, each with its own learning curve,
-each losing information at the handoff.
+**A complete assistant for the maker's journey, from an idea to a real
+product.**
 
-CircuitKing is one continuous path:
+Not a circuit tool. Not an eCAD front-end. A companion that stays with one
+project from the first vague sentence through to something you could ship —
+carrying every decision forward, and verifying at every step.
 
 ```
 1. IDEA            "I want a soil sensor that tells Home Assistant when to water"
-        ↓
+        ↓          feasibility · prior art · testable requirements · architecture
 2. TEST DIGITALLY  simulate it before a single component is bought
         ↓
 3. PROTOTYPE       build it on a breadboard, safety-gated at every step
-        ↓
+        ↓          firmware · guided debugging
 4. PRODUCT         real schematic, PCB layout, enclosure, 3D model
         ↓
-5. PRODUCTION      Gerbers, BOM, pick-and-place, STEP — send it to a fab
+5. PRODUCTION      Gerbers, BOM, cost model, test plan, documentation
 ```
 
-**For makers, builders and hobbyists who might also want to take something to
-production.** Not two products with a handoff between them — one path, where
-each stage is a projection of the same underlying design.
+That's the summary. The full journey is **seventeen stages** with the loops and
+backtracking that real projects have — mapped, sequenced and costed in
+[roadmap.md](roadmap.md).
+
+**For makers, builders and hobbyists** — including the ones who might want to
+take something all the way to manufacturing. Not several products with handoffs
+between them. One path, where every stage is a projection of the same underlying
+model.
+
+> **The differentiator is continuity.** Every stage here has a good point tool
+> already. What nobody has is a companion that remembers the whole journey —
+> what was tried, what failed, why a part was chosen — and loses nothing at a
+> handoff.
 
 ## The problem
 
