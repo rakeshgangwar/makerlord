@@ -4,10 +4,13 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/makerlord/packages/ui
+# Repo root so the corpus/profile data paths resolve for server-side renders.
+WorkingDirectory=/opt/makerlord
+EnvironmentFile=/opt/makerlord/.env
 Environment=PORT=3000
 Environment=ORIGIN=https://makerlord.dev
-ExecStart=/opt/node-v22/bin/node build/index.js
+Environment=MAKERLORD_API_URL=http://127.0.0.1:8787
+ExecStart=/opt/node-v22/bin/node packages/ui/build/index.js
 Restart=on-failure
 RestartSec=3
 

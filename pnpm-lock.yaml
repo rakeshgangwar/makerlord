@@ -122,6 +122,9 @@ importers:
       '@makerlord/agent':
         specifier: workspace:*
         version: link:../agent
+      '@makerlord/circuit':
+        specifier: workspace:*
+        version: link:../circuit
       '@makerlord/protocol':
         specifier: workspace:*
         version: link:../protocol

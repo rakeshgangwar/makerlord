@@ -169,6 +169,50 @@ describe('the hosted surface', () => {
   });
 });
 
+describe('the UI-facing read + tool surface', () => {
+  it('GET /api/projects/:id returns the file and its hash', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'a lamp' });
+    const res = await fetch(`${base}/api/projects/${p.projectId as string}`);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { file: { project: { intent: string } }; hash: string };
+    expect(body.file.project.intent).toBe('a lamp');
+    expect(body.hash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('direct tool invocation runs the same registry, gates intact', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'x' });
+    const pid = p.projectId as string;
+    const add = await post(`/api/projects/${pid}/tool`, {
+      name: 'block_add', input: { id: 'psu', name: 'psu' },
+    });
+    expect(add.status).toBe(200);
+    expect(add.data.ok).toBe(true);
+    // The gate holds over HTTP exactly as in-process: a refusal, not an error.
+    const expand = await post(`/api/projects/${pid}/tool`, { name: 'expand', input: {} });
+    expect(expand.status).toBe(200);
+    expect(expand.data).toMatchObject({ ok: false, refused: 'BLOCK_UNDECIDED' });
+  });
+
+  it('steps endpoint reports the build state', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'x' });
+    const pid = p.projectId as string;
+    await post(`/api/projects/${pid}/tool`, {
+      name: 'part_add', input: { ref: 'R1', defId: 'ResistorModuleID' },
+    });
+    const res = await fetch(`${base}/api/projects/${pid}/steps`);
+    const body = (await res.json()) as {
+      steps: { kind: string }[]; gateOpen: boolean;
+    };
+    expect(body.gateOpen).toBe(false);
+    expect(body.steps.map((s) => s.kind)).toContain('GATE');
+  });
+
+  it('404s an unknown project', async () => {
+    const res = await fetch(`${base}/api/projects/ffffffffffffffff`);
+    expect(res.status).toBe(404);
+  });
+});
+
 describe('access token', () => {
   it('guards /api/* but not /healthz; header or query token both work', async () => {
     const guarded = buildHttpServer(sessions, 'sekrit');

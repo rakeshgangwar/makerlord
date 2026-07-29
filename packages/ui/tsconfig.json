@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
-  "include": ["src/**/*.ts"],
+  "include": ["src/lib/**/*.ts", "src/index.ts"],
   "references": [
     { "path": "../circuit" },
     { "path": "../parts" },

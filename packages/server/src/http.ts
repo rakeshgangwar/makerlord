@@ -1,5 +1,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { ALL_TOOLS } from '@makerlord/tools';
+import { dirname } from 'node:path';
+import { buildSequence } from '@makerlord/circuit';
+import {
+  ALL_TOOLS, circuitRuleContext, loadSession, runTool,
+} from '@makerlord/tools';
 import type { HostedSessions } from './sessions.js';
 
 function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -88,6 +92,62 @@ async function route(
       json(res, 201, sessions.createSession(projectId));
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  // Read the project file — the UI renders projections of this (D2).
+  const projectMatch = /^\/api\/projects\/([0-9a-f]+)$/.exec(path);
+  if (req.method === 'GET' && projectMatch) {
+    try {
+      const session = loadSession(sessions.projectPath(projectMatch[1]!));
+      json(res, 200, { file: session.file, hash: session.hash });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  // Build steps + gate state for the Bench posture.
+  const stepsMatch = /^\/api\/projects\/([0-9a-f]+)\/steps$/.exec(path);
+  if (req.method === 'GET' && stepsMatch) {
+    try {
+      const session = loadSession(sessions.projectPath(stepsMatch[1]!));
+      const steps = session.file.project.circuit
+        ? buildSequence(circuitRuleContext(session))
+        : [];
+      json(res, 200, {
+        steps,
+        currentStep: session.file.build.currentStep,
+        gateOpen: session.file.build.gateOpen,
+        measurements: session.file.build.measurements,
+      });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  // Direct tool invocation — the UI is a client of the tool surface (UI
+  // spec §7: the strip is populated by the UI's own check_* calls). Same
+  // registry, same gates; a refusal here is a normal 200 ToolResult.
+  const toolMatch = /^\/api\/projects\/([0-9a-f]+)\/tool$/.exec(path);
+  if (req.method === 'POST' && toolMatch) {
+    const { name, input } = await readBody(req);
+    if (typeof name !== 'string') {
+      json(res, 400, { error: 'name is required' });
+      return;
+    }
+    try {
+      const projectPath = sessions.projectPath(toolMatch[1]!);
+      const session = loadSession(projectPath);
+      const result = await runTool(name, input ?? {}, {
+        session,
+        cwd: dirname(projectPath),
+      });
+      json(res, 200, result);
+    } catch (e) {
+      json(res, 400, { error: e instanceof Error ? e.message : String(e) });
     }
     return;
   }

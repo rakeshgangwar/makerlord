@@ -123,6 +123,10 @@ export class HostedSessions {
     return this.get(sessionId).projectDir;
   }
 
+  projectPath(projectId: string): string {
+    return join(resolve(this.opts.projectsRoot), projectId, 'project.json');
+  }
+
   count(): number {
     return this.sessions.size;
   }
