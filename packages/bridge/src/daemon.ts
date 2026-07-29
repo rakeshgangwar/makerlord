@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { SessionEvent } from '@makerlord/protocol';
 import { AcpAgent } from './acp.js';
+import { digestTranscript } from './digest.js';
 import { PairingStore } from './pairing.js';
 
 export interface DaemonOptions {
@@ -61,6 +62,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
     let acpSessionId: string | undefined;
     let projectId: string | undefined;
     let turnActive = false;
+    let contextPreamble = '';
 
     /** Flush a completed turn into the hosted transcript so a reload
      *  replays one continuous history. Best-effort: a flush failure must
@@ -149,6 +151,20 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
             },
           }]);
           projectId = frame.projectId;
+          // A fresh local agent knows nothing of the conversation so far —
+          // hand it the hosted transcript as a first-prompt preamble.
+          try {
+            const res = await fetch(
+              `${opts.api}/api/projects/${projectId}/transcript`,
+              { headers: { authorization: `Bearer ${opts.token}` } },
+            );
+            if (res.ok) {
+              const { records } = (await res.json()) as { records: unknown[] };
+              contextPreamble = digestTranscript(records);
+            }
+          } catch {
+            // no history is a degraded session, not a failed one
+          }
           send(ws, { t: 'session.ready' });
           return;
         }
@@ -163,9 +179,15 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
             return;
           }
           turnActive = true;
+          // The preamble rides the first prompt only; the flush records the
+          // maker's actual words, never the injected history.
+          const wired = contextPreamble
+            ? `${contextPreamble}\n${frame.text}`
+            : frame.text;
+          contextPreamble = '';
           const records: unknown[] = [{ kind: 'maker', text: frame.text }];
           try {
-            await agent.prompt(acpSessionId, frame.text, (event: SessionEvent) => {
+            await agent.prompt(acpSessionId, wired, (event: SessionEvent) => {
               records.push({ kind: 'event', event });
               send(ws, { t: 'event', event });
             });

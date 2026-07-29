@@ -16,6 +16,15 @@ let flushed: { url: string; auth: string; body: { records: { kind: string }[] } 
 beforeEach(async () => {
   flushed = [];
   engine = createServer((req, res) => {
+    if (req.method === 'GET') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ records: [
+        { kind: 'maker', text: 'earlier hosted question' },
+        { kind: 'event', event: { t: 'message.delta', text: 'earlier hosted answer' } },
+        { kind: 'event', event: { t: 'turn.end', reason: 'end_turn' } },
+      ] }));
+      return;
+    }
     let data = '';
     req.on('data', (c) => (data += c));
     req.on('end', () => {
@@ -129,7 +138,11 @@ describe('the paired path: local brain, hosted authority', () => {
       if (frame.event.t === 'turn.end' || frame.event.t === 'session.error') break;
     }
     const text = events.filter((e) => e.t === 'message.delta').map((e) => e.text).join('');
-    expect(text).toContain('echo: hello local brain');
+    // The fake agent echoes its prompt: the digest of the HOSTED history
+    // rode in front of the maker's first message of this bridge session.
+    expect(text).toContain('earlier hosted question');
+    expect(text).toContain('echo:');
+    expect(text).toContain('hello local brain');
     expect(events.at(-1)!.t).toBe('turn.end');
 
     // The turn was flushed into the HOSTED transcript: one continuous
@@ -140,6 +153,8 @@ describe('the paired path: local brain, hosted authority', () => {
     expect(flush!.auth).toBe('Bearer test-token');
     const kinds = flush!.body.records.map((r) => r.kind);
     expect(kinds[0]).toBe('maker');
+    // The flush records the maker's words, never the injected history.
+    expect((flush!.body.records[0] as { text?: string }).text).toBe('hello local brain');
     expect(kinds.filter((k) => k === 'event').length).toBeGreaterThanOrEqual(2);
     ws.close();
   });

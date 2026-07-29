@@ -83,6 +83,7 @@ while every tool call executes on the hosted engine — project state, gates,
 artifacts and git commits stay server-side. Restarting the bridge burns the
 pairing; the app re-asks for a fresh code automatically. The bridge flushes each turn into the hosted transcript, so reloads
 replay one continuous history whichever brain drove, and the app quietly
-re-attaches to a running bridge on load. Known gaps: mid-turn steering is
-hosted-only, and a bridge session starts without the prior conversation in
-its context (the project state and transcript are a tool call away).
+re-attaches to a running bridge on load. A fresh bridge session is fed a
+digest of that transcript on its first prompt (per-turn prose capped so one
+long monologue can't evict the rest; oldest turns dropped beyond ~24k chars,
+and the digest says how many). Known gap: mid-turn steering is hosted-only.
