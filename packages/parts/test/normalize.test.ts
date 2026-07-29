@@ -16,7 +16,8 @@ function raw(over: Partial<RawFzp> = {}): RawFzp {
 
 describe('classifyPinRole', () => {
   it('recognises ground by several spellings', () => {
-    for (const n of ['GND', 'gnd', 'Ground', 'VSS', 'earth']) {
+    // "G" is the WeMos D1 mini's ground label — real corpus data.
+    for (const n of ['GND', 'gnd', 'Ground', 'VSS', 'earth', 'G']) {
       expect(classifyPinRole(n)).toBe('gnd');
     }
   });

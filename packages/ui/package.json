@@ -9,8 +9,10 @@
     "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
     "@makerlord/protocol": "workspace:*",
+    "@makerlord/sim": "workspace:*",
     "@makerlord/tools": "workspace:*",
-    "@makerlord/sim": "workspace:*"
+    "dompurify": "^3.4.12",
+    "marked": "^18.0.7"
   },
   "scripts": {
     "dev": "vite dev",

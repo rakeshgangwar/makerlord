@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
 import { AgentSession } from '@makerlord/agent';
@@ -81,15 +81,38 @@ export class HostedSessions {
     return s;
   }
 
+  private transcriptPath(projectDir: string): string {
+    return join(projectDir, 'transcript.jsonl');
+  }
+
+  private appendTranscript(projectDir: string, record: unknown): void {
+    appendFileSync(this.transcriptPath(projectDir), `${JSON.stringify(record)}\n`);
+  }
+
+  /** The conversation survives reloads and redeploys: it lives with the
+   *  project, not with the in-memory session. */
+  readTranscript(projectId: string): unknown[] {
+    const path = this.transcriptPath(
+      join(resolve(this.opts.projectsRoot), projectId),
+    );
+    if (!existsSync(path)) return [];
+    return readFileSync(path, 'utf8')
+      .split('\n')
+      .filter((l) => l.length > 0)
+      .map((l) => JSON.parse(l) as unknown);
+  }
+
   /** One prompt at a time per session; events flow to the log + listeners. */
   async prompt(sessionId: string, text: string): Promise<void> {
     const s = this.get(sessionId);
     if (s.turnActive) throw new Error('a turn is already active on this session');
     s.turnActive = true;
+    this.appendTranscript(s.projectDir, { kind: 'maker', text });
     try {
       await s.agent.send(text, (event) => {
         const numbered: NumberedEvent = { id: s.events.length + 1, event };
         s.events.push(numbered);
+        this.appendTranscript(s.projectDir, { kind: 'event', event });
         for (const l of s.listeners) l(numbered);
       });
     } finally {

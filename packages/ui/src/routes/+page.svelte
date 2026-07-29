@@ -1,8 +1,16 @@
 <script>
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { marked } from 'marked';
+  import DOMPurify from 'dompurify';
   import { postureFor, stagePhase } from '$lib/postures.js';
   import { presentSeverity } from '$lib/severity.js';
+
+  /** Agent prose is model output: render markdown, sanitised, always. */
+  function md(text) {
+    if (!browser) return text;
+    return DOMPurify.sanitize(marked.parse(text, { async: false }));
+  }
 
   // ── shell state ─────────────────────────────────────────────────────
   let stage = $state(1);
@@ -52,7 +60,7 @@
   }
 
   /** The one SessionEvent consumer — findings only ever from engine data. */
-  function consume(ev) {
+  function consume(ev, replay = false) {
     if (ev.t === 'message.delta') {
       streamingText += ev.text;
     } else if (ev.t === 'tool.start') {
@@ -69,10 +77,25 @@
       if (streamingText) messages = [...messages, { role: 'agent', text: streamingText }];
       streamingText = '';
       turnActive = false;
-      refreshProjections();
+      if (!replay) refreshProjections();
     } else if (ev.t === 'session.error') {
-      lastError = ev.message;
+      if (!replay) lastError = ev.message;
       turnActive = false;
+    }
+  }
+
+  /** Rebuild the conversation from the persisted transcript. */
+  async function replayTranscript() {
+    if (!projectId) return;
+    const r = await api(`projects/${projectId}/transcript`);
+    if (r.status !== 200) return;
+    for (const record of r.data.records ?? []) {
+      if (record.kind === 'maker') {
+        messages = [...messages, { role: 'maker', text: record.text }];
+        toolActivity = [];
+      } else if (record.kind === 'event') {
+        consume(record.event, true);
+      }
     }
   }
 
@@ -146,6 +169,7 @@
     if (projectId) {
       const r = await api(`projects/${projectId}/steps`);
       if (r.status === 200) build = r.data;
+      await refreshProjectFile();
     }
   }
 
@@ -182,10 +206,43 @@
     await refreshProjections();
   }
 
-  onMount(() => {
+  onMount(async () => {
     if (sessionId) openEvents();
+    await replayTranscript();
     if (projectId) refreshProjections();
   });
+
+  // ── the right panel: what's on the bench, and the parts library ─────
+  let panelTab = $state('bench');
+  /** @type {any} */
+  let projectFile = $state(null);
+  let libraryQuery = $state('');
+  /** @type {{id: string, title: string, family: string}[]} */
+  let libraryHits = $state([]);
+  /** @type {any} */
+  let libraryPart = $state(null);
+
+  async function refreshProjectFile() {
+    if (!projectId) return;
+    const r = await api(`projects/${projectId}`);
+    if (r.status === 200) projectFile = r.data.file;
+  }
+
+  async function searchLibrary() {
+    if (!projectId || !libraryQuery.trim()) return;
+    const r = await api(`projects/${projectId}/tool`, {
+      name: 'parts_search', input: { query: libraryQuery.trim() },
+    });
+    libraryHits = r.data.ok ? r.data.data.hits : [];
+    libraryPart = null;
+  }
+
+  async function openPart(id) {
+    const r = await api(`projects/${projectId}/tool`, {
+      name: 'parts_get', input: { id },
+    });
+    libraryPart = r.data.ok ? r.data.data : null;
+  }
 
   const blockerCount = $derived(
     findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
@@ -233,10 +290,13 @@
       {:else}
         <div class="conversation">
           {#each messages as m}
-            <div class="msg {m.role}"><span class="who">{m.role}</span>{m.text}</div>
+            <div class="msg {m.role}">
+              <span class="who">{m.role}</span>
+              {#if m.role === 'agent'}<div class="md">{@html md(m.text)}</div>{:else}{m.text}{/if}
+            </div>
           {/each}
           {#if streamingText}
-            <div class="msg agent streaming"><span class="who">agent</span>{streamingText}<span class="cursor"></span></div>
+            <div class="msg agent streaming"><span class="who">agent</span><div class="md">{@html md(streamingText)}</div><span class="cursor"></span></div>
           {/if}
           {#if toolActivity.length > 0}
             <div class="tools">
@@ -316,10 +376,84 @@
   </section>
 
   <aside class="artifacts" aria-label="Artifacts">
-    <h2>On the bench</h2>
-    <ul>
-      <li><span class="mono">project.json</span>{projectId ? ` · ${projectId.slice(0, 6)}` : ''}</li>
-    </ul>
+    <div class="panel-tabs" role="tablist">
+      <button role="tab" aria-selected={panelTab === 'bench'} class:on={panelTab === 'bench'}
+        onclick={() => (panelTab = 'bench')}>On the bench</button>
+      <button role="tab" aria-selected={panelTab === 'library'} class:on={panelTab === 'library'}
+        onclick={() => { panelTab = 'library'; }}>Library</button>
+    </div>
+
+    {#if panelTab === 'bench'}
+      <p class="mono panel-id">project.json{projectId ? ` · ${projectId.slice(0, 6)}` : ''}</p>
+      {#if projectFile}
+        {@const p = projectFile.project}
+        {#if p.requirements.length > 0}
+          <h3>Requirements</h3>
+          <ul class="panel-list">
+            {#each p.requirements as r}
+              <li>
+                <span class="mono">{r.metric}</span> {r.comparator} {r.value} {r.unit}
+                {#if r.provenance === 'assumed'}<span class="badge-assumed">assumed</span>{/if}
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        {#if p.architecture.blocks.length > 0}
+          <h3>Blocks</h3>
+          <ul class="panel-list">
+            {#each p.architecture.blocks as b}
+              <li><strong>{b.name}</strong> — <span class="mono">{b.sourcing.type === 'buy' ? b.sourcing.partId : b.sourcing.type}</span></li>
+            {/each}
+          </ul>
+        {/if}
+        {#if p.inventory.length > 0}
+          <h3>Inventory</h3>
+          <ul class="panel-list">
+            {#each p.inventory as item}<li>{item.freeText ?? item.partId}{item.quantity ? ` ×${item.quantity}` : ''}</li>{/each}
+          </ul>
+        {/if}
+        {#if p.requirements.length === 0 && p.architecture.blocks.length === 0 && p.inventory.length === 0}
+          <p class="empty">Nothing settled yet — it fills in as you talk.</p>
+        {/if}
+      {:else}
+        <p class="empty">No project on the bench.</p>
+      {/if}
+    {:else}
+      <form class="lib-search" onsubmit={(e) => { e.preventDefault(); searchLibrary(); }}>
+        <input bind:value={libraryQuery} name="library" placeholder="search parts…" />
+      </form>
+      {#if !projectId}
+        <p class="empty">Start a project to browse the library.</p>
+      {:else if libraryPart}
+        <button class="lib-back" onclick={() => (libraryPart = null)}>← back</button>
+        <h3>{libraryPart.definition.title}</h3>
+        <p class="mono panel-id">{libraryPart.definition.family}</p>
+        <ul class="panel-list">
+          {#each libraryPart.definition.pins as pin}
+            <li><span class="mono">{pin.name}</span> · {pin.role}</li>
+          {/each}
+        </ul>
+        {#if libraryPart.profile}
+          <h3>Safety profile</h3>
+          <ul class="panel-list mono small">
+            {#each Object.entries(libraryPart.profile) as [k, v]}
+              {#if typeof v !== 'object'}<li>{k}: {v}</li>{/if}
+            {/each}
+          </ul>
+        {:else}
+          <p class="empty">No safety profile yet — not usable in circuits.</p>
+        {/if}
+      {:else if libraryHits.length > 0}
+        <ul class="panel-list">
+          {#each libraryHits as hit}
+            <li><button class="lib-hit" onclick={() => openPart(hit.id)}>{hit.title}</button>
+              <span class="mono small">{hit.family}</span></li>
+          {/each}
+        </ul>
+      {:else}
+        <p class="empty">Search the curated library — only parts here can be used.</p>
+      {/if}
+    {/if}
   </aside>
 </div>
 
@@ -467,14 +601,48 @@
 
   .empty { color: var(--ink-soft); }
 
-  /* ── artifacts ── */
-  .artifacts { min-width: 11.5rem; }
-  .artifacts h2 {
-    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--ink-soft); margin: 0.2rem 0 0.6rem;
+  /* ── the right panel: bench state + library ── */
+  .artifacts { min-width: 15rem; max-width: 17rem; }
+  .panel-tabs { display: flex; gap: 0.25rem; margin-bottom: 0.7rem; }
+  .panel-tabs button {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; border: none; background: transparent;
+    color: var(--ink-soft); padding: 0.3rem 0.5rem; cursor: pointer;
+    border-bottom: 2px solid transparent;
   }
-  .artifacts ul { list-style: none; padding: 0; margin: 0; font-size: 0.85rem; }
+  .panel-tabs button.on { color: var(--mask); border-bottom-color: var(--mask); }
+  .artifacts h3 {
+    font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 0.9rem 0 0.3rem;
+  }
+  .panel-list { list-style: none; padding: 0; margin: 0; font-size: 0.82rem; }
+  .panel-list li { padding: 0.18rem 0; }
+  .panel-id { font-size: 0.72rem; color: var(--ink-soft); margin: 0; }
+  .badge-assumed {
+    font-family: var(--font-mono); font-size: 0.62rem; margin-left: 0.3rem;
+    background: #f3e8cf; color: var(--sev-warning); padding: 0 0.3rem; border-radius: 6px;
+  }
+  .lib-search input {
+    width: 100%; box-sizing: border-box; padding: 0.45rem 0.6rem;
+    border: 1.5px solid var(--line); border-radius: 7px; font-family: var(--font-body);
+  }
+  .lib-hit {
+    border: none; background: transparent; color: var(--mask); cursor: pointer;
+    padding: 0; font-size: 0.85rem; text-align: left; text-decoration: underline;
+  }
+  .lib-back { border: none; background: transparent; color: var(--ink-soft); cursor: pointer; padding: 0; }
+  .small { font-size: 0.72rem; color: var(--ink-soft); }
   .mono { font-family: var(--font-mono); }
+
+  /* markdown inside agent messages */
+  .md :global(p) { margin: 0.3em 0; }
+  .md :global(table) { border-collapse: collapse; margin: 0.4em 0; font-size: 0.9em; }
+  .md :global(th), .md :global(td) { border: 1px solid var(--line); padding: 0.25em 0.55em; text-align: left; }
+  .md :global(th) { font-family: var(--font-mono); font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.06em; }
+  .md :global(code) { font-family: var(--font-mono); font-size: 0.88em; background: #eef1f0; padding: 0 0.25em; border-radius: 4px; }
+  .md :global(pre) { background: #eef1f0; padding: 0.6em 0.8em; border-radius: 8px; overflow-x: auto; }
+  .md :global(ul), .md :global(ol) { margin: 0.3em 0; padding-left: 1.3em; }
+  .md :global(h1), .md :global(h2), .md :global(h3) { font-size: 1.05em; margin: 0.5em 0 0.2em; }
 
   /* ── the meter: findings as an instrument ── */
   .meter {

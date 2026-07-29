@@ -1,19 +1,82 @@
 [
-  { "file": "core/LED-generic-5mm.fzp", "partId": "5mmColorLEDModuleID" },
-  { "file": "core/resistor.fzp", "partId": "ResistorModuleID" },
-  { "file": "core/arduino_Uno_Rev3(fix).fzp", "partId": "arduino_Uno_Rev3(fix)" },
-  { "file": "core/capacitor_ceramic_100mil.fzp", "partId": "100milCeramicCapacitorModuleID" },
-  { "file": "core/capacitor_electrolytic_medium.fzp", "partId": "MediumElectrolyticCapacitorModuleID" },
-  { "file": "core/diode_1N4001_300mil.fzp", "partId": "3254CBFC44diode" },
-  { "file": "core/pushbutton_2_horizontal.fzp", "partId": "20A9BBEE34_ST-2leadbutton-horizon" },
-  { "file": "core/potentiometer_rotary_16mm_5.fzp", "partId": "potentiometer_rotary_16mm_5_PotentiometerModuleID" },
-  { "file": "core/dc_motor.fzp", "partId": "1000FADF10011leg" },
-  { "file": "core/basic-relay-6p_1c569ac_002.fzp", "partId": "basic-re0750cfe91b854b78be2154ffc8101a37" },
-  { "file": "core/led-rgb-4pin-cathode_v5.fzp", "partId": "d4d5af9700923b8a114f57961f29a8a0ColorLEDModuleID" },
-  { "file": "core/LDR_photocell_300mil_v5.fzp", "partId": "2010BBCD20113PhotocellModuleID" },
-  { "file": "core/Humidity_and_Temperature_Sensor_RHT03.fzp", "partId": "Humidity_and_Temperature_Sensor_RHT03_6" },
-  { "file": "core/battery-AA.fzp", "partId": "1000AFDF10011leg" },
-  { "file": "core/Battery block 9V.fzp", "partId": "77c36646df552e9fe72f360837f556ccleg" },
-  { "file": "core/basic_power_transistor_npn.fzp", "partId": "1238DBDC00" },
-  { "file": "core/Dagu DGServo 9g (End view).fzp", "partId": "Dagu_DGServo_9g_End_view" }
+  {
+    "file": "core/LED-generic-5mm.fzp",
+    "partId": "5mmColorLEDModuleID"
+  },
+  {
+    "file": "core/resistor.fzp",
+    "partId": "ResistorModuleID"
+  },
+  {
+    "file": "core/arduino_Uno_Rev3(fix).fzp",
+    "partId": "arduino_Uno_Rev3(fix)"
+  },
+  {
+    "file": "core/capacitor_ceramic_100mil.fzp",
+    "partId": "100milCeramicCapacitorModuleID"
+  },
+  {
+    "file": "core/capacitor_electrolytic_medium.fzp",
+    "partId": "MediumElectrolyticCapacitorModuleID"
+  },
+  {
+    "file": "core/diode_1N4001_300mil.fzp",
+    "partId": "3254CBFC44diode"
+  },
+  {
+    "file": "core/pushbutton_2_horizontal.fzp",
+    "partId": "20A9BBEE34_ST-2leadbutton-horizon"
+  },
+  {
+    "file": "core/potentiometer_rotary_16mm_5.fzp",
+    "partId": "potentiometer_rotary_16mm_5_PotentiometerModuleID"
+  },
+  {
+    "file": "core/dc_motor.fzp",
+    "partId": "1000FADF10011leg"
+  },
+  {
+    "file": "core/basic-relay-6p_1c569ac_002.fzp",
+    "partId": "basic-re0750cfe91b854b78be2154ffc8101a37"
+  },
+  {
+    "file": "core/led-rgb-4pin-cathode_v5.fzp",
+    "partId": "d4d5af9700923b8a114f57961f29a8a0ColorLEDModuleID"
+  },
+  {
+    "file": "core/LDR_photocell_300mil_v5.fzp",
+    "partId": "2010BBCD20113PhotocellModuleID"
+  },
+  {
+    "file": "core/Humidity_and_Temperature_Sensor_RHT03.fzp",
+    "partId": "Humidity_and_Temperature_Sensor_RHT03_6"
+  },
+  {
+    "file": "core/battery-AA.fzp",
+    "partId": "1000AFDF10011leg"
+  },
+  {
+    "file": "core/Battery block 9V.fzp",
+    "partId": "77c36646df552e9fe72f360837f556ccleg"
+  },
+  {
+    "file": "core/basic_power_transistor_npn.fzp",
+    "partId": "1238DBDC00"
+  },
+  {
+    "file": "core/Dagu DGServo 9g (End view).fzp",
+    "partId": "Dagu_DGServo_9g_End_view"
+  },
+  {
+    "file": "core/WeMos-D1-mini-male-headers-above_fixed.fzp",
+    "partId": "WeMos_D1_mini_male_headers_above_fix"
+  },
+  {
+    "file": "core/SparkFun_Soil_Moisture_Sensor.fzp",
+    "partId": "SparkFun_Soil_Moisture_Sensor"
+  },
+  {
+    "file": "core/sparkfun-poweric-v_reg_ld1117vxx-.fzp",
+    "partId": "SparkFun-PowerIC-V_REG_LD1117VXX-"
+  }
 ]

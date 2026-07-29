@@ -1,0 +1,15 @@
+# LD1117V33 low-dropout 3.3 V regulator, TO-220 (GND-OUT-IN left to right
+# per the ST datasheet; SVG-extracted offsets normalised to the 0.1" grid).
+# 800 mA output, ~1.1 V dropout, 15 V absolute max input.
+partId: SparkFun-PowerIC-V_REG_LD1117VXX-
+footprint:
+  pins:
+    GND: [0, 0]
+    OUT: [1, 0]
+    IN: [2, 0]
+polarity: polarized
+regulatorMaxMa: 800
+maxCurrentMa: 800
+absMaxVoltageV: 15
+quiescentMa: 5
+hazardClass: none

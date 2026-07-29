@@ -1,0 +1,15 @@
+# SparkFun Soil Moisture Sensor (SEN-13322 class, resistive). 3.3-5 V
+# supply, single-digit mA draw. Best practice (and the reason PSW exists in
+# soil-sensor architectures): power it from a GPIO/switch only while
+# reading — continuous bias corrodes the probes. 3-pin 0.1" header;
+# the part duplicates the SIG connector, one footprint entry covers both.
+partId: SparkFun_Soil_Moisture_Sensor
+footprint:
+  pins:
+    VCC: [0, 0]
+    GND: [1, 0]
+    SIG: [2, 0]
+polarity: polarized
+maxCurrentMa: 6
+absMaxVoltageV: 5.5
+hazardClass: none

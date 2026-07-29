@@ -108,6 +108,13 @@ async function route(
     return;
   }
 
+  // The conversation, persisted with the project.
+  const transcriptMatch = /^\/api\/projects\/([0-9a-f]+)\/transcript$/.exec(path);
+  if (req.method === 'GET' && transcriptMatch) {
+    json(res, 200, { records: sessions.readTranscript(transcriptMatch[1]!) });
+    return;
+  }
+
   // Build steps + gate state for the Bench posture.
   const stepsMatch = /^\/api\/projects\/([0-9a-f]+)\/steps$/.exec(path);
   if (req.method === 'GET' && stepsMatch) {

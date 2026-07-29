@@ -1,7 +1,8 @@
 import type { RawFzp } from './fzp/types.js';
 import type { PartDefinition, PinRole } from './types.js';
 
-const GND = /^(gnd|ground|vss|earth|agnd|dgnd)$/i;
+// "g" alone is real corpus data: the WeMos D1 mini labels ground "G".
+const GND = /^(gnd|ground|vss|earth|agnd|dgnd|g)$/i;
 const SUPPLY = /^(vcc|vdd|vin|v\+|\d+v\d*|\d+v|vbat|vbus|3v3|5v)$/i;
 const IO = /^(d\d+|gpio\d+|a\d+|io\d+|p[a-d]\d+|s(cl|da|ck)|mosi|miso|tx|rx)$/i;
 const PASSIVE = /^(anode|cathode|pin\s*\d+|leg\s*\d*|\d+|lead\s*\d*|[+-])$/i;

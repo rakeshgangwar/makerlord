@@ -1,0 +1,35 @@
+# WeMos/LOLIN D1 mini (ESP8266). Datasheet-grounded: 3.3 V logic; ESP8266
+# GPIO absolute max ~12 mA per pin. quiescentMa 75 is the wifi-active
+# AVERAGE (Espressif datasheet 70-80 mA; peaks 170-300 mA). Deep-sleep is
+# ~20 µA for the CHIP — the BOARD figure depends on regulator + LED and is
+# exactly the number the power-up gate measures; do not trust it from here.
+# absMaxVoltageV 6 covers the 5V USB-input pin; the 3V3 domain nuance
+# (3.6 V abs max on GPIO) awaits per-pin voltage domains in the engine.
+# Footprint hand-authored from board geometry: two 8-pin rows, 0.1" pitch,
+# rows 0.9" apart, silkscreen order.
+partId: WeMos_D1_mini_male_headers_above_fix
+footprint:
+  pins:
+    RST: [0, 0]
+    A0: [0, 1]
+    D0: [0, 2]
+    D5: [0, 3]
+    D6: [0, 4]
+    D7: [0, 5]
+    D8: [0, 6]
+    "3V3": [0, 7]
+    TX: [9, 0]
+    RX: [9, 1]
+    D1: [9, 2]
+    D2: [9, 3]
+    D3: [9, 4]
+    D4: [9, 5]
+    G: [9, 6]
+    "5V": [9, 7]
+logicLevelV: 3.3
+pinMaxMa: 12
+portTotalMaxMa: 60
+regulatorMaxMa: 500
+absMaxVoltageV: 6
+quiescentMa: 75
+hazardClass: none
