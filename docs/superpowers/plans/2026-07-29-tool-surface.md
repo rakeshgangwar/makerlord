@@ -64,81 +64,81 @@ interface ProjectFile {
 
 ### Task 1: Package scaffold, result type
 
-- [ ] `packages/tools` scaffold wired into workspace + tsconfig refs
-- [ ] `result.ts`: `ToolResult<T>`, `RefusalCode`, `ok()`, `refuse()`
-- [ ] Tests: result shape, refusal carries findings + message
+- [x] `packages/tools` scaffold wired into workspace + tsconfig refs
+- [x] `result.ts`: `ToolResult<T>`, `RefusalCode`, `ok()`, `refuse()`
+- [x] Tests: result shape, refusal carries findings + message
 
 ### Task 2: Session — load, hash, atomic write, optimistic lock
 
-- [ ] `contentHash(text)` — sha256 hex
-- [ ] `loadProjectFile(path)` → `{ file, hash }`; parse + version check
-- [ ] `saveProjectFile(path, file, expectHash?)` — temp file + rename; hash mismatch returns `STALE_PROJECT` refusal, not a throw
-- [ ] `findProjectFile(cwd)` — walk up git-style; error (throw) when absent
-- [ ] `initProjectFile(path, intent)` — errors if project.json already exists
-- [ ] Tests: round-trip, lock refusal on concurrent write, discovery walk-up, init-refuses-overwrite
+- [x] `contentHash(text)` — sha256 hex
+- [x] `loadProjectFile(path)` → `{ file, hash }`; parse + version check
+- [x] `saveProjectFile(path, file, expectHash?)` — temp file + rename; hash mismatch returns `STALE_PROJECT` refusal, not a throw
+- [x] `findProjectFile(cwd)` — walk up git-style; error (throw) when absent
+- [x] `initProjectFile(path, intent)` — errors if project.json already exists
+- [x] Tests: round-trip, lock refusal on concurrent write, discovery walk-up, init-refuses-overwrite
 
 ### Task 3: Registry and invariants
 
-- [ ] `ToolDef<I,O>` per spec §6; `registerTool`, `ALL_TOOLS`, `runTool(name, input, session)`
-- [ ] Registry appends `expectHash` handling for `mutates: true` tools — session validates, once
-- [ ] Invariant tests: unique names; non-empty prescriptive summaries (≥ 20 chars); `gated ⇒ mutates`; **no name matches `/dismiss|override|suppress|force/`**; every gated tool refuses when its precondition fails (asserted per-tool in later tasks, pinned here as a registry sweep once all groups land)
+- [x] `ToolDef<I,O>` per spec §6; `registerTool`, `ALL_TOOLS`, `runTool(name, input, session)`
+- [x] Registry appends `expectHash` handling for `mutates: true` tools — session validates, once
+- [x] Invariant tests: unique names; non-empty prescriptive summaries (≥ 20 chars); `gated ⇒ mutates`; **no name matches `/dismiss|override|suppress|force/`**; every gated tool refuses when its precondition fails (asserted per-tool in later tasks, pinned here as a registry sweep once all groups land)
 
 ### Task 4: project + inventory groups
 
-- [ ] `project_init` (mutates; errors if exists), `project_status` (summary counts + gate state), `project_inspect` (full file)
-- [ ] `inventory_add/list/remove`
-- [ ] Handler tests against fixture projects (adapter-free)
+- [x] `project_init` (mutates; errors if exists), `project_status` (summary counts + gate state), `project_inspect` (full file)
+- [x] `inventory_add/list/remove`
+- [x] Handler tests against fixture projects (adapter-free)
 
 ### Task 5: parts group
 
-- [ ] `data.ts`: load curated bundle (curated.json + profiles) and half-breadboard board once, cached
-- [ ] `parts_search {query}` → id + title + family one-liners from the curated bundle only
-- [ ] `parts_get {id}` → definition + safety profile; error for unknown id
-- [ ] Tests over the real vendored corpus
+- [x] `data.ts`: load curated bundle (curated.json + profiles) and half-breadboard board once, cached
+- [x] `parts_search {query}` → id + title + family one-liners from the curated bundle only
+- [x] `parts_get {id}` → definition + safety profile; error for unknown id
+- [x] Tests over the real vendored corpus
 
 ### Task 6: feasibility + requirements groups
 
-- [ ] `feasibility_claim` validates through `parseFeasibilityClaim` (evidence rules); `feasibility_verdict`; `feasibility_show`
-- [ ] `req_slots {intent?}` → archetype suggestion + slots; `req_propose` (provenance respected, defaults → assumed); `req_confirm` (assumed → stated); `req_list`; `req_remove`
-- [ ] Tests: sourced-claim-without-evidence throws (validation error, not finding)
+- [x] `feasibility_claim` validates through `parseFeasibilityClaim` (evidence rules); `feasibility_verdict`; `feasibility_show`
+- [x] `req_slots {intent?}` → archetype suggestion + slots; `req_propose` (provenance respected, defaults → assumed); `req_confirm` (assumed → stated); `req_list`; `req_remove`
+- [x] Tests: sourced-claim-without-evidence throws (validation error, not finding)
 
 ### Task 7: architecture + circuit groups
 
-- [ ] `block_add`, `block_link` (validates blocks + interfaces exist), `block_sourcing`, `arch_show`
-- [ ] `part_add` (defId must be in the bundle), `connect` (intent net; pins must exist on the part definitions), `place` (hole must exist on the board; resolves via footprint), `wire` (both holes must exist)
-- [ ] Tests: hallucinated pin/hole/part are errors at the boundary
+- [x] `block_add`, `block_link` (validates blocks + interfaces exist), `block_sourcing`, `arch_show`
+- [x] `part_add` (defId must be in the bundle), `connect` (intent net; pins must exist on the part definitions), `place` (hole must exist on the board; resolves via footprint), `wire` (both holes must exist)
+- [x] Tests: hallucinated pin/hole/part are errors at the boundary
 
 ### Task 8: checks group
 
-- [ ] `check_requirements` → `checkRequirements` findings
-- [ ] `check_architecture` → `checkArchitecture` findings
-- [ ] `check_circuit` → derive netlist + `runRules(ALL_RULES)` over the real board
-- [ ] `predict_dc` → `predictDc`
-- [ ] Tests: the danger-corpus rail short surfaces through the tool
+- [x] `check_requirements` → `checkRequirements` findings
+- [x] `check_architecture` → `checkArchitecture` findings
+- [x] `check_circuit` → derive netlist + `runRules(ALL_RULES)` over the real board
+- [x] `predict_dc` → `predictDc`
+- [x] Tests: the danger-corpus rail short surfaces through the tool
 
 ### Task 9: gated group
 
-- [ ] `expand`: refuses `BLOCK_UNDECIDED`, refuses `BLOCKERS_UNRESOLVED` while the architecture gate is shut; writes `project.circuit`
-- [ ] `advance_build_step {to}`: refuses `BLOCKERS_UNRESOLVED` on live circuit blockers; refuses `MAINS_ON_BREADBOARD` when an envelope REFUSE stands; refuses `GATE_NOT_OPEN` when crossing the GATE step unopened
-- [ ] `measure {name,value,unit}`: records a measurement
-- [ ] `gate_open`: refuses `MEASUREMENT_REQUIRED` with no measurements; refuses `BLOCKERS_UNRESOLVED`; sets `gateOpen`
-- [ ] Tests: every refusal code reachable; refusals exit `ok:false` with findings attached
+- [x] `expand`: refuses `BLOCK_UNDECIDED`, refuses `BLOCKERS_UNRESOLVED` while the architecture gate is shut; writes `project.circuit`
+- [x] `advance_build_step {to}`: refuses `BLOCKERS_UNRESOLVED` on live circuit blockers; refuses `MAINS_ON_BREADBOARD` when an envelope REFUSE stands; refuses `GATE_NOT_OPEN` when crossing the GATE step unopened
+- [x] `measure {name,value,unit}`: records a measurement
+- [x] `gate_open`: refuses `MEASUREMENT_REQUIRED` with no measurements; refuses `BLOCKERS_UNRESOLVED`; sets `gateOpen`
+- [x] Tests: every refusal code reachable; refusals exit `ok:false` with findings attached
 
 ### Task 10: `maker` CLI
 
-- [ ] `packages/cli`: argv → subcommand path → registry name (`maker req propose` → `req_propose`); flags from zod shape; `--project`, `--expect-hash`
-- [ ] Exit codes: success 0, refusal 0, error 1 (stderr JSON)
-- [ ] Subprocess tests pin all three exit codes and the refusal-exits-0 contract
+- [x] `packages/cli`: argv → subcommand path → registry name (`maker req propose` → `req_propose`); flags from zod shape; `--project`, `--expect-hash`
+- [x] Exit codes: success 0, refusal 0, error 1 (stderr JSON)
+- [x] Subprocess tests pin all three exit codes and the refusal-exits-0 contract
 
 ### Task 11: `maker-mcp` server
 
-- [ ] `packages/mcp`: MCP server over stdio; `tools/list` mirrors the registry via zod-to-json-schema; refusal arrives as a normal result, never `isError`
-- [ ] In-process tests: list matches registry exactly; a call round-trips; a refusal is not an error
+- [x] `packages/mcp`: MCP server over stdio; `tools/list` mirrors the registry via zod-to-json-schema; refusal arrives as a normal result, never `isError`
+- [x] In-process tests: list matches registry exactly; a call round-trips; a refusal is not an error
 
 ### Task 12: Golden end-to-end script
 
-- [ ] With **no LLM**: `project_init → req_propose → req_confirm → block_add → block_link → check_architecture → expand → check_circuit` asserted against the resulting `project.json`
-- [ ] Full suite + typecheck green; commit
+- [x] With **no LLM**: `project_init → req_propose → req_confirm → block_add → block_link → check_architecture → expand → check_circuit` asserted against the resulting `project.json`
+- [x] Full suite + typecheck green; commit
 
 ---
 
