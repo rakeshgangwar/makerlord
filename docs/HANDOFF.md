@@ -86,11 +86,12 @@ transcripts. Each spec has a ticked implementation plan in
 main · github.com/rakeshgangwar/makerlord (private)
 ```
 
-**Next:** install ngspice to light up the known-answer simulation integration
-tests (`sudo apt install -y ngspice`); then the named deferrals — streaming
-transport + SSE wiring with a hosted deployment, Playwright e2e, persona
-prose (D38), curated-library growth toward ~150 parts (the schedule risk),
-and the Phase 2+ stage specs (firmware, debug, PCB).
+**Next:** the deferrals are scoped with reasons and triggers in
+[deferred-work.md](deferred-work.md) — suggested order: CI, Phase 1 persona
+prose, the go-live cluster (streaming/SSE/compaction/web research), Playwright,
+with the curation drip toward ~150 parts (the schedule risk) running
+underneath. ngspice is installed; the known-answer integration suite runs.
+Then the Phase 2+ stage specs (firmware ⑦, debug ⑧, PCB ⑨).
 
 ## External dependencies
 

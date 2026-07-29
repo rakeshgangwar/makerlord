@@ -36,6 +36,7 @@ Start at the top. Each document assumes the ones above it.
 | 16 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
 | 17 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
 | 18 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 19 | [deferred-work.md](deferred-work.md) | Every deferral — why, scope, trigger | When picking up the next piece of work |
 
 Rows 6–12 are the seven design specs. Rows 6–8 and 9–11 are the two clusters
 you'll read together: **the stages** (prototype, front door) and **the layers**
