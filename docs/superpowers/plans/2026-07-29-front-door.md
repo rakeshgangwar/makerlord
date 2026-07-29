@@ -2684,7 +2684,7 @@ git commit -m "feat(project): expand architecture blocks into a circuit"
 
 **This is the front door's Tier 1.** Each case is an end-to-end project fixture that must produce the expected verdict. Spec §6.
 
-- [ ] **Step 1: Write the corpus**
+- [x] **Step 1: Write the corpus**
 
 Create `packages/project/test/front-door-corpus.test.ts`:
 
@@ -2842,12 +2842,12 @@ describe('Front door — elicitation', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `pnpm vitest run packages/project/test/front-door-corpus.test.ts`
 Expected: PASS, 10 tests.
 
-- [ ] **Step 3: Export the public surface**
+- [x] **Step 3: Export the public surface**
 
 Replace `packages/project/src/index.ts`:
 
@@ -2870,12 +2870,12 @@ export * from './feasibility/types.js';
 export * from './feasibility/schema.js';
 ```
 
-- [ ] **Step 4: Run everything**
+- [x] **Step 4: Run everything**
 
 Run: `pnpm test && pnpm typecheck`
 Expected: all tests PASS across all three packages; typecheck clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/test/front-door-corpus.test.ts packages/project/src/index.ts
