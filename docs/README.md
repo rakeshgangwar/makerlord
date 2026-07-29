@@ -89,14 +89,14 @@ Phase 1 is genuinely good.
 | — | Simulation | **Specced** — needs a plan |
 | — | PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-**All seven specs are implemented** (2026-07-29): Slices 0–1 (the headless
-engine with the Tier-1 danger corpus), the front door (`@makerlord/project`),
-the tool surface (36 tools, `maker` CLI, `maker-mcp`), the ACP host
-(`maker-bridge` with the cross-brain assertion), the agent runtime
-(`maker-agent`, D44), simulation (`@makerlord/sim`, D43 provenance ceilings;
-ngspice integration awaits the binary), and the UI core + SvelteKit shell
-(`@makerlord/ui`). 471 tests green. **Seven design specs exist; each has an
-implementation
-plans.** Phase 1 is fully specced and planned — 37 TDD tasks. The agent layer,
-the UI and simulation are specced and await plans. The production half of the
+**All seven specs are implemented and the product is live at
+[makerlord.dev](https://makerlord.dev)** (2026-07-29): Slices 0–1 (the
+headless engine with the Tier-1 danger corpus), the front door, the tool
+surface (37 tools incl. `decision_record`, `maker` CLI, `maker-mcp`), the ACP
+host (cross-brain assertion), the streaming agent runtime, simulation with
+real ngspice solves (D43 ceilings verified against physics), the UI (bench
+design, live SSE conversation, project selector), and `@makerlord/artifacts`
+— every project is a real git repo carrying the user-journey §3 file tree,
+committed turn by turn. 501 tests green. Each spec has a ticked implementation
+plan in [superpowers/plans/](superpowers/plans/). The production half of the
 arc is agreed in principle and not yet specified.

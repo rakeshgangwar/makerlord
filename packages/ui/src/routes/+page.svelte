@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
-  import { postureFor, stagePhase } from '$lib/postures.js';
+  import { inferStage, postureFor, stagePhase } from '$lib/postures.js';
   import { presentSeverity } from '$lib/severity.js';
 
   /** Agent prose is model output: render markdown, sanitised, always. */
@@ -14,7 +14,12 @@
 
   // ── shell state ─────────────────────────────────────────────────────
   let stage = $state(1);
+  let stagePinned = $state(false);
   const posture = $derived(postureFor(stage));
+
+  function followStage() {
+    if (!stagePinned && projectFile) stage = inferStage(projectFile.project);
+  }
 
   const STAGE_NAMES = [
     'Idea', 'Feasibility', 'Requirements', 'Architecture', 'Simulate',
@@ -185,6 +190,7 @@
       const r = await api(`projects/${projectId}/steps`);
       if (r.status === 200) build = r.data;
       await refreshProjectFile();
+      followStage();
     }
   }
 
@@ -296,7 +302,7 @@
         class="stage"
         class:active={stage === i + 1}
         data-phase={stagePhase(i + 1)}
-        onclick={() => (stage = i + 1)}
+        onclick={() => { stage = i + 1; stagePinned = true; }}
       >
         <span class="stage-n">{String(i + 1).padStart(2, '0')}</span>
         {name}

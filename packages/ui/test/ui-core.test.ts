@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Finding } from '@makerlord/circuit';
-import { layoutFor, postureFor, stagePhase } from '../src/lib/postures.js';
+import { inferStage, layoutFor, postureFor, stagePhase } from '../src/lib/postures.js';
 import { badgeConsistent, ceilingFor, presentSeverity } from '../src/lib/severity.js';
 import { FindingSurface } from '../src/lib/findings.js';
 import { SessionConsumer } from '../src/lib/events.js';
@@ -30,6 +30,17 @@ describe('postures — four, not seventeen', () => {
     expect(postureFor(5)).toBe('inspect');
     expect(postureFor(11)).toBe('decide');
     expect(postureFor(1)).toBe('converse');
+  });
+
+  it('infers where the project actually is from its facets', () => {
+    const base = { requirements: [], architecture: { blocks: [] } };
+    expect(inferStage(null)).toBe(1);
+    expect(inferStage({ ...base })).toBe(1);
+    expect(inferStage({ ...base, feasibility: { verdict: 'buildable' } })).toBe(2);
+    expect(inferStage({ ...base, requirements: [{}] })).toBe(3);
+    expect(inferStage({ ...base, requirements: [{}], architecture: { blocks: [{}] } })).toBe(4);
+    expect(inferStage({ ...base, circuit: { parts: [{}] } })).toBe(5);
+    expect(inferStage({ ...base, circuit: { parts: [{ placement: {} }] } })).toBe(6);
   });
 
   it('groups the rail by the four phases', () => {

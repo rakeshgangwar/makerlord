@@ -75,23 +75,28 @@ that were rejected and why.
 
 ## Current state
 
-**All seven specs are implemented** (PopOS box, 2026-07-29). Ten packages:
-parts, circuit, project, tools (36-tool registry), cli, mcp, protocol, bridge,
-agent, sim, ui. 471 tests green including the Tier-1 danger corpus, the
-tool-surface golden script, the cross-brain assertion, and the fake-LLM agent
-transcripts. Each spec has a ticked implementation plan in
-[superpowers/plans/](superpowers/plans/).
+**All seven specs are implemented and deployed** (2026-07-29). Live at
+**makerlord.dev** on the infra server (see [infra.md](infra.md)): nginx + TLS,
+basic auth over the shell, bearer token over the API, ngspice on the host.
+Thirteen packages: parts, circuit, project, tools (37-tool registry), cli, mcp,
+protocol, bridge, agent, sim, artifacts, server, ui. Every project is a real
+git repo (D34) carrying the user-journey §3 tree incl. DECISIONS.md (D29).
+501 tests green. Each spec has a ticked implementation plan in
+[superpowers/plans/](superpowers/plans/); the full pipeline ①→⑤ was driven
+live through the browser, and the three engine bugs the agent found in the
+process are fixed with regressions.
 
 ```
 main · github.com/rakeshgangwar/makerlord (private)
 ```
 
-**Next:** the deferrals are scoped with reasons and triggers in
-[deferred-work.md](deferred-work.md) — suggested order: CI, Phase 1 persona
-prose, the go-live cluster (streaming/SSE/compaction/web research), Playwright,
-with the curation drip toward ~150 parts (the schedule risk) running
-underneath. ngspice is installed; the known-answer integration suite runs.
-Then the Phase 2+ stage specs (firmware ⑦, debug ⑧, PCB ⑨).
+**Next:** the remaining deferrals are scoped with reasons and triggers in
+[deferred-work.md](deferred-work.md) — suggested order: CI (an hour, protects
+everything), the three deferred rules that are now unblocked on data
+(flyback, source capacity, decoupling), Playwright on the live shell, the
+three live-API residues (bridge WS, compaction eval, web research), with the
+curation drip from 20 toward ~150 parts (the schedule risk) running
+underneath. Then the Phase 2+ stage specs (firmware ⑦, debug ⑧, PCB ⑨).
 
 ## External dependencies
 

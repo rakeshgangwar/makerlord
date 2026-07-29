@@ -63,6 +63,28 @@ export interface StageRailEntry {
   state: 'not-started' | 'in-progress' | 'complete' | 'blocked';
 }
 
+/**
+ * Where the project actually is, inferred from its facets. The rail follows
+ * this unless the maker pins a stage by clicking — a map that keeps up,
+ * still never a wizard.
+ */
+export function inferStage(project: {
+  feasibility?: unknown;
+  requirements: unknown[];
+  architecture: { blocks: unknown[] };
+  circuit?: { parts: { placement?: unknown }[] };
+} | null): number {
+  if (!project) return 1;
+  if (project.circuit) {
+    const placed = project.circuit.parts.some((p) => p.placement !== undefined);
+    return placed ? 6 : 5;
+  }
+  if (project.architecture.blocks.length > 0) return 4;
+  if (project.requirements.length > 0) return 3;
+  if (project.feasibility) return 2;
+  return 1;
+}
+
 /** The rail is a map, not a wizard — makers loop and backtrack. */
 export function stagePhase(stage: number): 1 | 2 | 3 | 4 {
   if (stage <= 4 || stage === 6) return 1;
