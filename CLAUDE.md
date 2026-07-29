@@ -5,15 +5,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is right now
 
 **MakerLord** is a complete assistant for the maker's journey — idea → simulate →
-prototype → product → production, across 17 stages. **Nothing is built yet.**
-The repository is documentation only: `docs/` holds the vision, roadmap, seven
-approved design specs, two TDD implementation plans, and a decision log. There is
-no `package.json`, no source tree, and no dependencies installed.
+prototype → product → production, across 17 stages. Implementation has just
+begun: the pnpm monorepo scaffold exists and development follows
+`docs/superpowers/plans/2026-07-28-slices-0-and-1.md` **task-by-task, strict
+TDD** — find the first unchecked `- [ ]` task there and continue from it. The
+specs and plans in `docs/` remain the source of truth for all design intent.
 
-Consequently there are **no build/lint/test commands yet** — they arrive with
-Task 1 of the first plan. Do not invent them. When you start writing code, the
-first plan (`docs/superpowers/plans/2026-07-28-slices-0-and-1.md`) scaffolds the
-tooling; follow it rather than improvising a setup.
+## Commands
+
+```bash
+pnpm test                          # Vitest across all packages
+pnpm vitest run path/to/x.test.ts  # a single test file
+pnpm typecheck                     # tsc -b over the packages
+./scripts/verify-env.sh            # toolchain + corpus + disk check
+```
+
+- **Non-interactive shells need `CI=true`** on pnpm commands that might prompt
+  (install/clean) — pnpm 11 asks for TTY confirmation on modules purge.
+- pnpm 11 is pinned via `packageManager` (corepack). Its `minimumReleaseAge`
+  policy can reject very fresh upstream releases at resolution time; that is
+  deliberate supply-chain hygiene, not a bug. Postinstall scripts are
+  allowlisted per-package in `pnpm-workspace.yaml` (`allowBuilds`).
 
 ## Working in this repository
 
