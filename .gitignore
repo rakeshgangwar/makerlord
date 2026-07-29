@@ -6,3 +6,6 @@ coverage/
 *.tsbuildinfo
 .svelte-kit/
 packages/ui/build/
+
+# secrets
+.env
