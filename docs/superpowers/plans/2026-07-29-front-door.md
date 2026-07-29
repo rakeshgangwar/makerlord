@@ -993,7 +993,7 @@ git commit -m "feat(project): power budget with input provenance tracking"
 
 **Spec §3.2:** a requirement is *computable* when its `metric` has a registered evaluator. `battery_runtime` has one; `enclosure_colour` does not, and is carried to the stage ⑭ test plan instead.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/evaluators.test.ts`:
 
@@ -1079,12 +1079,12 @@ describe('evaluateMetric', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/evaluators.test.ts`
 Expected: FAIL — cannot resolve `../src/architecture/evaluators.js`.
 
-- [ ] **Step 3: Write the registry**
+- [x] **Step 3: Write the registry**
 
 Create `packages/project/src/architecture/evaluators.ts`:
 
@@ -1148,12 +1148,12 @@ export function evaluateMetric(
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/evaluators.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/architecture/evaluators.ts packages/project/test/evaluators.test.ts
