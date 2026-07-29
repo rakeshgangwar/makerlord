@@ -75,19 +75,22 @@ that were rejected and why.
 
 ## Current state
 
-**Slices 0–1 are built** (completed on the PopOS box, 2026-07-29). All 25 tasks
-of the first plan are done: `@makerlord/parts` (ETL, profiles, board grid,
-bundle) and `@makerlord/circuit` (model, netlist, 8 rules, DC, substitution,
-build sequence), 196 tests green including the Tier-1 danger corpus.
+**All seven specs are implemented** (PopOS box, 2026-07-29). Ten packages:
+parts, circuit, project, tools (36-tool registry), cli, mcp, protocol, bridge,
+agent, sim, ui. 471 tests green including the Tier-1 danger corpus, the
+tool-surface golden script, the cross-brain assertion, and the fake-LLM agent
+transcripts. Each spec has a ticked implementation plan in
+[superpowers/plans/](superpowers/plans/).
 
 ```
 main · github.com/rakeshgangwar/makerlord (private)
 ```
 
-**Next:** the front-door plan
-([superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md),
-12 TDD tasks), or a plan for the specced-but-unplanned layers (tool surface,
-ACP host, agent runtime, UI).
+**Next:** install ngspice to light up the known-answer simulation integration
+tests (`sudo apt install -y ngspice`); then the named deferrals — streaming
+transport + SSE wiring with a hosted deployment, Playwright e2e, persona
+prose (D38), curated-library growth toward ~150 parts (the schedule risk),
+and the Phase 2+ stage specs (firmware, debug, PCB).
 
 ## External dependencies
 

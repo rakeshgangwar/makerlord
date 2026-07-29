@@ -88,10 +88,14 @@ Phase 1 is genuinely good.
 | — | Simulation | **Specced** — needs a plan |
 | — | PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-**Slices 0–1 are built** (2026-07-29): the headless engine — ETL over the
-1,794-part corpus, safety profiles, netlist derivation, the 8-rule engine, DC
-prediction, substitution, and the build sequence — with the Tier-1 danger
-corpus green. **Seven design specs exist; two have implementation
+**All seven specs are implemented** (2026-07-29): Slices 0–1 (the headless
+engine with the Tier-1 danger corpus), the front door (`@makerlord/project`),
+the tool surface (36 tools, `maker` CLI, `maker-mcp`), the ACP host
+(`maker-bridge` with the cross-brain assertion), the agent runtime
+(`maker-agent`, D44), simulation (`@makerlord/sim`, D43 provenance ceilings;
+ngspice integration awaits the binary), and the UI core + SvelteKit shell
+(`@makerlord/ui`). 471 tests green. **Seven design specs exist; each has an
+implementation
 plans.** Phase 1 is fully specced and planned — 37 TDD tasks. The agent layer,
 the UI and simulation are specced and await plans. The production half of the
 arc is agreed in principle and not yet specified.

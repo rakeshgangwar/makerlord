@@ -5,12 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is right now
 
 **MakerLord** is a complete assistant for the maker's journey — idea → simulate →
-prototype → product → production, across 17 stages. **Slices 0–1 are built**
-(the headless engine: `@makerlord/parts` and `@makerlord/circuit`, 196 tests
-incl. the Tier-1 danger corpus). Development follows the plans in
-`docs/superpowers/plans/` **task-by-task, strict TDD** — the next plan is the
-front door (`2026-07-29-front-door.md`, 12 tasks). The specs and plans in
-`docs/` remain the source of truth for all design intent.
+prototype → product → production, across 17 stages. **All seven design specs
+are implemented** across ten packages: `parts`, `circuit`, `project`, `tools`
+(the 36-tool registry), `cli` (`maker`), `mcp` (`maker-mcp`), `protocol`,
+`bridge` (`maker-bridge`), `agent`, `sim`, and `ui` (core + SvelteKit shell;
+`pnpm --filter @makerlord/ui build` to build it). Development follows the
+plans in `docs/superpowers/plans/` **task-by-task, strict TDD**; each plan's
+checkboxes record what is done. The specs and plans in `docs/` remain the
+source of truth for all design intent; `docs/decisions.md` (D1–D44) is the
+decision log.
 
 The Tier-1 danger corpus (`packages/circuit/test/danger-corpus.test.ts`) is
 release-blocking: a failure there is not a flaky test, it is a maker's
