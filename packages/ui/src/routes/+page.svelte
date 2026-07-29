@@ -104,14 +104,29 @@
   }
 
   async function sendPrompt(text) {
-    if (!text.trim() || !sessionId) return;
+    if (!text.trim() || !projectId) return;
     messages = [...messages, { role: 'maker', text }];
     toolActivity = [];
     turnActive = true;
     lastError = '';
-    const r = await api(`sessions/${sessionId}/prompt`, { text });
-    if (r.status === 409) {
-      await api(`sessions/${sessionId}/steer`, { text });
+    try {
+      // Sessions are in-memory server-side: a redeploy drops them. Resume by
+      // minting a fresh one against the same project — the artefact persists.
+      if (!sessionId) await ensureSession(text);
+      let r = await api(`sessions/${sessionId}/prompt`, { text });
+      if (r.status === 404) {
+        sessionId = null;
+        localStorage.removeItem('makerlord.sessionId');
+        if (eventSource) { eventSource.close(); eventSource = null; }
+        await ensureSession(text);
+        r = await api(`sessions/${sessionId}/prompt`, { text });
+      }
+      if (r.status === 409) {
+        await api(`sessions/${sessionId}/steer`, { text });
+      }
+    } catch (e) {
+      turnActive = false;
+      lastError = `Could not reach the agent: ${e instanceof Error ? e.message : e}. Try again.`;
     }
   }
 
