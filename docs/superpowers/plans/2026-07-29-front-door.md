@@ -449,7 +449,7 @@ git commit -m "feat(project): requirement schema and measurability check"
   - `checkRequirements(ctx: ProjectContext): Finding[]`
   - `REQUIREMENT_RULES: readonly ProjectRule[]` where `interface ProjectRule { id: string; severity: Severity; check(ctx: ProjectContext): Finding[] }`
 
-- [ ] **Step 1: Write the shared fixture helper**
+- [x] **Step 1: Write the shared fixture helper**
 
 Create `packages/project/test/fixtures.ts`:
 
@@ -518,7 +518,7 @@ export function projectWith(
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `packages/project/test/requirement-rules.test.ts`:
 
@@ -573,12 +573,12 @@ describe('checkRequirements', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/requirement-rules.test.ts`
 Expected: FAIL — cannot resolve `../src/requirements/rules.js`.
 
-- [ ] **Step 4: Write the rules**
+- [x] **Step 4: Write the rules**
 
 Create `packages/project/src/requirements/rules.ts`:
 
@@ -679,12 +679,12 @@ export function checkRequirements(ctx: ProjectContext): Finding[] {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/requirement-rules.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/project/src/requirements/rules.ts packages/project/test/fixtures.ts packages/project/test/requirement-rules.test.ts
