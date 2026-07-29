@@ -1,4 +1,5 @@
 [
   { "file": "core/LED-generic-5mm.fzp", "partId": "5mmColorLEDModuleID" },
-  { "file": "core/resistor.fzp", "partId": "ResistorModuleID" }
+  { "file": "core/resistor.fzp", "partId": "ResistorModuleID" },
+  { "file": "core/arduino_Uno_Rev3(fix).fzp", "partId": "arduino_Uno_Rev3(fix)" }
 ]

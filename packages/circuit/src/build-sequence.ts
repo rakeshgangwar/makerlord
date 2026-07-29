@@ -74,10 +74,14 @@ export function buildSequence(ctx: RuleContext): BuildStep[] {
   }
 
   const { supply, ground } = railHoles(ctx);
+  // Only nets that actually carry a part pin earn a routing step — on a real
+  // board every unused bus is also a derived net, and routing those would be
+  // 60+ meaningless instructions.
   const signalNets = ctx.nets.filter(
     (n) =>
       !n.holes.some((h) => supply.includes(h) || ground.includes(h)) &&
-      n.holes.length > 0,
+      n.holes.length > 0 &&
+      n.pins.length > 0,
   );
 
   for (const n of signalNets) {
