@@ -1,5 +1,6 @@
 import type { Finding } from '@makerlord/circuit';
 import type { ProjectContext, ProjectRule } from '../requirements/rules.js';
+import { SEVERITY_ORDER } from '../requirements/rules.js';
 import { findBlock, findInterface, linksTouching } from './context.js';
 import type { ComputedValue } from './power.js';
 import { computePowerBudget, severityForComputed } from './power.js';
@@ -152,3 +153,62 @@ export const requirementUnsatisfiedRule: ProjectRule = {
     return out;
   },
 };
+
+export const pinCountRule: ProjectRule = {
+  id: 'ARCH_PIN_COUNT_EXCEEDED',
+  severity: 'BLOCKER',
+  check(ctx) {
+    const out: Finding[] = [];
+    for (const block of ctx.project.architecture.blocks) {
+      if (block.sourcing.type !== 'buy') continue;
+      const def = ctx.defs.get(block.sourcing.partId);
+      if (!def) continue;
+
+      const available = def.pins.filter((p) => p.role === 'io').length;
+      if (available === 0) continue;
+
+      const gpioPorts = block.interfaces.filter(
+        (i) => i.kind === 'gpio' && i.direction === 'provides',
+      );
+      let demand = 0;
+      for (const port of gpioPorts) {
+        demand += linksTouching(ctx, block.id, port.id).length;
+      }
+      if (demand <= available) continue;
+
+      out.push({
+        ruleId: 'ARCH_PIN_COUNT_EXCEEDED',
+        severity: 'BLOCKER' as const,
+        message:
+          `"${block.name}" would need ${demand} I/O pins but ${def.title} ` +
+          `has ${available}.`,
+        affected: { parts: [block.id] },
+        suggestedFix:
+          'Pick a board with more I/O, move devices onto a shared bus like ' +
+          'I²C, or add a port expander block.',
+      });
+    }
+    return out;
+  },
+};
+
+export const ARCHITECTURE_RULES: readonly ProjectRule[] = [
+  interfaceUnmetRule,
+  voltageMismatchRule,
+  powerBudgetRule,
+  requirementUnsatisfiedRule,
+  pinCountRule,
+];
+
+export function checkArchitecture(ctx: ProjectContext): Finding[] {
+  return ARCHITECTURE_RULES.flatMap((r) => r.check(ctx)).sort(
+    (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity],
+  );
+}
+
+/** Spec §5.3: advance_to_circuit refuses while any BLOCKER or REFUSE stands. */
+export function architectureGateOpens(findings: readonly Finding[]): boolean {
+  return !findings.some(
+    (f) => f.severity === 'REFUSE' || f.severity === 'BLOCKER',
+  );
+}

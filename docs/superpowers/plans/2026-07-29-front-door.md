@@ -1738,7 +1738,7 @@ git commit -m "feat(project): power budget and requirement satisfaction rules"
 
 **Pin counting model:** a block declares **one** `gpio` interface with direction `provides`; each link into it consumes one pin. Available pins come from the block's `PartDefinition` — pins whose `role` is `io`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/architecture-registry.test.ts`:
 
@@ -1867,12 +1867,12 @@ describe('architectureGateOpens', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/architecture-registry.test.ts`
 Expected: FAIL — `pinCountRule` is not exported.
 
-- [ ] **Step 3: Append the rule and the registry**
+- [x] **Step 3: Append the rule and the registry**
 
 Add to `packages/project/src/architecture/rules.ts`:
 
@@ -1945,12 +1945,12 @@ also bring in `SEVERITY_ORDER` (defined in Task 3) — `ProjectContext` and
 import { SEVERITY_ORDER } from '../requirements/rules.js';
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/architecture-registry.test.ts`
 Expected: PASS, 9 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/architecture/rules.ts packages/project/test/architecture-registry.test.ts
