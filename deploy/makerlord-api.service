@@ -1,0 +1,16 @@
+[Unit]
+Description=MakerLord hosted API (sessions over SSE)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/makerlord
+EnvironmentFile=/opt/makerlord/.env
+Environment=PORT=8787
+Environment=MAKERLORD_PROJECTS_ROOT=/opt/makerlord/projects
+ExecStart=/opt/node-v22/bin/node packages/server/dist/main.js
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

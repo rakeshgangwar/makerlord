@@ -1,0 +1,15 @@
+[Unit]
+Description=MakerLord web UI (SvelteKit)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/makerlord/packages/ui
+Environment=PORT=3000
+Environment=ORIGIN=https://makerlord.dev
+ExecStart=/opt/node-v22/bin/node build/index.js
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
