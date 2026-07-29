@@ -1,6 +1,6 @@
+# vendor/fritzing-parts is a submodule — only the gitlink is tracked, never the 365 MB content
 node_modules/
 .DS_Store
 dist/
 coverage/
-vendor/
 *.tsbuildinfo

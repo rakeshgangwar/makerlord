@@ -1,0 +1,3 @@
+[submodule "vendor/fritzing-parts"]
+	path = vendor/fritzing-parts
+	url = https://github.com/rakeshgangwar/fritzing-parts
