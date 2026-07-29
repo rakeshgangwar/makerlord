@@ -5,6 +5,7 @@
   import DOMPurify from 'dompurify';
   import { inferStage, postureFor, stagePhase } from '$lib/postures.js';
   import { presentSeverity } from '$lib/severity.js';
+  import SvgViewer from '$lib/SvgViewer.svelte';
 
   /** Agent prose is model output: render markdown, sanitised, always. */
   function md(text) {
@@ -316,14 +317,14 @@
     if (r.status === 200) fileOpen = r.data;
   }
 
-  /** Our generated SVGs are trusted-shaped but sanitised anyway. */
-  function svg(content) {
-    if (!browser) return content;
-    return DOMPurify.sanitize(content, { USE_PROFILES: { svg: true, svgFilters: true } });
-  }
-
   const blockerCount = $derived(
     findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
+  );
+
+  /** An empty breadboard is honest, not broken: placement is a ⑥ act. */
+  const nothingPlaced = $derived(
+    !!projectFile?.project?.circuit &&
+    !projectFile.project.circuit.parts.some((p) => p.placement),
   );
 </script>
 
@@ -410,10 +411,14 @@
           <div class="canvas-row">
             {#each ['blocks', 'schematic', 'breadboard'] as kind}
               <figure>
-                <figcaption>{kind}</figcaption>
-                <img src={`/render/${projectId}/${kind}?t=${renderTick}`} alt={`${kind} projection`}
-                  onerror={(e) => (e.target.closest('figure').dataset.empty = 'true')} />
-                <p class="empty-note">arrives when the circuit exists</p>
+                <figcaption>{kind} <span class="fig-hint">scroll to zoom · drag to pan</span></figcaption>
+                <SvgViewer url={`/render/${projectId}/${kind}?t=${renderTick}`} alt={`${kind} projection`}
+                  emptyNote={kind === 'breadboard' && nothingPlaced
+                    ? 'parts are placed at ⑥ Prototype — ask the agent to place them'
+                    : 'arrives when the circuit exists'} />
+                {#if kind === 'breadboard' && nothingPlaced}
+                  <p class="placed-note">circuit built, nothing placed yet — the board fills at ⑥ Prototype</p>
+                {/if}
               </figure>
             {/each}
           </div>
@@ -585,21 +590,12 @@
     {:else}
       {#if !projectId}
         <p class="empty">Start a project to see its files.</p>
-      {:else if fileOpen}
-        <button class="lib-back" onclick={() => (fileOpen = null)}>← back</button>
-        <p class="mono panel-id">{fileOpen.path}</p>
-        {#if fileOpen.path.endsWith('.md')}
-          <div class="md file-doc">{@html md(fileOpen.content)}</div>
-        {:else if fileOpen.path.endsWith('.svg')}
-          <div class="file-svg">{@html svg(fileOpen.content)}</div>
-        {:else}
-          <pre class="file-raw">{fileOpen.content}</pre>
-        {/if}
       {:else}
         <h3>Project files</h3>
         <ul class="panel-list file-list">
           {#each fileList as f}
-            <li><button class="lib-hit mono" onclick={() => openFile(f.path)}>{f.path}</button>
+            <li><button class="lib-hit mono" class:open={fileOpen?.path === f.path}
+                onclick={() => openFile(f.path)}>{f.path}</button>
               <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
           {/each}
         </ul>
@@ -615,6 +611,29 @@
     {/if}
   </aside>
 </div>
+
+{#if fileOpen}
+  <!-- Files get their own room: a workspace-wide viewer, not a sidebar squeeze. -->
+  <div class="file-overlay" role="dialog" aria-label={fileOpen.path}>
+    <div class="file-box">
+      <header class="file-head">
+        <span class="mono">{fileOpen.path}</span>
+        <button class="file-close" onclick={() => (fileOpen = null)}>✕ close</button>
+      </header>
+      <div class="file-body" class:is-svg={fileOpen.path.endsWith('.svg')}>
+        {#if fileOpen.path.endsWith('.md')}
+          <div class="md file-doc">{@html md(fileOpen.content)}</div>
+        {:else if fileOpen.path.endsWith('.svg')}
+          <SvgViewer content={fileOpen.content} alt={fileOpen.path} />
+        {:else}
+          <pre class="file-raw">{fileOpen.content}</pre>
+        {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && (fileOpen = null)} />
 
 <!-- The finding strip is an instrument, not a notification tray. -->
 <footer class="meter" aria-live="polite" aria-label="Findings">
@@ -745,12 +764,39 @@
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
   }
-  .canvas-row img { max-width: 380px; display: block; min-height: 90px; }
-  .canvas-row .empty-note { display: none; }
-  .canvas-row figure[data-empty='true'] img { display: none; }
-  .canvas-row figure[data-empty='true'] .empty-note {
-    display: block; color: var(--ink-soft); font-size: 0.8rem; margin: 1.4rem 0.5rem;
+  .canvas-row figure { width: 380px; }
+  .canvas-row figure :global(.viewer) { height: 240px; }
+  .fig-hint { text-transform: none; letter-spacing: 0; opacity: 0.6; float: right; }
+  .placed-note { color: var(--ink-soft); font-size: 0.74rem; margin: 0.4rem 0 0; }
+
+  /* ── the file viewer: dedicated room, not a sidebar squeeze ── */
+  .file-overlay {
+    position: fixed; inset: 0; z-index: 40; display: flex;
+    align-items: center; justify-content: center;
+    background: rgb(14 20 17 / 45%);
   }
+  .file-box {
+    display: flex; flex-direction: column;
+    width: min(1100px, 94vw); height: 88vh;
+    background: var(--panel, #fff); border-radius: 10px;
+    box-shadow: 0 12px 40px rgb(10 14 12 / 35%); overflow: hidden;
+  }
+  .file-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 1rem; border-bottom: 1px solid var(--line);
+    font-size: 0.8rem;
+  }
+  .file-close {
+    border: 1px solid var(--line); background: transparent; cursor: pointer;
+    font-family: var(--font-mono); font-size: 0.7rem; padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+  }
+  .file-close:hover { color: var(--mask); border-color: var(--mask); }
+  .file-body { flex: 1; overflow: auto; padding: 1rem 1.25rem; }
+  .file-body.is-svg { padding: 0; overflow: hidden; }
+  .file-body .file-raw { max-height: none; }
+  .file-body .file-doc { max-height: none; max-width: 46rem; }
+  .lib-hit.open { color: var(--mask); font-weight: 600; }
 
   /* ── bench: readable at arm's length ── */
   .bench { max-width: 44rem; }
@@ -794,8 +840,6 @@
     border-radius: 4px; padding: 0.6rem; overflow: auto; max-height: 60vh;
     white-space: pre-wrap; word-break: break-all;
   }
-  .file-svg { border: 1px solid var(--line); border-radius: 4px; background: #fff; padding: 0.4rem; overflow: auto; }
-  .file-svg :global(svg) { max-width: 100%; height: auto; }
   .file-doc { font-size: 0.85rem; max-height: 65vh; overflow: auto; }
   .file-list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
 
