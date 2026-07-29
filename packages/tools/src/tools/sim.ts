@@ -83,13 +83,18 @@ const simRun: ToolDef = {
     name: z.string().min(1),
     analyses: z.array(z.enum(['op', 'tran', 'ac'])).default(['op']),
     tranStop: z.number().optional(),
+    /** Sandbox: solve without touching the record — no run entry, no files
+     *  in the project, optional supply-volts override. Play stays play. */
+    sandbox: z.boolean().default(false),
+    volts: z.number().positive().optional(),
   }),
   mutates: true,
   gated: false,
   async handler(input, ctx) {
     const s = requireSession(ctx);
-    const { name, analyses, tranStop } = input as {
+    const { name, analyses, tranStop, sandbox, volts } = input as {
       name: string; analyses: ('op' | 'tran' | 'ac')[]; tranStop?: number;
+      sandbox: boolean; volts?: number;
     };
     const circuit = s.file.project.circuit;
     if (!circuit) throw new Error('sim_run: no circuit yet — expand or add parts first');
@@ -99,8 +104,19 @@ const simRun: ToolDef = {
     if (analyses.includes('ac')) cards.push('.ac dec 20 1 1e6');
 
     const state = simState(s.file);
+    // Sandbox stimuli: override the supply (highest-volts dc) in a COPY.
+    let effectiveStimuli = state.stimuli;
+    if (sandbox && volts !== undefined) {
+      const dcs = state.stimuli.filter((x) => x.kind === 'dc');
+      const supply = [...dcs].sort(
+        (a, b) => ((b.params.volts as number) ?? 0) - ((a.params.volts as number) ?? 0),
+      )[0];
+      effectiveStimuli = state.stimuli.map((x) =>
+        x === supply ? { ...x, params: { ...x.params, volts } } : x,
+      );
+    }
     const net = spiceNetlist(
-      circuit, defsMap(), profilesMap(), state.stimuli, cards,
+      circuit, defsMap(), profilesMap(), effectiveStimuli, cards,
     );
 
     if (!(await ngspiceAvailable())) {
@@ -117,9 +133,15 @@ const simRun: ToolDef = {
       if (profile) profilesByRef.set(part.ref, profile);
     }
 
-    const runId = `run-${Object.keys(state.runs).length + 1}-${name}`;
+    const runId = sandbox ? 'sandbox' : `run-${Object.keys(state.runs).length + 1}-${name}`;
     // The op baseline always runs (spec §4.1) — solved, not just generated.
-    const op = await runOpAnalysis(dirname(s.path), runId, net, profilesByRef);
+    // Sandbox runs solve in a scratch dir: the project tree stays untouched.
+    const runDir = sandbox
+      ? (await import('node:fs')).mkdtempSync(
+          (await import('node:path')).join((await import('node:os')).tmpdir(), 'makerlord-sandbox-'),
+        )
+      : dirname(s.path);
+    const op = await runOpAnalysis(runDir, runId, net, profilesByRef);
 
     const findings = [...net.findings, ...op.findings];
     if (!op.converged) {
@@ -133,13 +155,16 @@ const simRun: ToolDef = {
       });
     }
 
-    state.runs[runId] = {
-      name,
-      provenance: net.provenance,
-      findings,
-    };
+    if (!sandbox) {
+      state.runs[runId] = {
+        name,
+        provenance: net.provenance,
+        findings,
+      };
+    }
     return ok({
       runId,
+      sandbox,
       provenance: net.provenance,
       converged: op.converged,
       rung: op.rung,

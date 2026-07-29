@@ -8,7 +8,8 @@
    * pointer is over. The projections already carry those attributes — the
    * renderers stay deterministic and dumb; interactivity lives here.
    */
-  let { url = null, content = null, alt = '', emptyNote = 'arrives when the circuit exists' } = $props();
+  let { url = null, content = null, alt = '', emptyNote = 'arrives when the circuit exists',
+    highlightHoles = [], highlightParts = [] } = $props();
 
   let svgText = $state('');
   let failed = $state(false);
@@ -19,6 +20,32 @@
   let dragging = false;
   let lastX = 0;
   let lastY = 0;
+  /** @type {HTMLElement | null} */
+  let stageEl = $state(null);
+
+  // Paint the current step's holes/parts in copper — both views speak.
+  $effect(() => {
+    void svgText;
+    const holes = new Set(highlightHoles);
+    const parts = new Set(highlightParts);
+    if (!stageEl) return;
+    for (const el of stageEl.querySelectorAll('[data-hole]')) {
+      if (holes.has(el.dataset.hole)) {
+        el.setAttribute('fill', '#b26a38');
+        el.setAttribute('r', '4.6');
+        el.style.filter = 'drop-shadow(0 0 4px #b26a38)';
+      } else {
+        el.setAttribute('fill', '#3a3a3a');
+        el.setAttribute('r', '2.2');
+        el.style.filter = '';
+      }
+    }
+    for (const el of stageEl.querySelectorAll('[data-part]')) {
+      el.style.filter = parts.has(el.dataset.part)
+        ? 'drop-shadow(0 0 5px #b26a38)'
+        : '';
+    }
+  });
 
   function sanitize(text) {
     if (!browser) return '';
@@ -99,7 +126,7 @@
   {#if failed}
     <p class="note">{emptyNote}</p>
   {:else}
-    <div class="stage" style={`transform: translate(${tx}px, ${ty}px) scale(${scale})`}>
+    <div class="stage" bind:this={stageEl} style={`transform: translate(${tx}px, ${ty}px) scale(${scale})`}>
       {@html svgText}
     </div>
   {/if}

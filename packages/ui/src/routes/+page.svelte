@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { postureFor } from '$lib/postures.js';
-  import { app, boot } from '$lib/app.svelte.js';
+  import { app, boot, refreshProjections } from '$lib/app.svelte.js';
   import StageRail from '$lib/components/StageRail.svelte';
   import ConverseStart from '$lib/components/ConverseStart.svelte';
   import Conversation from '$lib/components/Conversation.svelte';
@@ -37,6 +37,15 @@
   );
 
   onMount(boot);
+
+  // A deploy restarts the API mid-boot sometimes; a failed first fetch must
+  // not leave the bench empty. When a lens needs build state and none is
+  // loaded, retry.
+  $effect(() => {
+    if ((lens === 'bench' || lens === 'simulate') && app.projectId && !app.build) {
+      refreshProjections();
+    }
+  });
 </script>
 
 <div class="shell" data-posture={posture}>

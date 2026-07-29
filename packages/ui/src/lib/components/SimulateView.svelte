@@ -98,8 +98,11 @@
     running = true;
     if (!fromKnob) { rungShown = 0; result = null; }
     try {
+      const input = fromKnob
+        ? { name: 'bench', analyses: ['op'], sandbox: true, volts: knobVolts }
+        : { name: 'bench', analyses: ['op'] };
       const r = await api(`projects/${app.projectId}/tool`, {
-        name: 'sim_run', input: { name: 'bench', analyses: ['op'] },
+        name: 'sim_run', input,
       });
       if (r.data.ok) {
         const data = r.data.data;
@@ -123,20 +126,12 @@
     }
   }
 
-  /** The what-if knob: rewrite the dc stimulus, re-solve, repaint. */
+  /** The what-if knob: a SANDBOX solve — play never touches the record. */
   let knobTimer = null;
   function knobChange() {
     knobActive = true;
     clearTimeout(knobTimer);
-    knobTimer = setTimeout(async () => {
-      const dc = dcStimulus;
-      if (!dc) return;
-      await api(`projects/${app.projectId}/tool`, {
-        name: 'sim_stimulus_set',
-        input: { ...dc, params: { ...dc.params, volts: knobVolts } },
-      });
-      await run(true);
-    }, 350);
+    knobTimer = setTimeout(() => run(true), 350);
   }
 
   // Sim state lives at file.sim; the SUPPLY is the dc stimulus with the
@@ -213,7 +208,7 @@
             <label class="mono" for="knob">supply · {knobVolts.toFixed(1)} V</label>
             <input id="knob" type="range" min="5" max="12" step="0.5"
               bind:value={knobVolts} oninput={knobChange} />
-            {#if knobActive}<p class="small">re-solving as you turn…</p>{/if}
+            {#if knobActive}<p class="small">sandbox — re-solving as you turn; nothing is recorded</p>{/if}
           </div>
         {/if}
 

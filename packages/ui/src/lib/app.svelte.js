@@ -243,17 +243,31 @@ export async function runCheck(name) {
   else if (r.data.ok) app.findings = r.data.data.findings ?? [];
 }
 
-export async function recordMeasurement() {
-  const value = Number(app.measureValue);
+export async function recordMeasurement(name, rawValue, unit) {
+  const value = Number(rawValue);
   if (!Number.isFinite(value) || !app.projectId) return;
   await api(`projects/${app.projectId}/tool`, {
     name: 'measure',
-    input: { name: app.measureName, value, unit: app.measureUnit },
+    input: { name, value, unit },
   });
   // Only AFTER the number is recorded does the prediction appear (D15).
   const r = await api(`projects/${app.projectId}/tool`, { name: 'predict_dc', input: {} });
   app.prediction = r.data.ok ? r.data.data.prediction : null;
-  app.measureValue = '';
+  await refreshProjections();
+}
+
+/** The maker's own step control — the engine still owns the gate. */
+export async function advanceStep(to) {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}/tool`, {
+    name: 'advance_build_step', input: { to },
+  });
+  if (r.data.ok === false) {
+    app.findings = r.data.findings?.length ? r.data.findings : app.findings;
+    app.lastError = r.data.message ?? 'the engine refused the advance';
+  } else {
+    app.lastError = '';
+  }
   await refreshProjections();
 }
 

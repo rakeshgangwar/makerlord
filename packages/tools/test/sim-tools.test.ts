@@ -142,3 +142,39 @@ describe.skipIf(!available)('stimulus ergonomics — the bugs the agent found', 
     ).rejects.toThrow(/params\.volts/);
   });
 });
+
+describe.skipIf(!available)('sandbox runs: play never touches the record', () => {
+  it('solves with a volts override, records no run, writes nothing to the project', async () => {
+    await call('part_add', { ref: 'U1', defId: 'arduino_Uno_Rev3(fix)' });
+    await call('part_add', { ref: 'R1', defId: 'ResistorModuleID' });
+    await call('part_add', { ref: 'LED1', defId: '5mmColorLEDModuleID' });
+    await call('connect', { from: 'U1.5V', to: 'R1.Pin 0' });
+    await call('connect', { from: 'R1.Pin 1', to: 'LED1.anode' });
+    await call('connect', { from: 'LED1.cathode', to: 'U1.GND' });
+    await call('sim_stimulus_set', {
+      id: 'rail', target: 'net_U1_5V__R1_Pin 0', kind: 'dc',
+      params: { volts: 5 }, provenance: 'derived', rationale: 'rail',
+    });
+    const baseline = await call('sim_run', { name: 'base', analyses: ['op'] });
+    const runsBefore = JSON.stringify(
+      (ctx.session!.file as { sim?: { runs?: unknown } }).sim?.runs,
+    );
+
+    const play = await call('sim_run', { name: 'play', analyses: ['op'], sandbox: true, volts: 9 });
+    expect(play.sandbox).toBe(true);
+    expect(play.converged).toBe(true);
+    // 9V through the same branch pushes more current than the recorded 5V run.
+    const base = baseline.branchCurrentsMa as Record<string, number>;
+    const sand = play.branchCurrentsMa as Record<string, number>;
+    expect(sand.R1!).toBeGreaterThan(base.R1!);
+    // The record is untouched: same runs, no 'sandbox' entry, no project file
+    // under the project's sim/results for the sandbox run.
+    const runsAfter = JSON.stringify(
+      (ctx.session!.file as { sim?: { runs?: unknown } }).sim?.runs,
+    );
+    expect(runsAfter).toBe(runsBefore);
+    const { existsSync } = await import('node:fs');
+    const { join: j } = await import('node:path');
+    expect(existsSync(j(ctx.cwd!, 'sim', 'results', 'sandbox-op.csv'))).toBe(false);
+  });
+});
