@@ -6,16 +6,16 @@
 
 | | |
 |---|---|
-| Host | **periscope-staging** — Hetzner cx53, 16 cores / 32 GB / 320 GB, nbg1 |
-| IPv4 | `78.46.248.1` |
-| Chosen because | SSH-reachable from the dev box (periscope-agent rejects our key), light load (< 1 of 16 cores), 21 GB RAM available. Shared with Periscope staging workloads — MakerLord runs alongside, isolated under its own user/service. |
-| Watch | Disk is at 80% (58 GB free). Fine for the Node server + corpus (~400 MB); revisit before the Phase-2 toolchains (arduino-cli ~3 GB) land. |
+| Host | **superchotu** — Hetzner, 4 cores / 8 GB / 75 GB (ssh alias `superchotu`) |
+| IPv4 | `162.55.48.175` |
+| Chosen because | Idle (load 0.18, nothing deployed) — MakerLord gets the machine to itself, rather than sharing periscope-staging with Periscope workloads. 35 GB free holds the server + corpus now and the Phase-2 toolchains later. |
+| Also surveyed | periscope-staging (cx53, shared with Periscope, disk 80%), periscope-agent (key rejected), openclaw-vps/molt-bot (running uptime-kuma/sqld/searxng). This project's hcloud context covers only `periscope`; superchotu lives in another Hetzner project — manage it over SSH, or add its API token as a second hcloud context. |
 
 ## Domain
 
 **makerlord.dev** is purchased. DNS is not yet pointed — **action (Rakesh):**
-create an `A` record `makerlord.dev → 78.46.248.1` (and `www` if wanted) at the
-registrar. `.dev` is on the HSTS preload list, so the server must terminate
+create an `A` record `makerlord.dev → 162.55.48.175` (and `www` if wanted) at
+the registrar. `.dev` is on the HSTS preload list, so the server must terminate
 TLS from day one — use Caddy (automatic Let's Encrypt) when deploying.
 
 ## Secrets
