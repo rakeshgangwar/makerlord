@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "pnpm typecheck && vitest run",
-    "typecheck": "tsc -b packages/parts packages/circuit packages/project packages/tools packages/cli packages/mcp"
+    "typecheck": "tsc -b packages/parts packages/circuit packages/project packages/tools packages/cli packages/mcp packages/protocol packages/bridge"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -21,6 +21,15 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.20.1)
 
+  packages/bridge:
+    dependencies:
+      '@makerlord/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@makerlord/tools':
+        specifier: workspace:*
+        version: link:../tools
+
   packages/circuit:
     dependencies:
       '@makerlord/parts':
@@ -74,6 +83,12 @@ importers:
       zod:
         specifier: ^3.23.0
         version: 3.25.76
+
+  packages/protocol:
+    dependencies:
+      '@makerlord/tools':
+        specifier: workspace:*
+        version: link:../tools
 
   packages/tools:
     dependencies:
