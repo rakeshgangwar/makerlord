@@ -20,8 +20,8 @@ async function call(name: string, input: unknown = {}) {
 }
 
 describe('the project file tree (user-journey.md §3)', () => {
-  it('a fresh project writes nothing but the model — no empty stubs', () => {
-    const written = writeAllArtifacts(loadSession(join(dir, 'project.json')));
+  it('a fresh project writes nothing but the model — no empty stubs', async () => {
+    const written = await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     expect(written).toEqual([]);
   });
 
@@ -31,7 +31,7 @@ describe('the project file tree (user-journey.md §3)', () => {
       metric: 'led_current', comparator: '>=', value: 10, unit: 'mA',
       consumedBy: ['CHECK_LED'], provenance: 'assumed',
     });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     const md = readFileSync(join(dir, 'requirements.md'), 'utf8');
     expect(md).toContain('| brightness | `led_current` | >= 10 | mA | CHECK_LED | assumed |');
     expect(md).toContain('visibly lit indoors');
@@ -43,7 +43,7 @@ describe('the project file tree (user-journey.md §3)', () => {
       evidence: { toolCall: 'parts_search' },
     });
     await call('feasibility_verdict', { verdict: 'buildable' });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     const md = readFileSync(join(dir, 'feasibility.md'), 'utf8');
     expect(md).toContain('**Verdict: buildable**');
     expect(md).toContain('**verified**: the library has all three parts — verified via `parts_search`');
@@ -53,7 +53,7 @@ describe('the project file tree (user-journey.md §3)', () => {
     await call('part_add', { ref: 'R1', defId: 'ResistorModuleID' });
     await call('part_add', { ref: 'LED1', defId: '5mmColorLEDModuleID' });
     await call('connect', { from: 'R1.Pin 1', to: 'LED1.anode' });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
 
     expect(existsSync(join(dir, 'circuit', 'netlist.json'))).toBe(true);
     expect(existsSync(join(dir, 'circuit', 'schematic.svg'))).toBe(true);
@@ -72,7 +72,7 @@ describe('the project file tree (user-journey.md §3)', () => {
       sourcing: { type: 'buy', partId: '5mmColorLEDModuleID' },
       interfaces: [{ id: 'vin', kind: 'power', direction: 'consumes', voltageV: 5 }],
     });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     const md = readFileSync(join(dir, 'architecture.md'), 'utf8');
     expect(md).toContain('**indicator**');
     expect(md).toContain('buy: `5mmColorLEDModuleID`');
@@ -91,7 +91,7 @@ describe('the history facet (D29)', () => {
       ],
       consequence: '3.3 V logic everywhere; level care at the probe.',
     });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     const md = readFileSync(join(dir, 'DECISIONS.md'), 'utf8');
     expect(md).toContain('## D1 — WeMos D1 mini over the Uno');
     expect(md).toContain('**Rejected — Arduino Uno:** no wifi');
@@ -111,9 +111,9 @@ describe('the history facet (D29)', () => {
     await expect(again).rejects.toThrow(/append-only/);
   });
 
-  it('a pre-facet project file (no history key) still writes everything else', () => {
+  it('a pre-facet project file (no history key) still writes everything else', async () => {
     // emptyProject files from before the facet simply lack the key.
-    const written = writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    const written = await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     expect(written).not.toContain('DECISIONS.md');
   });
 });
@@ -124,7 +124,7 @@ describe('D34: a real git repo', () => {
     expect(log(dir)).toEqual(['Project created']);
 
     await call('inventory_add', { freeText: 'a drawer of LEDs' });
-    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    await writeAllArtifacts(loadSession(join(dir, 'project.json')));
     expect(commitAll(dir, 'note my LEDs and see what fits')).toBe(true);
     expect(log(dir)[0]).toBe('note my LEDs and see what fits');
 

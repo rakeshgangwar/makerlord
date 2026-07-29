@@ -21,10 +21,11 @@ export type AcpStartResult =
   | { ok: true; agent: AcpAgent }
   | { ok: false; reason: 'NO_MCP_CAPABILITY' | 'INIT_TIMEOUT' | 'SPAWN_FAILED'; message: string };
 
-interface McpServerSpec {
+export interface McpServerSpec {
   name: string;
   command: string;
   args: string[];
+  env?: Record<string, string>;
 }
 
 /** Does the initialize result advertise MCP server support, however spelt? */

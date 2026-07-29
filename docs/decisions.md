@@ -1038,6 +1038,39 @@ loop it warned about is what shipped.
 
 ---
 
+## D45 — elkjs is the schematic layout engine
+
+*2026-07-29.*
+
+The first schematic renderer placed parts on a fixed grid, four per row, and
+drew straight orthogonal nets between labelled boxes. Correct as a projection,
+useless as a schematic — the maker saw topology noise, not a circuit. The
+layout is now ELK's layered algorithm (`elkjs`, the engine behind netlistsvg),
+with orthogonal edge routing, and each part family draws as its conventional
+glyph: resistor zigzag, diode/LED triangle-and-bar with emission arrows,
+battery plates, capacitor plates, generic box with edge pins for everything
+else. `layoutSchematic` stays exported separately from the SVG so the KiCad
+generator consumes the same placement (D27 holds; ELK is proven in exactly
+that domain).
+
+**Rejected — netlistsvg wholesale:** its input is Yosys-shaped JSON and its
+skin system is digital-first; we would translate our model into someone
+else's model to get at the ELK underneath. Take the engine, keep our model.
+
+**Rejected — canvas/WebGL rendering:** wins only at thousands of elements;
+loses DOM hooks, text-diffability, and the ability to commit the artifact to
+the project repo (D2). Revisit at stage ⑨ where KiCanvas embeds real KiCad.
+
+**Rejected — hand-rolled layered layout:** a weekend of graph drawing that
+ends where ELK started. Layout is a solved problem; symbols and provenance
+are ours.
+
+**Consequence:** `renderSchematic`/`layoutSchematic` are async (ELK's API is
+promise-based), which made `writeAllArtifacts` async — callers await it. ELK
+is deterministic for a given graph, so golden-equality tests still hold.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

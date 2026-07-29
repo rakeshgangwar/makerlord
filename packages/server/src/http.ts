@@ -94,7 +94,7 @@ async function route(
       return;
     }
     try {
-      json(res, 201, sessions.createSession(projectId));
+      json(res, 201, await sessions.createSession(projectId));
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -190,7 +190,7 @@ async function route(
         cwd: dirname(projectPath),
       });
       if (result.ok) {
-        sessions.projectArtifacts(dirname(projectPath), `tool: ${name}`);
+        await sessions.projectArtifacts(dirname(projectPath), `tool: ${name}`);
       }
       json(res, 200, result);
     } catch (e) {

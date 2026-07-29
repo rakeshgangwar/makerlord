@@ -12,6 +12,7 @@
     "@makerlord/protocol": "workspace:*",
     "@makerlord/tools": "workspace:*",
     "@makerlord/circuit": "workspace:*",
-    "@makerlord/artifacts": "workspace:*"
+    "@makerlord/artifacts": "workspace:*",
+    "@makerlord/bridge": "workspace:*"
   }
 }

@@ -9,6 +9,7 @@ import { loadPack } from '@makerlord/agent';
 import {
   commitAll, initProjectRepo, logDetailed, writeAllArtifacts,
 } from '@makerlord/artifacts';
+import { AcpAgent } from '@makerlord/bridge';
 import type { SessionEvent } from '@makerlord/protocol';
 import { bundle, initProjectFile, loadSession } from '@makerlord/tools';
 
@@ -17,9 +18,15 @@ export interface NumberedEvent {
   event: SessionEvent;
 }
 
+/** What a hosted turn needs from a brain — ours or a spawned ACP agent. */
+interface AgentLike {
+  send(text: string, onEvent: (event: SessionEvent) => void): Promise<void>;
+  steer(text: string): void;
+}
+
 interface Hosted {
   projectDir: string;
-  agent: AgentSession;
+  agent: AgentLike;
   events: NumberedEvent[];
   listeners: Set<(e: NumberedEvent) => void>;
   turnActive: boolean;
@@ -31,6 +38,14 @@ export interface HostOptions {
   baseURL?: string;
   model?: string;
   stage?: number;
+  /** 'sdk' (default): our agent loop on the Anthropic API key.
+   *  'acp': spawn an ACP agent (e.g. Claude Code) that sees the project
+   *  through maker-mcp — the maker's subscription pays, not the API key. */
+  backend?: 'sdk' | 'acp';
+  acpCommand?: string;
+  acpArgs?: string[];
+  /** Path to maker-mcp's entry; the ACP agent gets it as an MCP server. */
+  mcpPath?: string;
 }
 
 /**
@@ -77,18 +92,78 @@ export class HostedSessions {
   }
 
   /** Project the per-stage files and commit whatever changed (D2 + D34). */
-  projectArtifacts(projectDir: string, message: string): void {
+  async projectArtifacts(projectDir: string, message: string): Promise<void> {
     try {
       const session = loadSession(join(projectDir, 'project.json'));
-      writeAllArtifacts(session);
+      await writeAllArtifacts(session);
       commitAll(projectDir, message);
     } catch {
       // Artifact projection must never break a turn; the model is the truth.
     }
   }
 
-  createSession(projectId: string): { sessionId: string } {
+  async createSession(projectId: string): Promise<{ sessionId: string }> {
     const projectDir = join(resolve(this.opts.projectsRoot), projectId);
+    const agent = this.opts.backend === 'acp'
+      ? await this.acpAgent(projectDir)
+      : this.sdkAgent(projectDir);
+    const sessionId = randomBytes(12).toString('hex');
+    this.sessions.set(sessionId, {
+      projectDir,
+      agent,
+      events: [],
+      listeners: new Set(),
+      turnActive: false,
+    });
+    return { sessionId };
+  }
+
+  /** Spawn the ACP agent once per session; it holds its own conversation. */
+  private async acpAgent(projectDir: string): Promise<AgentLike> {
+    const started = await AcpAgent.start({
+      command: this.opts.acpCommand ?? 'claude-code-acp',
+      args: this.opts.acpArgs ?? [],
+      cwd: projectDir,
+    });
+    if (!started.ok) {
+      throw new Error(`ACP agent failed to start (${started.reason}): ${started.message}`);
+    }
+    const agent = started.agent;
+    // Auto-answer permission asks with the most durable "allow" on offer.
+    // This is safe BY DESIGN, not by trust: the gates live in the engine
+    // (D3/D4) and the cross-brain assertion proves the BYO path is equally
+    // gated — an allowed tool still refuses while a BLOCKER is live.
+    agent.onPermissionAsk = (_askId, _title, options) => {
+      const pick =
+        options.find((o) => o.kind === 'allow_always') ??
+        options.find((o) => o.kind.startsWith('allow')) ??
+        options[0];
+      return Promise.resolve(pick?.id ?? '');
+    };
+    const mcpPath =
+      this.opts.mcpPath ?? join(process.cwd(), 'packages/mcp/dist/main.js');
+    const acpSessionId = await agent.newSession(projectDir, [{
+      name: 'makerlord',
+      command: process.execPath,
+      args: [mcpPath],
+      env: {
+        MAKERLORD_PROJECT: join(projectDir, 'project.json'),
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(([k]) =>
+            k.startsWith('MAKERLORD_'),
+          ) as [string, string][],
+        ),
+      },
+    }]);
+    return {
+      send: (text, onEvent) => agent.prompt(acpSessionId, text, onEvent),
+      steer: () => {
+        throw new Error('steering is not supported on the ACP backend yet');
+      },
+    };
+  }
+
+  private sdkAgent(projectDir: string): AgentLike {
     const toolSession = loadSession(join(projectDir, 'project.json'));
     const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
       apiKey: this.opts.apiKey,
@@ -104,15 +179,7 @@ export class HostedSessions {
       bundle: bundle(),
     };
     if (this.opts.model) agentOpts.model = this.opts.model;
-    const sessionId = randomBytes(12).toString('hex');
-    this.sessions.set(sessionId, {
-      projectDir,
-      agent: new AgentSession(agentOpts),
-      events: [],
-      listeners: new Set(),
-      turnActive: false,
-    });
-    return { sessionId };
+    return new AgentSession(agentOpts);
   }
 
   private get(sessionId: string): Hosted {
@@ -157,7 +224,7 @@ export class HostedSessions {
       });
     } finally {
       s.turnActive = false;
-      this.projectArtifacts(s.projectDir, text);
+      await this.projectArtifacts(s.projectDir, text);
     }
   }
 

@@ -5,10 +5,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@makerlord/parts": "workspace:*",
     "@makerlord/circuit": "workspace:*",
+    "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
     "@makerlord/sim": "workspace:*",
-    "@makerlord/tools": "workspace:*"
+    "@makerlord/tools": "workspace:*",
+    "elkjs": "^0.12.0"
   }
 }

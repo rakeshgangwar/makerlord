@@ -292,3 +292,61 @@ describe('the artifact files surface — the repo is visible, read-only', () => 
     expect(commits[0]!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
+
+describe('the ACP backend — a spawned agent instead of the API key', () => {
+  it('drives a hosted session through the fake ACP agent', async () => {
+    const { resolve: resolvePath } = await import('node:path');
+    const acp = new HostedSessions({
+      projectsRoot,
+      apiKey: '',
+      backend: 'acp',
+      acpCommand: process.execPath,
+      acpArgs: [resolvePath('packages/bridge/test/fake-agent.mjs')],
+    });
+    const srv = buildHttpServer(acp);
+    await new Promise<void>((r) => srv.listen(0, '127.0.0.1', r));
+    const b = `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
+
+    const post2 = async (path: string, body: unknown) => {
+      const res = await fetch(`${b}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return { status: res.status, data: (await res.json()) as Record<string, unknown> };
+    };
+
+    const p = await post2('/api/projects', { intent: 'acp-driven lamp' });
+    expect(p.status).toBe(201);
+    const s = await post2('/api/sessions', { projectId: p.data.projectId });
+    expect(s.status).toBe(201);
+    const sid = s.data.sessionId as string;
+
+    const accepted = await post2(`/api/sessions/${sid}/prompt`, { text: 'hello agent' });
+    expect(accepted.status).toBe(202);
+
+    // Same SSE surface, same event union — the UI cannot tell the backends apart.
+    const res = await fetch(`${b}/api/sessions/${sid}/events`);
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const deadline = Date.now() + 8000;
+    const events: { t: string; text?: string }[] = [];
+    while (Date.now() < deadline) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      for (const m of buffer.matchAll(/^data: (.*)$/gm)) {
+        const parsed = JSON.parse(m[1]!) as { t: string; text?: string };
+        if (!events.some((e) => JSON.stringify(e) === JSON.stringify(parsed))) events.push(parsed);
+      }
+      if (events.some((e) => e.t === 'turn.end')) break;
+    }
+    await reader.cancel().catch(() => undefined);
+    srv.close();
+
+    const deltas = events.filter((e) => e.t === 'message.delta').map((e) => e.text).join('');
+    expect(deltas).toContain('echo: hello agent');
+    expect(events.at(-1)!.t).toBe('turn.end');
+  });
+});

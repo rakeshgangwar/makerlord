@@ -99,15 +99,28 @@ describe('the shared schematic layout engine (D27)', () => {
     ],
   };
 
-  it('the layout is exported separately from the SVG — one engine, two consumers', () => {
-    const layout = layoutSchematic(c, defs);
+  it('the layout is exported separately from the SVG — one engine, two consumers', async () => {
+    const layout = await layoutSchematic(c, defs);
     expect(layout.symbols.map((s) => s.ref)).toEqual(['R1', 'LED1']);
     expect(layout.nets[0]!.points).toHaveLength(2);
-    // The SVG is a projection of exactly that layout.
-    const svg = renderSchematic(c, defs);
-    expect(svg).toBe(renderSchematic(c, defs));
+    // ELK actually routed the net: a polyline exists between the two pins.
+    expect(layout.nets[0]!.segments.length).toBeGreaterThanOrEqual(1);
+    // The SVG is a projection of exactly that layout — and deterministic.
+    const svg = await renderSchematic(c, defs);
+    expect(svg).toBe(await renderSchematic(c, defs));
     expect(svg).toContain('data-net="mid"');
     expect(svg).toContain('data-part="R1"');
+  });
+
+  it('D45: parts render as real glyphs, not labelled boxes', async () => {
+    const svg = await renderSchematic(c, defs);
+    // The resistor is a zigzag polyline inside its group; the LED a filled
+    // triangle with emission arrows — a family the maker recognises on sight.
+    expect(svg).toContain('<polyline points=');
+    expect(svg).toContain('<polygon points=');
+    const layout = await layoutSchematic(c, defs);
+    expect(layout.symbols.find((s) => s.ref === 'R1')!.glyph).toBe('resistor');
+    expect(layout.symbols.find((s) => s.ref === 'LED1')!.glyph).toBe('led');
   });
 });
 

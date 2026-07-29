@@ -132,7 +132,7 @@ export function writeDecisionsMd(dir: string, session: Session): boolean {
   return true;
 }
 
-export function writeCircuitDir(dir: string, session: Session): boolean {
+export async function writeCircuitDir(dir: string, session: Session): Promise<boolean> {
   const circuit = session.file.project.circuit;
   if (!circuit) return false;
 
@@ -147,7 +147,7 @@ export function writeCircuitDir(dir: string, session: Session): boolean {
     JSON.stringify({ intent: circuit.intent, derived: nets }, null, 2),
   );
 
-  write(join(dir, 'circuit', 'schematic.svg'), renderSchematic(circuit, defsMap()));
+  write(join(dir, 'circuit', 'schematic.svg'), await renderSchematic(circuit, defsMap()));
   write(
     join(dir, 'circuit', 'breadboard.svg'),
     renderBreadboard(board(), circuit, footprints),
@@ -182,7 +182,7 @@ export function writeArchitectureSvg(dir: string, session: Session): boolean {
 }
 
 /** Write every projection the current project state supports. */
-export function writeAllArtifacts(session: Session): string[] {
+export async function writeAllArtifacts(session: Session): Promise<string[]> {
   const dir = dirname(session.path);
   const written: string[] = [];
   if (writeFeasibilityMd(dir, session)) written.push('feasibility.md');
@@ -190,7 +190,7 @@ export function writeAllArtifacts(session: Session): string[] {
   if (writeDecisionsMd(dir, session)) written.push('DECISIONS.md');
   if (writeArchitectureMd(dir, session)) written.push('architecture.md');
   if (writeArchitectureSvg(dir, session)) written.push('architecture.svg');
-  if (writeCircuitDir(dir, session)) {
+  if (await writeCircuitDir(dir, session)) {
     written.push('circuit/netlist.json', 'circuit/schematic.svg', 'circuit/breadboard.svg', 'circuit/build-steps.md');
   }
   return written;
