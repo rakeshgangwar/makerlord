@@ -28,13 +28,36 @@ const SENSOR_PROFILE: SafetyProfile = {
   hazardClass: 'none',
 };
 
+const MOTOR = def('motor', 'motor', [
+  { id: 'c0', name: 'pin 1', role: 'passive' },
+  { id: 'c1', name: 'pin 2', role: 'passive' },
+]);
+const MOTOR_PROFILE: SafetyProfile = {
+  partId: 'motor',
+  footprint: { pins: { 'pin 1': [0, 0], 'pin 2': [0, 4] } },
+  maxCurrentMa: 800,
+  hazardClass: 'inductive',
+};
+const BAT = def('bat', 'battery', [
+  { id: 'c0', name: '+', role: 'supply' },
+  { id: 'c1', name: '-', role: 'gnd' },
+]);
+const BAT_PROFILE: SafetyProfile = {
+  partId: 'bat',
+  footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+  polarity: 'polarized',
+  maxContinuousMa: 100,
+  hazardClass: 'none',
+};
+
 const ALL_DEFS: [string, ReturnType<typeof def>][] = [
   ['uno', UNO], ['led', LED], ['res', RESISTOR],
-  ['mains', MAINS], ['sensor', SENSOR],
+  ['mains', MAINS], ['sensor', SENSOR], ['motor', MOTOR], ['bat', BAT],
 ];
 const ALL_PROFILES: [string, SafetyProfile][] = [
   ['uno', UNO_PROFILE], ['led', LED_PROFILE], ['res', RESISTOR_PROFILE],
   ['mains', MAINS_PROFILE], ['sensor', SENSOR_PROFILE],
+  ['motor', MOTOR_PROFILE], ['bat', BAT_PROFILE],
 ];
 
 interface Danger {
@@ -119,6 +142,17 @@ const DANGERS: Danger[] = [
       [net('l', [{ ref: 'PS1', pin: 'L' }])],
     ),
   },
+  {
+    name: 'motor switched with no flyback diode',
+    expectRule: 'RULE_FLYBACK_MISSING',
+    ctx: build(
+      [{ ref: 'U1', defId: 'uno' }, { ref: 'M1', defId: 'motor' }],
+      [
+        net('a', [{ ref: 'U1', pin: 'D9' }, { ref: 'M1', pin: 'pin 1' }]),
+        net('g', [{ ref: 'U1', pin: 'GND' }, { ref: 'M1', pin: 'pin 2' }]),
+      ],
+    ),
+  },
 ];
 
 describe('Tier 1 — known-dangerous circuits', () => {
@@ -165,4 +199,42 @@ describe('Tier 1 — safe circuits must not be blocked', () => {
     )();
     expect(gateOpens(runRules(ALL_RULES, ctx))).toBe(true);
   });
+});
+
+describe('Tier 1 — degradations that must be NAMED, even when the gate opens', () => {
+  const warnings: Danger[] = [
+    {
+      name: 'stall-rated motor on a PP3-class source',
+      expectRule: 'RULE_SOURCE_OVER_CAPACITY',
+      ctx: build(
+        [
+          { ref: 'B1', defId: 'bat' },
+          { ref: 'M1', defId: 'motor' },
+          { ref: 'D1', defId: 'led' },     // any diode-shaped part is NOT a flyback fix —
+        ],                                  // keep flyback out of this scenario via wiring
+        [
+          net('v', [{ ref: 'B1', pin: '+' }, { ref: 'M1', pin: 'pin 1' }, { ref: 'D1', pin: 'cathode' }]),
+          net('g', [{ ref: 'B1', pin: '-' }, { ref: 'M1', pin: 'pin 2' }, { ref: 'D1', pin: 'anode' }]),
+        ],
+      ),
+    },
+    {
+      name: 'computing module with a bare supply and no decoupling',
+      expectRule: 'RULE_DECOUPLING_MISSING',
+      ctx: build(
+        [{ ref: 'U1', defId: 'uno' }],
+        [net('v', [{ ref: 'U1', pin: '5V' }]), net('g', [{ ref: 'U1', pin: 'GND' }])],
+      ),
+    },
+  ];
+
+  for (const d of warnings) {
+    it(`names: ${d.name}`, () => {
+      const f = runRules(ALL_RULES, d.ctx()).find((x) => x.ruleId === d.expectRule)!;
+      expect(f).toBeDefined();
+      expect(f.severity).toBe('WARNING');
+      expect(f.message.length).toBeGreaterThan(40);
+      expect(f.suggestedFix?.length ?? 0).toBeGreaterThan(20);
+    });
+  }
 });

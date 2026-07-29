@@ -1,4 +1,7 @@
 import { breadboardCurrentRule, resistorDissipationRule } from './dissipation.js';
+import { decouplingRule } from './decoupling.js';
+import { flybackRule } from './flyback.js';
+import { sourceCapacityRule } from './source-capacity.js';
 import { envelopeRule } from './envelope.js';
 import { ledCurrentLimitRule } from './led-current-limit.js';
 import { pinCurrentRule } from './pin-current.js';
@@ -16,6 +19,9 @@ export const ALL_RULES: readonly Rule[] = [
   voltageDomainRule,
   resistorDissipationRule,
   breadboardCurrentRule,
+  flybackRule,
+  sourceCapacityRule,
+  decouplingRule,
 ];
 
 export {
@@ -23,7 +29,10 @@ export {
   breadboardCurrentRule,
   resistorDissipationRule,
 } from './dissipation.js';
+export { decouplingRule } from './decoupling.js';
 export { envelopeRule, MAX_SAFE_VOLTAGE } from './envelope.js';
+export { flybackRule } from './flyback.js';
+export { sourceCapacityRule } from './source-capacity.js';
 export { ledCurrentLimitRule } from './led-current-limit.js';
 export { loadOnNet, pinCurrentRule } from './pin-current.js';
 export { polarityRule } from './polarity.js';

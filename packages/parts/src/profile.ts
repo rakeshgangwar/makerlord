@@ -16,6 +16,8 @@ export const profileSchema = z.object({
   polarity: z.enum(['polarized', 'nonpolarized']).optional(),
   forwardVoltageV: z.number().nonnegative().optional(),
   maxCurrentMa: z.number().nonnegative().optional(),
+  /** Source-side: continuous current this SUPPLY can deliver (datasheet-cited). */
+  maxContinuousMa: z.number().nonnegative().optional(),
   logicLevelV: z.number().nonnegative().optional(),
   pinMaxMa: z.number().nonnegative().optional(),
   portTotalMaxMa: z.number().nonnegative().optional(),

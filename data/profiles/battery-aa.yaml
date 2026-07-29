@@ -1,9 +1,13 @@
 # Single AA cell, 1.5 V nominal (~2500 mAh alkaline — capacity lives in the
 # requirement model, not here). Terminal offsets from the breadboard SVG.
+# maxContinuousMa: Energizer E91 datasheet publishes continuous-discharge
+# performance to 250 mA; beyond that, capacity derates sharply and the
+# cell heats. 250 mA is the honest continuous design ceiling.
 partId: 1000AFDF10011leg
 footprint:
   pins:
     "-": [0, 0]
     "+": [0, -2]
 polarity: polarized
+maxContinuousMa: 250
 hazardClass: none

@@ -1,10 +1,15 @@
 # 9 V PP3 block. 9 V across a 5 V/3V3 part is the classic burnout — the
-# voltage-domain rule reads absMaxVoltageV on the LOAD side; the source
-# itself carries no limit fields beyond polarity.
+# voltage-domain rule reads absMaxVoltageV on the LOAD side.
+# maxContinuousMa: alkaline PP3 service curves (Energizer 522 datasheet)
+# are specified down to ~25 mA loads and collapse fast above ~100 mA
+# continuous — capacity and voltage both fall off a cliff. 100 mA is the
+# honest continuous ceiling for design purposes; motors at stall blow
+# straight past it.
 partId: 77c36646df552e9fe72f360837f556ccleg
 footprint:
   pins:
     "-": [0, 0]
     "+": [0, -1]
 polarity: polarized
+maxContinuousMa: 100
 hazardClass: none
