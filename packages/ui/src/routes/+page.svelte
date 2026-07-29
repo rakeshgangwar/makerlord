@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { postureFor, stagePhase } from '$lib/postures.js';
   import { presentSeverity } from '$lib/severity.js';
@@ -160,9 +161,9 @@
     await refreshProjections();
   }
 
-  $effect(() => {
-    if (browser && sessionId) openEvents();
-    if (browser && projectId) refreshProjections();
+  onMount(() => {
+    if (sessionId) openEvents();
+    if (projectId) refreshProjections();
   });
 </script>
 
