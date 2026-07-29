@@ -21,6 +21,8 @@ export interface DaemonOptions {
   token: string;
   /** Path to maker-mcp's entry (run in remote mode via env). */
   mcpMain: string;
+  /** Extra args before env config — the bundled binary passes ['mcp']. */
+  mcpArgs?: string[];
   initTimeoutMs?: number;
 }
 
@@ -145,7 +147,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
           acpSessionId = await agent.newSession(startOpts.cwd!, [{
             name: 'makerlord',
             command: process.execPath,
-            args: [opts.mcpMain],
+            args: [opts.mcpMain, ...(opts.mcpArgs ?? [])],
             env: {
               MAKERLORD_REMOTE_API: opts.api,
               MAKERLORD_REMOTE_TOKEN: opts.token,

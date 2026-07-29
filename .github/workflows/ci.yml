@@ -44,3 +44,13 @@ jobs:
 
       - name: svelte-check
         run: pnpm --filter @makerlord/ui run check
+
+      # The bridge ships as one self-spawning file — installable anywhere
+      # with install.sh --bundle, no checkout needed.
+      - name: Bundle maker-bridge
+        run: node scripts/build-bridge-bundle.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maker-bridge
+          path: dist/bridge.cjs
+          if-no-files-found: error

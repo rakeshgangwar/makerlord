@@ -8,8 +8,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@makerlord/mcp": "workspace:*",
     "@makerlord/protocol": "workspace:*",
     "@makerlord/tools": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {

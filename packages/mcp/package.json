@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "type": "module",
   "bin": { "maker-mcp": "./dist/main.js" },
-  "main": "./dist/server.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "dependencies": {
     "@makerlord/tools": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0",

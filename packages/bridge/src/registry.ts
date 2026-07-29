@@ -28,7 +28,7 @@ export const BUILTIN_PROBES: Omit<AgentEntry, 'detected' | 'source'>[] = [
   { id: 'gemini', displayName: 'Gemini CLI', command: 'gemini', args: ['--experimental-acp'] },
   { id: 'goose', displayName: 'Goose', command: 'goose', args: ['acp'] },
   { id: 'qwen', displayName: 'Qwen Code', command: 'qwen', args: ['--experimental-acp'] },
-  { id: 'kimi', displayName: 'Kimi CLI', command: 'kimi', args: ['--acp'] },
+  { id: 'kimi', displayName: 'Kimi CLI', command: 'kimi', args: ['acp'] },   // VERIFIED: `kimi --help`
 ];
 
 export function userAgentsPath(env: NodeJS.ProcessEnv = process.env): string {
