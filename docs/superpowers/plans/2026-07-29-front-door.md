@@ -2481,7 +2481,7 @@ git commit -m "feat(project): archetype library with universal requirement core"
 
 **Spec §5.4:** `buy` becomes one `PartInstance`; `build` becomes several; `undecided` is **refused**. `BlockLink`s become `IntentNet`s. **Blocks are retained** — each `PartInstance` carries its `blockId`, which is how D27's hierarchical schematic knows its sheet.
 
-- [ ] **Step 1: Add `blockId` to PartInstance**
+- [x] **Step 1: Add `blockId` to PartInstance**
 
 In `packages/circuit/src/model.ts`, change:
 
@@ -2496,7 +2496,7 @@ export interface PartInstance {
 }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `packages/project/test/expand.test.ts`:
 
@@ -2589,12 +2589,12 @@ describe('expandArchitecture', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/expand.test.ts`
 Expected: FAIL — cannot resolve `../src/architecture/expand.js`.
 
-- [ ] **Step 4: Write the expansion**
+- [x] **Step 4: Write the expansion**
 
 Create `packages/project/src/architecture/expand.ts`:
 
@@ -2658,12 +2658,12 @@ export function expandArchitecture(project: Project): Circuit {
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/expand.test.ts`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/project/src/architecture/expand.ts packages/circuit/src/model.ts packages/project/test/expand.test.ts

@@ -14,6 +14,9 @@ export interface PartInstance {
   ref: string;
   defId: string;
   placement?: Placement;
+  /** Set when this part came from expanding an architecture block (front door
+   *  spec §5.4). Carried through to the hierarchical schematic sheet (D27). */
+  blockId?: string;
 }
 
 export interface Wire {
