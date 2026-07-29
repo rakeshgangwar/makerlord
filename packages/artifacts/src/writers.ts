@@ -147,7 +147,8 @@ export async function writeCircuitDir(dir: string, session: Session): Promise<bo
     JSON.stringify({ intent: circuit.intent, derived: nets }, null, 2),
   );
 
-  write(join(dir, 'circuit', 'schematic.svg'), await renderSchematic(circuit, defsMap()));
+  const profileMap = new Map(Object.entries(bundle().profiles));
+  write(join(dir, 'circuit', 'schematic.svg'), await renderSchematic(circuit, defsMap(), undefined, profileMap));
   write(
     join(dir, 'circuit', 'breadboard.svg'),
     renderBreadboard(board(), circuit, footprints),

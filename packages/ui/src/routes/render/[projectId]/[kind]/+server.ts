@@ -44,7 +44,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     case 'schematic': {
       const circuit = file.project.circuit;
       if (!circuit) throw error(404, 'no circuit yet');
-      svg = await renderSchematic(circuit, defsMap(), selected);
+      svg = await renderSchematic(circuit, defsMap(), selected, profilesMap());
       break;
     }
     case 'breadboard': {

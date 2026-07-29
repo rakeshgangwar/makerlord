@@ -145,3 +145,86 @@ describe('waveform view', () => {
     expect(waveformView(trace, 800, 200, 500).points.length).toBeLessThanOrEqual(500);
   });
 });
+
+describe('schematic v3 — the ladder engine draws by electrical convention', () => {
+  const bat = {
+    id: 'bat', title: 'Battery block 9V', family: 'battery', properties: {},
+    pins: [{ id: 'p0', name: '-', role: 'gnd' }, { id: 'p1', name: '+', role: 'vcc' }],
+    buses: [], views: {},
+  } as PartDefinition;
+  const res = {
+    id: 'res', title: 'R', family: 'Resistor', properties: {},
+    pins: [{ id: 'c0', name: 'Pin 0', role: 'passive' }, { id: 'c1', name: 'Pin 1', role: 'passive' }],
+    buses: [], views: {},
+  } as PartDefinition;
+  const led = {
+    id: 'led', title: 'LED', family: 'LED', properties: {},
+    pins: [{ id: 'c0', name: 'cathode', role: 'passive' }, { id: 'c1', name: 'anode', role: 'passive' }],
+    buses: [], views: {},
+  } as PartDefinition;
+  const defs = new Map([['bat', bat], ['res', res], ['led', led]]);
+
+  /** Two parallel branches: R1→LED1 and R2→LED2, LED2 wired REVERSED. */
+  const ladder: Circuit = {
+    boardId: 't',
+    parts: [
+      { ref: 'BAT1', defId: 'bat' },
+      { ref: 'R1', defId: 'res' }, { ref: 'LED1', defId: 'led' },
+      { ref: 'R2', defId: 'res' }, { ref: 'LED2', defId: 'led' },
+    ],
+    wires: [],
+    intent: [
+      { name: 'vcc', members: [{ ref: 'BAT1', pin: '+' }, { ref: 'R1', pin: 'Pin 0' }, { ref: 'R2', pin: 'Pin 0' }] },
+      { name: 'a', members: [{ ref: 'R1', pin: 'Pin 1' }, { ref: 'LED1', pin: 'anode' }] },
+      { name: 'b', members: [{ ref: 'R2', pin: 'Pin 1' }, { ref: 'LED2', pin: 'cathode' }] },
+      { name: 'gnd', members: [{ ref: 'LED1', pin: 'cathode' }, { ref: 'LED2', pin: 'anode' }, { ref: 'BAT1', pin: '-' }] },
+    ],
+  };
+
+  it('extracts the ladder: two ordered branches with per-segment nets', async () => {
+    const { buildLadder } = await import('../src/renderers/ladder.js');
+    const m = buildLadder(ladder, defs)!;
+    expect(m).not.toBeNull();
+    expect(m.source.ref).toBe('BAT1');
+    expect(m.branches.map((b) => b.elements.map((e) => e.ref))).toEqual([
+      ['R1', 'LED1'], ['R2', 'LED2'],
+    ]);
+    expect(m.branches[0]!.nets).toEqual(['vcc', 'a', 'gnd']);
+  });
+
+  it('SAFETY: a reversed polarized element renders flipped — the drawing never lies', async () => {
+    const { buildLadder } = await import('../src/renderers/ladder.js');
+    const m = buildLadder(ladder, defs)!;
+    const led1 = m.branches.flatMap((b) => b.elements).find((e) => e.ref === 'LED1')!;
+    const led2 = m.branches.flatMap((b) => b.elements).find((e) => e.ref === 'LED2')!;
+    expect(led1.flipped).toBe(false);   // current enters at anode — correct
+    expect(led2.flipped).toBe(true);    // current enters at cathode — draw flipped
+    const svg = await renderSchematic(ladder, defs);
+    expect(svg).toContain('data-layout="ladder"');
+    expect(svg).toContain('scale(-1,1)');
+  });
+
+  it('is deterministic, keeps data-net segments, and labels values from profiles', async () => {
+    const profiles = new Map([
+      ['res', { resistanceOhms: 220 }],
+      ['led', { forwardVoltageV: 2 }],
+    ]) as never;
+    const a = await renderSchematic(ladder, defs, undefined, profiles);
+    expect(a).toBe(await renderSchematic(ladder, defs, undefined, profiles));
+    expect(a).toContain('data-net="vcc"');
+    expect(a).toContain('data-net="gnd"');
+    expect(a).toContain('220Ω');
+    expect(a).toContain('2V');
+  });
+
+  it('a non-ladder circuit falls back to the ELK path', async () => {
+    const noSource: Circuit = {
+      boardId: 't',
+      parts: [{ ref: 'R1', defId: 'res' }, { ref: 'LED1', defId: 'led' }],
+      wires: [],
+      intent: [{ name: 'mid', members: [{ ref: 'R1', pin: 'Pin 1' }, { ref: 'LED1', pin: 'anode' }] }],
+    };
+    const svg = await renderSchematic(noSource, defs);
+    expect(svg).toContain('data-layout="elk"');
+  });
+});

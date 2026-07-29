@@ -2,20 +2,21 @@
 // which the SvelteKit SSR bundler would otherwise chase and fail on.
 import ElkDefault from 'elkjs/lib/elk.bundled.js';
 import type { ELK as ElkApi, ElkNode, ElkExtendedEdge } from 'elkjs';
-
-// elkjs ships CJS with a default-export .d.ts; under NodeNext the runtime
-// default IS the constructor — the cast just tells TS what Node already does.
-const ELK = ElkDefault as unknown as new () => ElkApi;
 import type { Circuit } from '@makerlord/circuit';
-import type { PartDefinition } from '@makerlord/parts';
+import type { PartDefinition, SafetyProfile } from '@makerlord/parts';
+import { glyphFor, drawGlyph, type Glyph } from './glyphs.js';
+import { buildLadder, type LadderModel } from './ladder.js';
+
+const ELK = ElkDefault as unknown as new () => ElkApi;
 
 /**
- * The shared schematic layout engine (UI spec §6, D27, D45). ELK's layered
- * algorithm does placement and orthogonal routing; the LAYOUT is exported
- * separately from the SVG projection so the KiCad generator can consume the
- * same placement — one engine's bugs, not two. ELK is deterministic for a
- * given graph, which keeps the golden-equality property.
+ * Schematic v3: electrical-convention layout for ladder circuits (source
+ * left, supply bus top, return bus bottom, one row per parallel branch,
+ * glyphs oriented by current direction) with the D45 ELK path as the
+ * fallback for anything non-ladder. Deterministic; `data-part`/`data-net`
+ * attributes are the contract the virtual bench animates.
  */
+
 export interface SymbolPlacement {
   ref: string;
   x: number;
@@ -28,9 +29,7 @@ export interface SymbolPlacement {
 
 export interface NetRoute {
   name: string;
-  /** Pin endpoints, for connectivity consumers (KiCad). */
   points: [number, number][];
-  /** Routed orthogonal polylines from ELK, for drawing. */
   segments: [number, number][][];
 }
 
@@ -41,22 +40,114 @@ export interface SchematicLayout {
   height: number;
 }
 
-export type Glyph =
-  | 'resistor' | 'led' | 'diode' | 'battery' | 'capacitor' | 'box';
+type Profiles = ReadonlyMap<string, SafetyProfile> | undefined;
 
-/** Family strings come from the .fzp corpus — match loosely, fall back to a box. */
-export function glyphFor(def: PartDefinition | undefined): Glyph {
-  const family = (def?.family ?? '').toLowerCase();
-  const title = (def?.title ?? '').toLowerCase();
-  const twoPin = (def?.pins.length ?? 0) === 2;
-  const hay = `${family} ${title}`;
-  if (/resistor/.test(hay) && twoPin) return 'resistor';
-  if (/led|light.emitting/.test(hay)) return 'led';
-  if (/diode|rectifier/.test(hay) && twoPin) return 'diode';
-  if (/battery/.test(hay) && twoPin) return 'battery';
-  if (/capacitor/.test(hay) && twoPin) return 'capacitor';
-  return 'box';
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+function valueLabel(defId: string, profiles: Profiles): string | undefined {
+  const p = profiles?.get(defId) as { resistanceOhms?: number; forwardVoltageV?: number } | undefined;
+  if (p?.resistanceOhms !== undefined) return `${p.resistanceOhms}Ω`;
+  if (p?.forwardVoltageV !== undefined) return `${p.forwardVoltageV}V`;
+  return undefined;
+}
+
+// ── the conventional ladder drawing ───────────────────────────────────
+
+const ELEM_W = 88;
+const ELEM_H = 36;
+const ELEM_GAP = 40;
+const ROW_H = 78;
+const X_BAT = 58;
+const X_FEED = 128;
+
+function renderLadder(
+  model: LadderModel,
+  circuit: Circuit,
+  defs: ReadonlyMap<string, PartDefinition>,
+  selectedRef: string | undefined,
+  profiles: Profiles,
+): string {
+  const nB = model.branches.length;
+  const maxLen = Math.max(...model.branches.map((b) => b.elements.length));
+  const x0 = X_FEED + 34;
+  const xC = x0 + maxLen * (ELEM_W + ELEM_GAP) - ELEM_GAP + 34;
+  const supplyY = 36;
+  const yOf = (i: number): number => supplyY + ROW_H * (i + 1);
+  const returnY = supplyY + ROW_H * (nB + 1);
+  const width = xC + 56;
+  const height = returnY + 44;
+
+  const wire = (net: string, pts: [number, number][], heavy = false): string =>
+    `<polyline data-net="${esc(net)}" points="${pts.map((p) => p.join(',')).join(' ')}" ` +
+    `fill="none" stroke="#0a7d33" stroke-width="${heavy ? 2 : 1.4}"/>`;
+  const dot = (x: number, y: number): string =>
+    `<circle cx="${x}" cy="${y}" r="2.6" fill="#0a7d33"/>`;
+
+  const out: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" data-renderer="schematic" data-layout="ladder" font-family="Archivo, system-ui, sans-serif">`,
+    `<rect width="${width}" height="${height}" fill="#fff"/>`,
+  ];
+
+  // Source: vertical battery between the buses at the left edge.
+  const midY = (supplyY + returnY) / 2;
+  const halfSpan = 24;
+  out.push(`<g data-part="${esc(model.source.ref)}"${model.source.ref === selectedRef ? ' data-selected="true"' : ''}>`);
+  out.push(wire(model.source.plusNet, [[X_BAT, supplyY], [X_BAT, midY - halfSpan]], true));
+  out.push(wire(model.source.minusNet, [[X_BAT, midY + halfSpan], [X_BAT, returnY]], true));
+  out.push(
+    `<g transform="translate(${X_BAT + 14}, ${midY - halfSpan}) rotate(90)">${drawGlyph('battery', halfSpan * 2, 28)}</g>`,
+  );
+  out.push(
+    `<text x="${X_BAT - 12}" y="${midY + 4}" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="end">${esc(model.source.ref)}</text>`,
+  );
+  out.push('</g>');
+
+  // Supply bus + feeder (one net, one polyline): battery + → top bus → down the taps.
+  out.push(wire(model.source.plusNet, [[X_BAT, supplyY], [X_FEED, supplyY], [X_FEED, yOf(nB - 1)]], true));
+  // Return collector + bottom bus.
+  out.push(wire(model.source.minusNet, [[xC, yOf(0)], [xC, returnY], [X_BAT, returnY]], true));
+
+  model.branches.forEach((branch, i) => {
+    const y = yOf(i);
+    // Feeder tap → first element.
+    out.push(wire(branch.nets[0]!, [[X_FEED, y], [x0, y]]));
+    if (i !== nB - 1) out.push(dot(X_FEED, y));
+    branch.elements.forEach((el, k) => {
+      const x = x0 + k * (ELEM_W + ELEM_GAP);
+      const def = defs.get(el.defId);
+      const glyph = glyphFor(def);
+      const selected = el.ref === selectedRef;
+      const flip = el.flipped ? ` transform="translate(${x + ELEM_W}, ${y - ELEM_H / 2}) scale(-1,1)"` : ` transform="translate(${x}, ${y - ELEM_H / 2})"`;
+      out.push(`<g data-part="${esc(el.ref)}"${selected ? ' data-selected="true"' : ''}>`);
+      if (selected) {
+        out.push(`<rect x="${x - 4}" y="${y - ELEM_H / 2 - 4}" width="${ELEM_W + 8}" height="${ELEM_H + 8}" fill="none" stroke="#1d4ed8" stroke-width="1.6" rx="4"/>`);
+      }
+      out.push(`<g${flip}>${drawGlyph(glyph, ELEM_W, ELEM_H)}</g>`);
+      out.push(
+        `<text x="${x + ELEM_W / 2}" y="${y - ELEM_H / 2 - 8}" font-size="9.5" font-family="IBM Plex Mono, monospace" text-anchor="middle">${esc(el.ref)}</text>`,
+      );
+      const value = valueLabel(el.defId, profiles);
+      if (value) {
+        out.push(
+          `<text x="${x + ELEM_W / 2}" y="${y + ELEM_H / 2 + 13}" font-size="9" font-family="IBM Plex Mono, monospace" fill="#4c555c" text-anchor="middle">${esc(value)}</text>`,
+        );
+      }
+      out.push('</g>');
+      // Wire to the next element (or the collector).
+      const xEnd = x + ELEM_W;
+      const xNext = k === branch.elements.length - 1 ? xC : x0 + (k + 1) * (ELEM_W + ELEM_GAP);
+      out.push(wire(branch.nets[k + 1]!, [[xEnd, y], [xNext, y]]));
+    });
+    if (i !== 0) out.push(dot(xC, y));
+  });
+
+  out.push('</svg>');
+  return out.join('\n');
+}
+
+// ── the ELK fallback (D45) for non-ladder circuits ────────────────────
 
 const TWO_PIN_W = 72;
 const TWO_PIN_H = 28;
@@ -67,7 +158,6 @@ function nodeFor(ref: string, def: PartDefinition | undefined): ElkNode {
   const glyph = glyphFor(def);
   const pins = def?.pins ?? [];
   if (glyph !== 'box') {
-    // Two-terminal symbol: one port each side, mid-height.
     return {
       id: ref,
       width: TWO_PIN_W,
@@ -92,7 +182,6 @@ function nodeFor(ref: string, def: PartDefinition | undefined): ElkNode {
       id: `${ref}::${pin.name}`,
       width: 0.1,
       height: 0.1,
-      // Alternate west/east, walking down each side.
       x: i % 2 === 0 ? 0 : BOX_W,
       y: BOX_ROW + Math.floor(i / 2) * BOX_ROW,
     })),
@@ -105,22 +194,15 @@ export async function layoutSchematic(
 ): Promise<SchematicLayout> {
   const elk = new ELK();
   const children = circuit.parts.map((inst) => nodeFor(inst.ref, defs.get(inst.defId)));
-  const known = new Set(
-    children.flatMap((n) => (n.ports ?? []).map((p) => p.id)),
-  );
+  const known = new Set(children.flatMap((n) => (n.ports ?? []).map((p) => p.id)));
 
-  // A net of N members becomes a chain of N-1 edges sharing the net name.
   const edges: ElkExtendedEdge[] = [];
   for (const net of circuit.intent) {
     const ports = net.members
       .map((m) => `${m.ref}::${m.pin}`)
       .filter((id) => known.has(id));
     for (let i = 1; i < ports.length; i += 1) {
-      edges.push({
-        id: `${net.name}#${i}`,
-        sources: [ports[i - 1]!],
-        targets: [ports[i]!],
-      });
+      edges.push({ id: `${net.name}#${i}`, sources: [ports[i - 1]!], targets: [ports[i]!] });
     }
   }
 
@@ -178,89 +260,32 @@ export async function layoutSchematic(
     return { name: net.name, points, segments };
   });
 
-  return {
-    symbols,
-    nets,
-    width: graph.width ?? 400,
-    height: graph.height ?? 300,
-  };
+  return { symbols, nets, width: graph.width ?? 400, height: graph.height ?? 300 };
 }
 
-/** The glyph vocabulary: drawn in local coords for a w×h symbol, pin A at
- *  (0, h/2), pin B at (w, h/2). Stroke only — theme-neutral. */
-function drawGlyph(g: Glyph, w: number, h: number): string {
-  const m = h / 2;
-  const s = 'fill="none" stroke="#111" stroke-width="1.4"';
-  switch (g) {
-    case 'resistor': {
-      const zig = [
-        [0, m], [w * 0.2, m], [w * 0.27, m - 8], [w * 0.4, m + 8],
-        [w * 0.53, m - 8], [w * 0.66, m + 8], [w * 0.76, m], [w, m],
-      ].map(([x, y]) => `${x},${y}`).join(' ');
-      return `<polyline points="${zig}" ${s}/>`;
-    }
-    case 'led':
-    case 'diode': {
-      const a = w * 0.34;
-      const b = w * 0.62;
-      const tri = `<line x1="0" y1="${m}" x2="${a}" y2="${m}" ${s}/>` +
-        `<polygon points="${a},${m - 8} ${a},${m + 8} ${b},${m}" fill="#111"/>` +
-        `<line x1="${b}" y1="${m - 8}" x2="${b}" y2="${m + 8}" ${s}/>` +
-        `<line x1="${b}" y1="${m}" x2="${w}" y2="${m}" ${s}/>`;
-      if (g === 'diode') return tri;
-      const arrow = (dx: number): string =>
-        `<line x1="${w * 0.42 + dx}" y1="${m - 9}" x2="${w * 0.5 + dx}" y2="${m - 16}" ${s}/>` +
-        `<polygon points="${w * 0.5 + dx},${m - 16} ${w * 0.46 + dx},${m - 12} ${w * 0.49 + dx},${m - 11}" fill="#111"/>`;
-      return tri + arrow(0) + arrow(8);
-    }
-    case 'battery': {
-      const long = w * 0.44;
-      const short = w * 0.56;
-      return `<line x1="0" y1="${m}" x2="${long}" y2="${m}" ${s}/>` +
-        `<line x1="${long}" y1="${m - 11}" x2="${long}" y2="${m + 11}" ${s} stroke-width="2"/>` +
-        `<line x1="${short}" y1="${m - 5}" x2="${short}" y2="${m + 5}" ${s}/>` +
-        `<line x1="${short}" y1="${m}" x2="${w}" y2="${m}" ${s}/>` +
-        `<text x="${long - 5}" y="${m - 14}" font-size="8" text-anchor="end">+</text>`;
-    }
-    case 'capacitor': {
-      const p1 = w * 0.44;
-      const p2 = w * 0.56;
-      return `<line x1="0" y1="${m}" x2="${p1}" y2="${m}" ${s}/>` +
-        `<line x1="${p1}" y1="${m - 10}" x2="${p1}" y2="${m + 10}" ${s}/>` +
-        `<line x1="${p2}" y1="${m - 10}" x2="${p2}" y2="${m + 10}" ${s}/>` +
-        `<line x1="${p2}" y1="${m}" x2="${w}" y2="${m}" ${s}/>`;
-    }
-    case 'box':
-      return `<rect x="0" y="0" width="${w}" height="${h}" fill="#fff" stroke="#111" stroke-width="1.2"/>`;
-  }
-}
-
-export async function renderSchematic(
+async function renderElk(
   circuit: Circuit,
   defs: ReadonlyMap<string, PartDefinition>,
   selectedRef?: string,
 ): Promise<string> {
   const layout = await layoutSchematic(circuit, defs);
   const lines: string[] = [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${layout.width} ${layout.height}" data-renderer="schematic">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${layout.width} ${layout.height}" data-renderer="schematic" data-layout="elk">`,
     `<rect width="${layout.width}" height="${layout.height}" fill="#fff"/>`,
   ];
 
   for (const net of layout.nets) {
     for (const seg of net.segments) {
       lines.push(
-        `<polyline data-net="${net.name}" points="${seg.map(([x, y]) => `${x},${y}`).join(' ')}" ` +
+        `<polyline data-net="${esc(net.name)}" points="${seg.map(([x, y]) => `${x},${y}`).join(' ')}" ` +
           'fill="none" stroke="#0a7d33" stroke-width="1.3"/>',
       );
     }
-    // Junction dots where more than two segment ends meet a pin.
     for (const [x, y] of net.points) {
       const touching = net.segments.filter((seg) =>
         seg.some(([sx, sy]) => sx === x && sy === y),
       ).length;
-      if (touching > 1) {
-        lines.push(`<circle cx="${x}" cy="${y}" r="2" fill="#0a7d33"/>`);
-      }
+      if (touching > 1) lines.push(`<circle cx="${x}" cy="${y}" r="2" fill="#0a7d33"/>`);
     }
   }
 
@@ -268,19 +293,19 @@ export async function renderSchematic(
     const selected = sym.ref === selectedRef;
     const inner = drawGlyph(sym.glyph, sym.width, sym.height);
     lines.push(
-      `<g data-part="${sym.ref}" transform="translate(${sym.x},${sym.y})"${selected ? ' data-selected="true"' : ''}>` +
+      `<g data-part="${esc(sym.ref)}" transform="translate(${sym.x},${sym.y})"${selected ? ' data-selected="true"' : ''}>` +
         (selected
           ? `<rect x="-3" y="-3" width="${sym.width + 6}" height="${sym.height + 6}" fill="none" stroke="#1d4ed8" stroke-width="1.6" rx="3"/>`
           : '') +
         inner +
-        `<text x="${sym.width / 2}" y="-5" font-size="9" font-family="monospace" text-anchor="middle">${sym.ref}</text>` +
+        `<text x="${sym.width / 2}" y="-5" font-size="9" font-family="monospace" text-anchor="middle">${esc(sym.ref)}</text>` +
         (sym.glyph === 'box'
           ? sym.pins
               .map(
                 (p) =>
                   `<circle cx="${p.x - sym.x}" cy="${p.y - sym.y}" r="1.6" fill="#111"/>` +
                   `<text x="${p.x - sym.x < sym.width / 2 ? p.x - sym.x + 4 : p.x - sym.x - 4}" y="${p.y - sym.y + 3}" ` +
-                  `font-size="6.5" text-anchor="${p.x - sym.x < sym.width / 2 ? 'start' : 'end'}">${p.name}</text>`,
+                  `font-size="6.5" text-anchor="${p.x - sym.x < sym.width / 2 ? 'start' : 'end'}">${esc(p.name)}</text>`,
               )
               .join('')
           : '') +
@@ -290,4 +315,15 @@ export async function renderSchematic(
 
   lines.push('</svg>');
   return lines.join('\n');
+}
+
+export async function renderSchematic(
+  circuit: Circuit,
+  defs: ReadonlyMap<string, PartDefinition>,
+  selectedRef?: string,
+  profiles?: Profiles,
+): Promise<string> {
+  const ladder = buildLadder(circuit, defs);
+  if (ladder) return renderLadder(ladder, circuit, defs, selectedRef, profiles);
+  return renderElk(circuit, defs, selectedRef);
 }
