@@ -200,6 +200,29 @@
     await refreshProjections();
   }
 
+  // ── simulation (stage ⑤) ────────────────────────────────────────────
+  /** @type {any} */
+  let simResult = $state(null);
+  let simRunning = $state(false);
+
+  async function runSimulation() {
+    if (!projectId || simRunning) return;
+    simRunning = true;
+    try {
+      const r = await api(`projects/${projectId}/tool`, {
+        name: 'sim_run', input: { name: 'ui', analyses: ['op'] },
+      });
+      if (r.data.ok) {
+        simResult = r.data.data;
+        if (simResult.findings?.length) findings = simResult.findings;
+      } else {
+        lastError = r.data.error ?? 'simulation failed';
+      }
+    } finally {
+      simRunning = false;
+    }
+  }
+
   async function openGate() {
     const r = await api(`projects/${projectId}/tool`, { name: 'gate_open', input: {} });
     if (r.data.ok === false) findings = r.data.findings.length ? r.data.findings : findings;
@@ -328,9 +351,47 @@
               </figure>
             {/each}
           </div>
-          <button class="secondary" onclick={() => runCheck(stage === 4 ? 'check_architecture' : 'check_circuit')}>
-            Run checks
-          </button>
+          <div class="inspect-actions">
+            <button class="secondary" onclick={() => runCheck(stage === 4 ? 'check_architecture' : 'check_circuit')}>
+              Run checks
+            </button>
+            {#if stage === 5}
+              <button class="primary sim-btn" onclick={runSimulation} disabled={simRunning}>
+                {simRunning ? 'Solving…' : 'Run .op simulation'}
+              </button>
+            {/if}
+          </div>
+          {#if stage === 5 && simResult}
+            <div class="sim-result">
+              <p class="mono sim-head">
+                {simResult.converged ? `SOLVED · rung: ${simResult.rung}` : 'DID NOT CONVERGE'}
+                · provenance: <span class="badge-assumed">{simResult.provenance}</span>
+              </p>
+              {#if simResult.converged}
+                <table class="sim-table">
+                  <thead><tr><th>node</th><th>V</th></tr></thead>
+                  <tbody>
+                    {#each Object.entries(simResult.nodeVoltages) as [node, v]}
+                      <tr><td class="mono">{node}</td><td class="mono">{v.toFixed(3)}</td></tr>
+                    {/each}
+                  </tbody>
+                </table>
+                {#if Object.keys(simResult.deviceDissipationW).length > 0}
+                  <table class="sim-table">
+                    <thead><tr><th>device</th><th>W</th></tr></thead>
+                    <tbody>
+                      {#each Object.entries(simResult.deviceDissipationW) as [ref, w]}
+                        <tr><td class="mono">{ref}</td><td class="mono">{w.toFixed(3)}</td></tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                {/if}
+              {/if}
+              <details><summary class="mono">circuit.cir — check our work</summary>
+                <pre class="cir">{simResult.cir}</pre>
+              </details>
+            </div>
+          {/if}
         {:else}
           <p class="empty">No project on the bench — start one in stage 01.</p>
         {/if}
@@ -600,6 +661,16 @@
   .predicted { color: var(--mask); font-weight: 600; font-family: var(--font-mono); font-size: 0.95rem; }
 
   .empty { color: var(--ink-soft); }
+
+  /* ── simulation results ── */
+  .inspect-actions { display: flex; gap: 0.6rem; align-items: center; }
+  .sim-btn { margin-top: 0; }
+  .sim-result { background: var(--panel); border-radius: 8px; padding: 0.8rem 1rem; margin-top: 0.9rem; max-width: 40rem; }
+  .sim-head { font-size: 0.78rem; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .sim-table { border-collapse: collapse; margin: 0.5rem 1.5rem 0.5rem 0; display: inline-table; }
+  .sim-table th, .sim-table td { border: 1px solid var(--line); padding: 0.2rem 0.6rem; font-size: 0.8rem; text-align: left; }
+  .sim-table th { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
+  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.75rem; overflow-x: auto; }
 
   /* ── the right panel: bench state + library ── */
   .artifacts { min-width: 15rem; max-width: 17rem; }

@@ -1,9 +1,11 @@
+import { dirname } from 'node:path';
 import { z } from 'zod';
+import type { SafetyProfile } from '@makerlord/parts';
 import {
-  dischargePlan, notSimulable, ngspiceAvailable, spiceNetlist,
+  dischargePlan, notSimulable, ngspiceAvailable, runOpAnalysis, spiceNetlist,
   type Stimulus,
 } from '@makerlord/sim';
-import { board, defsMap, profilesMap } from '../data.js';
+import { defsMap, profilesMap } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { requireSession } from '../def.js';
 import { ok } from '../result.js';
@@ -69,7 +71,7 @@ const simRun: ToolDef = {
     const circuit = s.file.project.circuit;
     if (!circuit) throw new Error('sim_run: no circuit yet — expand or add parts first');
 
-    const cards = ['.op'];
+    const cards: string[] = [];
     if (analyses.includes('tran')) cards.push(`.tran 10u ${tranStop ?? 0.01}`);
     if (analyses.includes('ac')) cards.push('.ac dec 20 1 1e6');
 
@@ -85,16 +87,42 @@ const simRun: ToolDef = {
       );
     }
 
+    // Per-ref safety profiles for the op checks.
+    const profilesByRef = new Map<string, SafetyProfile>();
+    for (const part of circuit.parts) {
+      const profile = profilesMap().get(part.defId);
+      if (profile) profilesByRef.set(part.ref, profile);
+    }
+
     const runId = `run-${Object.keys(state.runs).length + 1}-${name}`;
+    // The op baseline always runs (spec §4.1) — solved, not just generated.
+    const op = await runOpAnalysis(dirname(s.path), runId, net, profilesByRef);
+
+    const findings = [...net.findings, ...op.findings];
+    if (!op.converged) {
+      findings.push({
+        ruleId: 'SIM_NO_CONVERGENCE',
+        severity: 'NOTE',
+        message:
+          'The simulation could not solve this circuit — a statement about ' +
+          `our tool, not your design. Rungs tried: ${op.artifacts.outcome.rungsTried.join(' → ')}.`,
+        affected: {},
+      });
+    }
+
     state.runs[runId] = {
       name,
       provenance: net.provenance,
-      findings: net.findings,
+      findings,
     };
     return ok({
       runId,
       provenance: net.provenance,
-      findings: net.findings,
+      converged: op.converged,
+      rung: op.rung,
+      nodeVoltages: op.nodeVoltages,
+      deviceDissipationW: op.deviceDissipationW,
+      findings,
       cir: net.cir,
     });
   },
