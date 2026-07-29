@@ -99,10 +99,12 @@ describe('envelopeRule', () => {
 describe('ALL_RULES', () => {
   it('registers every implemented rule', () => {
     expect(ALL_RULES.map((r) => r.id).sort()).toEqual([
+      'RULE_BREADBOARD_CURRENT',
       'RULE_LED_NO_CURRENT_LIMIT',
       'RULE_OUT_OF_SAFE_ENVELOPE',
       'RULE_PIN_CURRENT_EXCEEDED',
       'RULE_POLARIZED_PART_REVERSED',
+      'RULE_RESISTOR_DISSIPATION',
       'RULE_SUPPLY_RAIL_SHORT',
       'RULE_VOLTAGE_DOMAIN_MISMATCH',
     ]);

@@ -1,3 +1,4 @@
+import { breadboardCurrentRule, resistorDissipationRule } from './dissipation.js';
 import { envelopeRule } from './envelope.js';
 import { ledCurrentLimitRule } from './led-current-limit.js';
 import { pinCurrentRule } from './pin-current.js';
@@ -13,8 +14,15 @@ export const ALL_RULES: readonly Rule[] = [
   polarityRule,
   pinCurrentRule,
   voltageDomainRule,
+  resistorDissipationRule,
+  breadboardCurrentRule,
 ];
 
+export {
+  BREADBOARD_MAX_A,
+  breadboardCurrentRule,
+  resistorDissipationRule,
+} from './dissipation.js';
 export { envelopeRule, MAX_SAFE_VOLTAGE } from './envelope.js';
 export { ledCurrentLimitRule } from './led-current-limit.js';
 export { loadOnNet, pinCurrentRule } from './pin-current.js';
