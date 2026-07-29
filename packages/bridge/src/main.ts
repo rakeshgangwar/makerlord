@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 /**
@@ -132,11 +131,12 @@ async function runDaemon(): Promise<void> {
   }
 
   // Bundled (bridge.cjs) → spawn OURSELF for the MCP role; from the repo →
-  // the mcp package's own entry. import.meta.url does not survive the CJS
-  // bundle, so only touch it on the repo path.
+  // the mcp package's own entry. argv[1] IS this entry file on every launch
+  // path (direct, pnpm script, install.sh wrapper), so no import.meta —
+  // which would not survive the CJS bundle anyway.
   const self = process.argv[1] ?? '';
   const bundled = self.endsWith('bridge.cjs');
-  const here = bundled ? '' : dirname(fileURLToPath(import.meta.url));
+  const here = dirname(self);
 
   const daemon = await startDaemon({
     api,
