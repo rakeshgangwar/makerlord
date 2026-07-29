@@ -1974,7 +1974,7 @@ git commit -m "feat(project): pin count rule, architecture registry and gate"
 
 **Spec §2.3 / §3.5:** a `sourced` claim without `evidence.url` + `evidence.fetchedAt` is a **validation error**, not a finding. A `verified` claim needs `evidence.toolCall`. Hallucinated prior art cannot enter the model because the type will not hold it.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/feasibility.test.ts`:
 
@@ -2062,12 +2062,12 @@ describe('parseFeasibility', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/feasibility.test.ts`
 Expected: FAIL — cannot resolve `../src/feasibility/schema.js`.
 
-- [ ] **Step 3: Write the schema**
+- [x] **Step 3: Write the schema**
 
 Create `packages/project/src/feasibility/schema.ts`:
 
@@ -2144,12 +2144,12 @@ export function parseFeasibility(input: unknown): Feasibility {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/feasibility.test.ts`
 Expected: PASS, 10 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/feasibility/schema.ts packages/project/test/feasibility.test.ts
