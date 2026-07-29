@@ -5,6 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@makerlord/artifacts": "workspace:*",
     "@makerlord/circuit": "workspace:*",
     "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
@@ -12,19 +13,20 @@
     "@makerlord/sim": "workspace:*",
     "@makerlord/tools": "workspace:*",
     "dompurify": "^3.4.12",
-    "marked": "^18.0.7",
-    "@makerlord/artifacts": "workspace:*"
+    "marked": "^18.0.7"
   },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --threshold error"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.0.0",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "svelte": "^5.0.0",
+    "svelte-check": "^4.7.4",
     "vite": "^6.0.0"
   }
 }

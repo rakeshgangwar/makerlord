@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      # The parts corpus (~365 MB submodule) is cached against its pinned SHA
+      # so most runs skip the clone entirely.
+      - name: Resolve corpus SHA
+        id: corpus
+        run: echo "sha=$(git ls-tree HEAD vendor/fritzing-parts --object-only)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: corpus-cache
+        with:
+          path: vendor/fritzing-parts
+          key: fritzing-parts-${{ steps.corpus.outputs.sha }}
+      - name: Fetch corpus
+        if: steps.corpus-cache.outputs.cache-hit != 'true'
+        run: git submodule update --init --depth 1 vendor/fritzing-parts
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # The sim known-answer suite runs against the real solver, as on the
+      # bench: a silent skip once shipped a wrong diode model.
+      - name: Install ngspice
+        run: sudo apt-get update -q && sudo apt-get install -y -q ngspice
+
+      - run: pnpm install --frozen-lockfile
+
+      # Typecheck + the full Vitest suite (danger corpus included).
+      - run: pnpm test
+
+      - name: svelte-check
+        run: pnpm --filter @makerlord/ui run check
