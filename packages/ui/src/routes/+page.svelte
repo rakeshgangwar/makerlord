@@ -390,6 +390,24 @@
     bridgeCodeDraft = '';
   }
 
+  // ── the docked chat: the conversation follows every posture ─────────
+  // Inspect/bench/decide keep their primary surface; the agent stays one
+  // keystroke away. Streaming auto-opens the log so its questions are
+  // answerable from the screen they were asked on.
+  let dockOpen = $state(false);
+  /** @type {HTMLElement | null} */
+  let dockLog = $state(null);
+  $effect(() => {
+    void streamingText;
+    void messages.length;
+    if (dockLog) dockLog.scrollTop = dockLog.scrollHeight;
+  });
+  $effect(() => {
+    // Streaming latches the log open — the answer must not vanish with the
+    // turn; only the maker's ▾ closes it.
+    if (streamingText) dockOpen = true;
+  });
+
   const blockerCount = $derived(
     findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
   );
@@ -591,6 +609,38 @@
     {:else}
       <div class="decide"><p class="empty">A report, a number, one action — arrives with its stage.</p></div>
     {/if}
+
+    {#if posture !== 'converse' && projectId}
+      <div class="dock" class:open={dockOpen || turnActive || streamingText}>
+        {#if dockOpen || turnActive || streamingText}
+          <div class="dock-log" bind:this={dockLog}>
+            {#each messages.slice(-4) as m}
+              <div class="msg {m.role}">
+                <span class="who">{m.role}</span>
+                {#if m.role === 'agent'}<div class="md">{@html md(m.text)}</div>{:else}{m.text}{/if}
+              </div>
+            {/each}
+            {#if streamingText}
+              <div class="msg agent streaming"><span class="who">agent</span><div class="md">{@html md(streamingText)}</div></div>
+            {/if}
+            {#if toolActivity.length > 0}
+              <div class="tools">
+                {#each toolActivity as t}
+                  <span class="tool">{t.refused ? '⛔' : t.done ? '✓' : '·'} {t.name}{t.refused ? ` ${t.refused}` : ''}</span>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/if}
+        <form class="composer dock-composer" onsubmit={(e) => { e.preventDefault(); sendPrompt(promptDraft); promptDraft = ''; }}>
+          <button type="button" class="dock-toggle" aria-label={dockOpen ? 'collapse conversation' : 'expand conversation'}
+            onclick={() => (dockOpen = !dockOpen)}>{dockOpen || turnActive || streamingText ? '▾' : '▴'}</button>
+          <input bind:value={promptDraft} name="dockprompt"
+            placeholder={turnActive ? 'steer the agent mid-turn…' : 'ask the agent…'} />
+          <button class="primary" type="submit">{turnActive ? 'Steer' : 'Send'}</button>
+        </form>
+      </div>
+    {/if}
   </section>
 
   <aside class="artifacts" aria-label="Artifacts">
@@ -772,7 +822,26 @@
   .new-project { margin-top: 1rem; border-left-color: transparent; }
 
   /* ── workspace ── */
-  .workspace { flex: 1; min-width: 0; }
+  .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .workspace > :first-child { flex: 1; }
+
+  /* ── the dock: chat follows the maker to every posture ── */
+  .dock {
+    position: sticky; bottom: 0.6rem; margin-top: 0.9rem; align-self: stretch;
+    max-width: 46rem; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 0.45rem 0.6rem; box-shadow: 0 4px 18px rgb(20 24 27 / 12%);
+  }
+  .dock-log {
+    max-height: 38vh; overflow-y: auto; display: flex; flex-direction: column;
+    gap: 0.5rem; padding: 0.3rem 0.2rem 0.5rem; font-size: 0.88rem;
+  }
+  .dock-composer { margin-top: 0; }
+  .dock-toggle {
+    border: 1px solid var(--line); background: transparent; border-radius: 6px;
+    padding: 0 0.55rem; cursor: pointer; color: var(--ink-soft);
+  }
+  .dock-toggle:hover { color: var(--mask); border-color: var(--mask); }
   .converse-start { max-width: 40rem; margin: 9vh auto 0; }
   .project-list { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
   .list-head {
