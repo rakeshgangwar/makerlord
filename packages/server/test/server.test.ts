@@ -170,6 +170,19 @@ describe('the hosted surface', () => {
 });
 
 describe('the UI-facing read + tool surface', () => {
+  it('GET /api/projects lists every project, newest first', async () => {
+    await post('/api/projects', { intent: 'first' });
+    await new Promise((r) => setTimeout(r, 20));
+    await post('/api/projects', { intent: 'second' });
+    const res = await fetch(`${base}/api/projects`);
+    const { projects } = (await res.json()) as {
+      projects: { intent: string; projectId: string; updatedAt: string }[];
+    };
+    expect(projects.length).toBeGreaterThanOrEqual(2);
+    expect(projects[0]!.intent).toBe('second');
+    expect(projects.map((p) => p.intent)).toContain('first');
+  });
+
   it('GET /api/projects/:id returns the file and its hash', async () => {
     const { data: p } = await post('/api/projects', { intent: 'a lamp' });
     const res = await fetch(`${base}/api/projects/${p.projectId as string}`);

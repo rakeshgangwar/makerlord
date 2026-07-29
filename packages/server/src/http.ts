@@ -72,6 +72,11 @@ async function route(
     }
   }
 
+  if (req.method === 'GET' && path === '/api/projects') {
+    json(res, 200, { projects: sessions.listProjects() });
+    return;
+  }
+
   if (req.method === 'POST' && path === '/api/projects') {
     const { intent } = await readBody(req);
     if (typeof intent !== 'string' || intent.trim().length === 0) {

@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import {
+  appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
 import { AgentSession } from '@makerlord/agent';
@@ -38,6 +40,28 @@ export class HostedSessions {
 
   constructor(private opts: HostOptions) {
     mkdirSync(resolve(opts.projectsRoot), { recursive: true });
+  }
+
+  /** Every project on the bench, newest first. */
+  listProjects(): { projectId: string; intent: string; updatedAt: string }[] {
+    const root = resolve(this.opts.projectsRoot);
+    if (!existsSync(root)) return [];
+    const out: { projectId: string; intent: string; updatedAt: string }[] = [];
+    for (const entry of readdirSync(root)) {
+      const path = join(root, entry, 'project.json');
+      if (!existsSync(path)) continue;
+      try {
+        const session = loadSession(path);
+        out.push({
+          projectId: entry,
+          intent: session.file.project.intent,
+          updatedAt: statSync(path).mtime.toISOString(),
+        });
+      } catch {
+        // an unreadable project is skipped, not fatal
+      }
+    }
+    return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   createProject(intent: string): { projectId: string } {

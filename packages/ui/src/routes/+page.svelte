@@ -159,6 +159,21 @@
     location.reload();
   }
 
+  // ── project selection ───────────────────────────────────────────────
+  /** @type {{projectId: string, intent: string, updatedAt: string}[]} */
+  let projectList = $state([]);
+
+  async function loadProjectList() {
+    const r = await api('projects');
+    if (r.status === 200) projectList = r.data.projects ?? [];
+  }
+
+  function openProject(id) {
+    localStorage.setItem('makerlord.projectId', id);
+    localStorage.removeItem('makerlord.sessionId');
+    location.reload();
+  }
+
   // ── projections (Inspect) + build state (Bench) ─────────────────────
   let renderTick = $state(0);
   /** @type {{steps: any[], currentStep: number, gateOpen: boolean, measurements: any[]} | null} */
@@ -233,6 +248,7 @@
     if (sessionId) openEvents();
     await replayTranscript();
     if (projectId) refreshProjections();
+    else loadProjectList();
   });
 
   // ── the right panel: what's on the bench, and the parts library ─────
@@ -287,7 +303,7 @@
       </button>
     {/each}
     {#if projectId}
-      <button class="stage new-project" onclick={newProject}>+ new project</button>
+      <button class="stage new-project" onclick={newProject}>⇤ projects</button>
     {/if}
   </nav>
 
@@ -309,6 +325,17 @@
             Start
           </button>
           {#if lastError}<p class="error">{lastError}</p>{/if}
+          {#if projectList.length > 0}
+            <div class="project-list">
+              <h2 class="mono list-head">On the bench</h2>
+              {#each projectList as p}
+                <button class="project-row" onclick={() => openProject(p.projectId)}>
+                  <span class="project-intent">{p.intent}</span>
+                  <span class="mono project-meta">{p.projectId.slice(0, 6)} · {p.updatedAt.slice(0, 10)}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
       {:else}
         <div class="conversation">
@@ -571,6 +598,22 @@
   /* ── workspace ── */
   .workspace { flex: 1; min-width: 0; }
   .converse-start { max-width: 40rem; margin: 9vh auto 0; }
+  .project-list { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+  .list-head {
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 0 0 0.3rem;
+  }
+  .project-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 1rem; text-align: left; border: 1.5px solid var(--line);
+    background: var(--panel); border-radius: 8px; padding: 0.6rem 0.9rem;
+    cursor: pointer; font-size: 0.95rem;
+  }
+  .project-row:hover { border-color: var(--mask); }
+  .project-intent {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .project-meta { font-size: 0.7rem; color: var(--ink-soft); flex-shrink: 0; }
   .eyebrow {
     font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--copper); margin: 0 0 0.4rem;
