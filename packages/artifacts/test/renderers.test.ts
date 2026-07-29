@@ -45,7 +45,7 @@ describe('renderers are deterministic projections (D2)', () => {
     expect(svg).toContain('data-selected="true"');
   });
 
-  it('block diagram: deterministic with links and sourcing labels', () => {
+  it('block diagram: deterministic with links and sourcing labels', async () => {
     const blocks = [
       {
         id: 'mcu', name: 'controller',
@@ -62,10 +62,11 @@ describe('renderers are deterministic projections (D2)', () => {
       from: { blockId: 'mcu', interfaceId: 'rail' },
       to: { blockId: 'led', interfaceId: 'vin' },
     }];
-    const a = renderBlockDiagram(blocks, links);
-    expect(a).toBe(renderBlockDiagram(blocks, links));
+    const a = await renderBlockDiagram(blocks, links);
+    expect(a).toBe(await renderBlockDiagram(blocks, links));
     expect(a).toContain('data-block="mcu"');
     expect(a).toContain('undecided');
+    expect(a).toContain('stroke-dasharray');            // undecided LOOKS unfinished
     expect(a).toContain('data-link="mcu.rail→led.vin"');
   });
 });

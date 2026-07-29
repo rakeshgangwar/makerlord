@@ -35,10 +35,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
   let svg: string;
   switch (params.kind) {
     case 'blocks':
-      svg = renderBlockDiagram(
+      svg = await renderBlockDiagram(
         file.project.architecture.blocks,
         file.project.architecture.links,
-        selected,
+        { selectedId: selected, titleFor: (id) => defsMap().get(id)?.title },
       );
       break;
     case 'schematic': {

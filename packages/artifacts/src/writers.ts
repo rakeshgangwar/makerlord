@@ -171,12 +171,14 @@ export async function writeCircuitDir(dir: string, session: Session): Promise<bo
   return true;
 }
 
-export function writeArchitectureSvg(dir: string, session: Session): boolean {
+export async function writeArchitectureSvg(dir: string, session: Session): Promise<boolean> {
   const arch = session.file.project.architecture;
   if (arch.blocks.length === 0) return false;
   write(
     join(dir, 'architecture.svg'),
-    renderBlockDiagram(arch.blocks, arch.links),
+    await renderBlockDiagram(arch.blocks, arch.links, {
+      titleFor: (id) => defsMap().get(id)?.title,
+    }),
   );
   return true;
 }
@@ -189,7 +191,7 @@ export async function writeAllArtifacts(session: Session): Promise<string[]> {
   if (writeRequirementsMd(dir, session)) written.push('requirements.md');
   if (writeDecisionsMd(dir, session)) written.push('DECISIONS.md');
   if (writeArchitectureMd(dir, session)) written.push('architecture.md');
-  if (writeArchitectureSvg(dir, session)) written.push('architecture.svg');
+  if (await writeArchitectureSvg(dir, session)) written.push('architecture.svg');
   if (await writeCircuitDir(dir, session)) {
     written.push('circuit/netlist.json', 'circuit/schematic.svg', 'circuit/breadboard.svg', 'circuit/build-steps.md');
   }
