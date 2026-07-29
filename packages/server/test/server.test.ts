@@ -251,3 +251,44 @@ describe('access token', () => {
     guarded.close();
   });
 });
+
+describe('the artifact files surface — the repo is visible, read-only', () => {
+  it('lists the tree without .git and serves file content', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'a lamp' });
+    const pid = p.projectId as string;
+    const list = (await (await fetch(`${base}/api/projects/${pid}/files`)).json()) as {
+      files: { path: string; size: number }[];
+    };
+    const paths = list.files.map((f) => f.path);
+    expect(paths).toContain('project.json');
+    expect(paths.every((x) => !x.startsWith('.git'))).toBe(true);
+
+    const file = await fetch(`${base}/api/projects/${pid}/file?path=project.json`);
+    expect(file.status).toBe(200);
+    const body = (await file.json()) as { path: string; content: string };
+    expect(body.content).toContain('a lamp');
+  });
+
+  it('refuses to escape the project directory', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'x' });
+    const pid = p.projectId as string;
+    for (const evil of ['../../../etc/passwd', '..%2F..%2Fetc%2Fpasswd', '.git/config']) {
+      const res = await fetch(`${base}/api/projects/${pid}/file?path=${evil}`);
+      expect(res.status, evil).toBe(404);
+    }
+  });
+
+  it('serves the git history, newest first', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'x' });
+    const pid = p.projectId as string;
+    await post(`/api/projects/${pid}/tool`, {
+      name: 'block_add', input: { id: 'psu', name: 'psu' },
+    });
+    const { commits } = (await (await fetch(`${base}/api/projects/${pid}/log`)).json()) as {
+      commits: { subject: string; date: string }[];
+    };
+    expect(commits.at(-1)!.subject).toBe('Project created');
+    expect(commits[0]!.subject).toBe('tool: block_add');
+    expect(commits[0]!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});

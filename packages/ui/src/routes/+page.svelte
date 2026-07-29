@@ -289,6 +289,39 @@
     libraryPart = r.data.ok ? r.data.data : null;
   }
 
+  // ── the files tab: the project's real git repo, visible read-only ───
+  /** @type {{path: string, size: number}[]} */
+  let fileList = $state([]);
+  /** @type {{path: string, content: string} | null} */
+  let fileOpen = $state(null);
+  /** @type {{subject: string, date: string}[]} */
+  let commits = $state([]);
+
+  async function loadFiles() {
+    if (!projectId) return;
+    // Fetched independently: a blip on one must not blank the other, and a
+    // failed load just leaves the previous list for the next tab click.
+    try {
+      const f = await api(`projects/${projectId}/files`);
+      if (f.status === 200) fileList = f.data.files;
+    } catch { /* transient — retried on next open */ }
+    try {
+      const l = await api(`projects/${projectId}/log`);
+      if (l.status === 200) commits = l.data.commits;
+    } catch { /* transient — retried on next open */ }
+  }
+
+  async function openFile(path) {
+    const r = await api(`projects/${projectId}/file?path=${encodeURIComponent(path)}`);
+    if (r.status === 200) fileOpen = r.data;
+  }
+
+  /** Our generated SVGs are trusted-shaped but sanitised anyway. */
+  function svg(content) {
+    if (!browser) return content;
+    return DOMPurify.sanitize(content, { USE_PROFILES: { svg: true, svgFilters: true } });
+  }
+
   const blockerCount = $derived(
     findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
   );
@@ -475,6 +508,8 @@
         onclick={() => (panelTab = 'bench')}>On the bench</button>
       <button role="tab" aria-selected={panelTab === 'library'} class:on={panelTab === 'library'}
         onclick={() => { panelTab = 'library'; }}>Library</button>
+      <button role="tab" aria-selected={panelTab === 'files'} class:on={panelTab === 'files'}
+        onclick={() => { panelTab = 'files'; fileOpen = null; loadFiles(); }}>Files</button>
     </div>
 
     {#if panelTab === 'bench'}
@@ -512,7 +547,7 @@
       {:else}
         <p class="empty">No project on the bench.</p>
       {/if}
-    {:else}
+    {:else if panelTab === 'library'}
       <form class="lib-search" onsubmit={(e) => { e.preventDefault(); searchLibrary(); }}>
         <input bind:value={libraryQuery} name="library" placeholder="search parts…" />
       </form>
@@ -546,6 +581,36 @@
         </ul>
       {:else}
         <p class="empty">Search the curated library — only parts here can be used.</p>
+      {/if}
+    {:else}
+      {#if !projectId}
+        <p class="empty">Start a project to see its files.</p>
+      {:else if fileOpen}
+        <button class="lib-back" onclick={() => (fileOpen = null)}>← back</button>
+        <p class="mono panel-id">{fileOpen.path}</p>
+        {#if fileOpen.path.endsWith('.md')}
+          <div class="md file-doc">{@html md(fileOpen.content)}</div>
+        {:else if fileOpen.path.endsWith('.svg')}
+          <div class="file-svg">{@html svg(fileOpen.content)}</div>
+        {:else}
+          <pre class="file-raw">{fileOpen.content}</pre>
+        {/if}
+      {:else}
+        <h3>Project files</h3>
+        <ul class="panel-list file-list">
+          {#each fileList as f}
+            <li><button class="lib-hit mono" onclick={() => openFile(f.path)}>{f.path}</button>
+              <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
+          {/each}
+        </ul>
+        {#if commits.length > 0}
+          <h3>History</h3>
+          <ul class="panel-list">
+            {#each commits as c}
+              <li><span class="mono small">{c.date}</span> {c.subject}</li>
+            {/each}
+          </ul>
+        {/if}
       {/if}
     {/if}
   </aside>
@@ -723,6 +788,17 @@
 
   /* ── the right panel: bench state + library ── */
   .artifacts { min-width: 15rem; max-width: 17rem; }
+  .file-raw {
+    font-family: var(--font-mono); font-size: 0.68rem; line-height: 1.5;
+    background: var(--bench, #f4f5f6); border: 1px solid var(--line);
+    border-radius: 4px; padding: 0.6rem; overflow: auto; max-height: 60vh;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .file-svg { border: 1px solid var(--line); border-radius: 4px; background: #fff; padding: 0.4rem; overflow: auto; }
+  .file-svg :global(svg) { max-width: 100%; height: auto; }
+  .file-doc { font-size: 0.85rem; max-height: 65vh; overflow: auto; }
+  .file-list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+
   .panel-tabs { display: flex; gap: 0.25rem; margin-bottom: 0.7rem; }
   .panel-tabs button {
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;

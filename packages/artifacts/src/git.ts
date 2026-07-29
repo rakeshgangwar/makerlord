@@ -33,6 +33,22 @@ export function commitAll(dir: string, message: string): boolean {
   return true;
 }
 
+export function logDetailed(
+  dir: string,
+  limit = 50,
+): { subject: string; date: string }[] {
+  return git(dir, [
+    'log', `--max-count=${limit}`, '--date=short', '--pretty=%ad%s',
+  ])
+    .trim()
+    .split('\n')
+    .filter((l) => l.includes(''))
+    .map((l) => {
+      const [date, subject] = l.split('');
+      return { date: date!, subject: subject! };
+    });
+}
+
 export function log(dir: string, limit = 20): string[] {
   return git(dir, ['log', `--max-count=${limit}`, '--pretty=%s'])
     .trim()

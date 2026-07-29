@@ -2,11 +2,13 @@ import { randomBytes } from 'node:crypto';
 import {
   appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
 import { AgentSession } from '@makerlord/agent';
 import { loadPack } from '@makerlord/agent';
-import { commitAll, initProjectRepo, writeAllArtifacts } from '@makerlord/artifacts';
+import {
+  commitAll, initProjectRepo, logDetailed, writeAllArtifacts,
+} from '@makerlord/artifacts';
 import type { SessionEvent } from '@makerlord/protocol';
 import { bundle, initProjectFile, loadSession } from '@makerlord/tools';
 
@@ -179,6 +181,49 @@ export class HostedSessions {
     }
     s.listeners.add(listener);
     return () => s.listeners.delete(listener);
+  }
+
+  private projectDir(projectId: string): string {
+    const dir = join(resolve(this.opts.projectsRoot), projectId);
+    if (!existsSync(join(dir, 'project.json'))) {
+      throw new Error(`no project "${projectId}"`);
+    }
+    return dir;
+  }
+
+  /** The artifact tree, .git excluded — the repo made visible, read-only. */
+  listFiles(projectId: string): { path: string; size: number }[] {
+    const dir = this.projectDir(projectId);
+    const out: { path: string; size: number }[] = [];
+    const walk = (d: string): void => {
+      for (const entry of readdirSync(d)) {
+        if (entry === '.git') continue;
+        const full = join(d, entry);
+        const stat = statSync(full);
+        if (stat.isDirectory()) walk(full);
+        else out.push({ path: relative(dir, full).split(sep).join('/'), size: stat.size });
+      }
+    };
+    walk(dir);
+    return out.sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  /** Read one artifact file. Refuses any path that escapes the project. */
+  readFile(projectId: string, relPath: string): string {
+    const dir = this.projectDir(projectId);
+    const full = resolve(dir, relPath);
+    const rel = relative(dir, full);
+    if (rel.startsWith('..') || rel.split(sep).includes('.git')) {
+      throw new Error(`no file "${relPath}"`);
+    }
+    if (!existsSync(full) || !statSync(full).isFile()) {
+      throw new Error(`no file "${relPath}"`);
+    }
+    return readFileSync(full, 'utf8');
+  }
+
+  gitLog(projectId: string): { subject: string; date: string }[] {
+    return logDetailed(this.projectDir(projectId));
   }
 
   projectDirOf(sessionId: string): string {

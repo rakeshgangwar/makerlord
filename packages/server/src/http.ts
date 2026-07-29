@@ -113,6 +113,38 @@ async function route(
     return;
   }
 
+  // The artifact files — the maker's repo made visible in the UI (D34).
+  const filesMatch = /^\/api\/projects\/([0-9a-f]+)\/files$/.exec(path);
+  if (req.method === 'GET' && filesMatch) {
+    try {
+      json(res, 200, { files: sessions.listFiles(filesMatch[1]!) });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  const fileMatch = /^\/api\/projects\/([0-9a-f]+)\/file$/.exec(path);
+  if (req.method === 'GET' && fileMatch) {
+    const relPath = url.searchParams.get('path') ?? '';
+    try {
+      json(res, 200, { path: relPath, content: sessions.readFile(fileMatch[1]!, relPath) });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  const logMatch = /^\/api\/projects\/([0-9a-f]+)\/log$/.exec(path);
+  if (req.method === 'GET' && logMatch) {
+    try {
+      json(res, 200, { commits: sessions.gitLog(logMatch[1]!) });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
   // The conversation, persisted with the project.
   const transcriptMatch = /^\/api\/projects\/([0-9a-f]+)\/transcript$/.exec(path);
   if (req.method === 'GET' && transcriptMatch) {
