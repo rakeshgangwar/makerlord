@@ -46,6 +46,11 @@
           inputmode="numeric" maxlength="6" />
       </form>
     {/if}
+    {#if app.bridgeStatus !== 'ready'}
+      <label class="bridge-port mono">port
+        <input inputmode="numeric" bind:value={app.bridgePort} name="bridgeport" />
+      </label>
+    {/if}
     {#if app.bridgeError}<p class="bridge-err">{app.bridgeError}</p>{/if}
     {#if app.bridgeStatus === 'error'}
       <details class="bridge-help" open>
@@ -104,6 +109,14 @@
     margin: 0.3rem 0 0 0.25rem; letter-spacing: 0.2em;
   }
   .bridge-err { font-size: 0.68rem; color: #b3423a; margin: 0.3rem 0.25rem 0; max-width: 12rem; }
+  .bridge-port {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.62rem; color: var(--ink-soft); margin: 0.3rem 0.25rem 0;
+  }
+  .bridge-port input {
+    width: 4rem; font-family: var(--font-mono); font-size: 0.72rem;
+    padding: 0.15rem 0.4rem; border: 1px solid var(--line); border-radius: 4px;
+  }
   .bridge-help {
     font-size: 0.68rem; color: var(--ink-soft); max-width: 12.5rem;
     margin: 0.3rem 0.25rem 0;

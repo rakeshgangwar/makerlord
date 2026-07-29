@@ -67,6 +67,7 @@ export const app = $state({
   commits: [],
   // the local brain (maker-bridge)
   bridgeStatus: 'off',   // off | pair | connecting | ready | error
+  bridgePort: browser ? Number(store.get('makerlord.bridgePort') ?? 8790) : 8790,
   bridgeAgent: '',
   bridgeSessionReady: false,
   bridgeCodeDraft: '',
@@ -344,7 +345,9 @@ export function bridgeConnect(quiet = false) {
   if (bridgeWs) { bridgeWs.close(); return; }
   app.bridgeStatus = 'connecting';
   app.bridgeError = '';
-  const ws = new WebSocket('ws://127.0.0.1:8790');
+  const port = Number(app.bridgePort) || 8790;
+  store.set('makerlord.bridgePort', String(port));
+  const ws = new WebSocket(`ws://127.0.0.1:${port}`);
   bridgeWs = ws;
   ws.onopen = () => {
     const token = store.get('makerlord.bridgeToken');
