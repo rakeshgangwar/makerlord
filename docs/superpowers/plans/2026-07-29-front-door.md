@@ -304,7 +304,7 @@ git commit -m "feat(project): scaffold project package with model types"
 
 **Definition (spec §2.1):** measurable = `value` + `unit` + `comparator` present **and** `consumedBy` non-empty.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/requirement-schema.test.ts`:
 
@@ -367,12 +367,12 @@ describe('isMeasurable', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/requirement-schema.test.ts`
 Expected: FAIL — cannot resolve `../src/requirements/schema.js`.
 
-- [ ] **Step 3: Write the schema**
+- [x] **Step 3: Write the schema**
 
 Create `packages/project/src/requirements/schema.ts`:
 
@@ -420,12 +420,12 @@ export function isMeasurable(r: Requirement): boolean {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/requirement-schema.test.ts`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/requirements/schema.ts packages/project/test/requirement-schema.test.ts
