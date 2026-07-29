@@ -67,9 +67,10 @@ cat > "$BIN_DIR/maker-bridge" <<WRAP
 exec node "$TARGET" "\$@"
 WRAP
 chmod +x "$BIN_DIR/maker-bridge"
+ln -sf "$BIN_DIR/maker-bridge" "$BIN_DIR/mlb"
 
 echo
-echo "installed: $BIN_DIR/maker-bridge  →  $TARGET"
+echo "installed: $BIN_DIR/maker-bridge (alias: mlb)  →  $TARGET"
 echo "config:    $CONF (0600)"
 case ":$PATH:" in
   *":$BIN_DIR:"*) ;;

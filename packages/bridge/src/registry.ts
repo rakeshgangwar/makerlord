@@ -9,8 +9,13 @@ export interface AgentEntry {
   command: string;
   args: string[];
   env?: Record<string, string>;
+  /** When the adapter itself is absent but its vendor CLI is present, run
+   *  the adapter through npx instead — the bridge carries the shim. */
+  fallback?: { requires: string; npxPackage: string };
   source: 'builtin' | 'user';
   detected: boolean;
+  /** How the detected entry will run: a PATH binary, or npx on demand. */
+  via?: 'path' | 'npx';
 }
 
 /**
@@ -23,8 +28,10 @@ export interface AgentEntry {
  * `qwen serve` daemon mode) are NOT listed — this host speaks stdio.
  */
 export const BUILTIN_PROBES: Omit<AgentEntry, 'detected' | 'source'>[] = [
-  { id: 'claude-code', displayName: 'Claude Code', command: 'claude-code-acp', args: [] },
-  { id: 'codex', displayName: 'Codex', command: 'codex-acp', args: [] },
+  { id: 'claude-code', displayName: 'Claude Code', command: 'claude-code-acp', args: [],
+    fallback: { requires: 'claude', npxPackage: '@zed-industries/claude-code-acp' } },
+  { id: 'codex', displayName: 'Codex', command: 'codex-acp', args: [],
+    fallback: { requires: 'codex', npxPackage: '@zed-industries/codex-acp' } },
   { id: 'gemini', displayName: 'Gemini CLI', command: 'gemini', args: ['--experimental-acp'] },
   { id: 'goose', displayName: 'Goose', command: 'goose', args: ['acp'] },
   { id: 'qwen', displayName: 'Qwen Code', command: 'qwen', args: ['--experimental-acp'] },
@@ -94,11 +101,23 @@ export async function probeAgents(
     // pure ACP adapters (claude-code-acp) have no --version and just start
     // serving; a broken binary surfaces at initialize with a clear
     // INIT_TIMEOUT instead.
-    out.push({
-      ...entry,
-      command: resolved ?? entry.command,
-      detected: resolved !== undefined,
-    });
+    if (resolved !== undefined) {
+      out.push({ ...entry, command: resolved, detected: true, via: 'path' });
+      continue;
+    }
+    // The adapter is absent — but if its vendor CLI is here, the bridge
+    // carries the shim: run the adapter via npx (cached after first use).
+    if (entry.fallback && resolveOnPath(entry.fallback.requires, env)) {
+      out.push({
+        ...entry,
+        command: 'npx',
+        args: ['-y', entry.fallback.npxPackage, ...entry.args],
+        detected: true,
+        via: 'npx',
+      });
+      continue;
+    }
+    out.push({ ...entry, detected: false });
   }
   return out;
 }

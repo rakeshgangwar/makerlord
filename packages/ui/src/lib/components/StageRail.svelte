@@ -51,9 +51,9 @@
       <details class="bridge-help" open>
         <summary>how to set up</summary>
         <ol>
-          <li>On this machine, in your MakerLord checkout, run
-            <code>pnpm bridge</code>
-            (it reads <code>MAKERLORD_ACCESS_TOKEN</code> from the environment).</li>
+          <li>On this machine: <code>mlb</code> (installed once via
+            <code>./install.sh</code>) — or <code>pnpm bridge</code> from a
+            checkout. <code>mlb --help</code> shows your detected agents.</li>
           <li>It auto-detects your agent — Claude Code, Codex, Gemini CLI,
             Goose, Qwen or Kimi — or takes any stdio ACP agent via
             <code>--agent &lt;command&gt;</code>.</li>

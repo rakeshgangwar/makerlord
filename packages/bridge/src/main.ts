@@ -24,6 +24,10 @@ import { dirname, join, resolve } from 'node:path';
 // ── dispatch: daemon by default, MCP role on `mcp` (same file, second
 // hat) — kept awaitless at top level so the CJS bundle stays legal.
 async function dispatch(): Promise<void> {
+  if (['--help', '-h', 'help'].includes(process.argv[2] ?? '')) {
+    await printHelp();
+    return;
+  }
   if (process.argv[2] === 'mcp') {
     const { MAKERLORD_REMOTE_API, MAKERLORD_REMOTE_TOKEN, MAKERLORD_REMOTE_PROJECT } =
       process.env;
@@ -53,6 +57,45 @@ void dispatch().catch((e: Error) => {
   process.stderr.write(`maker-bridge: ${e.message}\n`);
   process.exit(1);
 });
+
+/** Help needs no token — it probes agents so the maker sees what's ready. */
+async function printHelp(): Promise<void> {
+  const { probeAgents, userAgentsPath } = await import('./registry.js');
+  const agents = await probeAgents();
+  const rows = agents
+    .map((a) => {
+      const how = a.via === 'npx'
+        ? `via npx (${a.fallback?.requires} found, adapter fetched on first run)`
+        : `${a.command}${a.args.length ? ' ' + a.args.join(' ') : ''}`;
+      return `  ${a.detected ? '✓' : '✗'} ${a.id.padEnd(13)} ${how}`;
+    })
+    .join('\n');
+  process.stdout.write(`maker-bridge (mlb) — your own agent driving makerlord.dev
+
+Your agent runs HERE with your own login; every tool call executes on the
+hosted engine, safety gates intact. Pair once per bridge start.
+
+USAGE
+  mlb                          auto-detect an installed agent and start
+  mlb --agent <id|command>     pick a brain (registry id or any stdio ACP command)
+  mlb --token <bearer>         hosted API token (once via install.sh is enough)
+  mlb --api <url>              engine (default https://makerlord.dev)
+  mlb --port <n>               WebSocket port (default 8790)
+  mlb --origin <url>           allowed web-app origin
+  mlb mcp                      internal — the MCP role the daemon spawns
+
+AGENTS on this machine
+${rows}
+  +               add your own: ${userAgentsPath()}
+
+CONFIG precedence
+  flags  >  MAKERLORD_ACCESS_TOKEN / MAKERLORD_API  >  ~/.makerlord/bridge.json
+
+PAIRING
+  Start mlb, then click "⚡ local brain" in the web app and enter the
+  6-digit code it prints. The code burns on use; restart for a fresh one.
+`);
+}
 
 async function runDaemon(): Promise<void> {
   const { startDaemon } = await import('./daemon.js');
@@ -138,12 +181,15 @@ async function runDaemon(): Promise<void> {
   const bundled = self.endsWith('bridge.cjs');
   const here = dirname(self);
 
+  const chosen = agents.find((a) => a.detected && a.command === command);
   const daemon = await startDaemon({
     api,
     token,
     agentCommand: command,
     agentArgs: args,
     agentLabel: label,
+    // First npx run downloads the adapter — give initialize room.
+    ...(chosen?.via === 'npx' ? { initTimeoutMs: 120_000 } : {}),
     origins: [
       arg('origin', 'https://makerlord.dev')!,
       'http://localhost:5173',   // vite dev
