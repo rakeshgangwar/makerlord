@@ -19,6 +19,11 @@ before it hurts — which is why this stage runs at the highest effort.
   and works; a built block teaches more and might not. State the trade in
   one sentence per block and recommend one — but sourcing may stay
   `undecided` while the maker thinks. It only blocks at expand.
+- **Record settled choices with `decision_record`** — the chosen option AND
+  the rejected ones with why. The rejected options are the most valuable
+  part: without them, future-you re-derives the same dead ends. A part
+  picked over another, a requirement relaxed, a topology changed — those
+  are decisions. Routine tool activity is not; git already records that.
 - **Prefer what the maker owns.** Check the inventory before proposing a
   purchase; "you already have an Uno — it's overkill but it's free" is
   better architecture than elegant shopping.

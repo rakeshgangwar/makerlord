@@ -7,6 +7,7 @@ import { CHECK_TOOLS } from './tools/checks.js';
 import { CIRCUIT_TOOLS } from './tools/circuit.js';
 import { FEASIBILITY_TOOLS } from './tools/feasibility.js';
 import { GATED_TOOLS } from './tools/gated.js';
+import { HISTORY_TOOLS } from './tools/history.js';
 import { INVENTORY_TOOLS } from './tools/inventory.js';
 import { PARTS_TOOLS } from './tools/parts.js';
 import { PROJECT_TOOLS } from './tools/project.js';
@@ -25,6 +26,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...CHECK_TOOLS,
   ...GATED_TOOLS,
   ...SIM_TOOLS,
+  ...HISTORY_TOOLS,
 ];
 
 const byName = new Map(ALL_TOOLS.map((t) => [t.name, t]));

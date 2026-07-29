@@ -80,6 +80,44 @@ describe('the project file tree (user-journey.md §3)', () => {
   });
 });
 
+describe('the history facet (D29)', () => {
+  it('decision_record → DECISIONS.md with the rejected options', async () => {
+    await call('decision_record', {
+      id: 'D1', title: 'WeMos D1 mini over the Uno', stage: 4,
+      decision: 'The D1 mini is the MCU: onboard wifi and deep sleep.',
+      rejected: [
+        { option: 'Arduino Uno', reason: 'no wifi; needs a shield and more power' },
+        { option: 'bare ESP-12', reason: 'no USB; harder for a first build' },
+      ],
+      consequence: '3.3 V logic everywhere; level care at the probe.',
+    });
+    writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    const md = readFileSync(join(dir, 'DECISIONS.md'), 'utf8');
+    expect(md).toContain('## D1 — WeMos D1 mini over the Uno');
+    expect(md).toContain('**Rejected — Arduino Uno:** no wifi');
+    expect(md).toContain('**Consequence:** 3.3 V logic');
+    expect(md).toMatch(/\*\d{4}-\d{2}-\d{2}\* · stage 4/);
+  });
+
+  it('decisions are append-only — a duplicate id is refused with guidance', async () => {
+    await call('decision_record', {
+      id: 'D1', title: 't', decision: 'd',
+      rejected: [{ option: 'o', reason: 'r' }],
+    });
+    const again = runTool('decision_record', {
+      id: 'D1', title: 't2', decision: 'd2',
+      rejected: [{ option: 'o', reason: 'r' }],
+    }, ctx);
+    await expect(again).rejects.toThrow(/append-only/);
+  });
+
+  it('a pre-facet project file (no history key) still writes everything else', () => {
+    // emptyProject files from before the facet simply lack the key.
+    const written = writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    expect(written).not.toContain('DECISIONS.md');
+  });
+});
+
 describe('D34: a real git repo', () => {
   it('init commits the birth of the project; work commits with messages', async () => {
     initProjectRepo(dir);

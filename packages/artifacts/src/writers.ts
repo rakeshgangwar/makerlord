@@ -105,6 +105,33 @@ export function writeArchitectureMd(dir: string, session: Session): boolean {
   return true;
 }
 
+export function writeDecisionsMd(dir: string, session: Session): boolean {
+  const history = session.file.project.history ?? [];
+  if (history.length === 0) return false;
+  const lines = [
+    '# Decisions',
+    '',
+    'The history facet (D29): what was chosen, what was rejected, and why.',
+    'The rejected options are the most valuable part — without them the next',
+    'person re-derives the same dead ends.',
+    '',
+    ...history.flatMap((d) => [
+      `## ${d.id} — ${d.title}`,
+      `*${d.date}*${d.stage ? ` · stage ${d.stage}` : ''}`,
+      '',
+      d.decision,
+      '',
+      ...d.rejected.map((r) => `**Rejected — ${r.option}:** ${r.reason}`),
+      ...(d.consequence ? ['', `**Consequence:** ${d.consequence}`] : []),
+      '',
+      '---',
+      '',
+    ]),
+  ];
+  write(join(dir, 'DECISIONS.md'), lines.join('\n'));
+  return true;
+}
+
 export function writeCircuitDir(dir: string, session: Session): boolean {
   const circuit = session.file.project.circuit;
   if (!circuit) return false;
@@ -160,6 +187,7 @@ export function writeAllArtifacts(session: Session): string[] {
   const written: string[] = [];
   if (writeFeasibilityMd(dir, session)) written.push('feasibility.md');
   if (writeRequirementsMd(dir, session)) written.push('requirements.md');
+  if (writeDecisionsMd(dir, session)) written.push('DECISIONS.md');
   if (writeArchitectureMd(dir, session)) written.push('architecture.md');
   if (writeArchitectureSvg(dir, session)) written.push('architecture.svg');
   if (writeCircuitDir(dir, session)) {
