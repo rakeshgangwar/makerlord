@@ -1,0 +1,12 @@
+{
+  "name": "@makerlord/parts",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0",
+    "yaml": "^2.6.0",
+    "zod": "^3.23.0"
+  }
+}
