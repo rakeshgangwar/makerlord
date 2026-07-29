@@ -1180,7 +1180,7 @@ git commit -m "feat(project): metric evaluator registry with battery runtime"
 
 **Both are unconditional BLOCKERs.** Unlike the power budget, these compare values the maker or agent *declared* — no profile lookup, so no assumed inputs, so no severity degradation.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/interface-rules.test.ts`:
 
@@ -1306,12 +1306,12 @@ describe('voltageMismatchRule', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/interface-rules.test.ts`
 Expected: FAIL — cannot resolve `../src/architecture/rules.js`.
 
-- [ ] **Step 3: Write the lookup helpers**
+- [x] **Step 3: Write the lookup helpers**
 
 Create `packages/project/src/architecture/context.ts`:
 
@@ -1346,7 +1346,7 @@ export function linksTouching(
 }
 ```
 
-- [ ] **Step 4: Write the rules**
+- [x] **Step 4: Write the rules**
 
 Create `packages/project/src/architecture/rules.ts`:
 
@@ -1421,12 +1421,12 @@ export const voltageMismatchRule: ProjectRule = {
 };
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/interface-rules.test.ts`
 Expected: PASS, 9 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/project/src/architecture/context.ts packages/project/src/architecture/rules.ts packages/project/test/interface-rules.test.ts
