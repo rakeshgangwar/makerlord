@@ -1,0 +1,14 @@
+{
+  "name": "@makerlord/artifacts",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@makerlord/parts": "workspace:*",
+    "@makerlord/circuit": "workspace:*",
+    "@makerlord/project": "workspace:*",
+    "@makerlord/sim": "workspace:*",
+    "@makerlord/tools": "workspace:*"
+  }
+}

@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { Board, Circuit } from '@makerlord/circuit';
 import type { Footprint, PartDefinition } from '@makerlord/parts';
 import type { Trace } from '@makerlord/sim';
-import { renderBreadboard } from '../src/lib/renderers/breadboard.js';
-import { renderBlockDiagram } from '../src/lib/renderers/blocks.js';
-import { layoutSchematic, renderSchematic } from '../src/lib/renderers/schematic.js';
-import { waveformView } from '../src/lib/renderers/waveform.js';
+import { renderBreadboard } from '../src/renderers/breadboard.js';
+import { renderBlockDiagram } from '../src/renderers/blocks.js';
+import { layoutSchematic, renderSchematic } from '../src/renderers/schematic.js';
+import { waveformView } from '../src/renderers/waveform.js';
 
 const board: Board = {
   id: 't',

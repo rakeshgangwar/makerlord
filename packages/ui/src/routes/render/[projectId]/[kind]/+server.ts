@@ -4,9 +4,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { Circuit } from '@makerlord/circuit';
 import type { Footprint } from '@makerlord/parts';
 import { board, defsMap, profilesMap } from '@makerlord/tools';
-import { renderBlockDiagram } from '$lib/renderers/blocks.js';
-import { renderBreadboard } from '$lib/renderers/breadboard.js';
-import { renderSchematic } from '$lib/renderers/schematic.js';
+import { renderBlockDiagram, renderBreadboard, renderSchematic } from '@makerlord/artifacts';
 
 /**
  * Deterministic SVG projections of project.json (D2), rendered server-side

@@ -1,13 +1,34 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
-  "include": ["src/lib/**/*.ts", "src/index.ts"],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/lib/**/*.ts",
+    "src/index.ts"
+  ],
   "references": [
-    { "path": "../circuit" },
-    { "path": "../parts" },
-    { "path": "../project" },
-    { "path": "../protocol" },
-    { "path": "../tools" },
-    { "path": "../sim" }
+    {
+      "path": "../circuit"
+    },
+    {
+      "path": "../parts"
+    },
+    {
+      "path": "../project"
+    },
+    {
+      "path": "../protocol"
+    },
+    {
+      "path": "../tools"
+    },
+    {
+      "path": "../sim"
+    },
+    {
+      "path": "../artifacts"
+    }
   ]
 }

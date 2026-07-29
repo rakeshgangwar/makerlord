@@ -11,6 +11,7 @@
     "@makerlord/agent": "workspace:*",
     "@makerlord/protocol": "workspace:*",
     "@makerlord/tools": "workspace:*",
-    "@makerlord/circuit": "workspace:*"
+    "@makerlord/circuit": "workspace:*",
+    "@makerlord/artifacts": "workspace:*"
   }
 }

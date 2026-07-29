@@ -57,6 +57,14 @@ export async function runOpAnalysis(
     nodeVoltages[node] = voltageOf(node);
   }
 
+  // CSV is canonical (spec §2): the trace a human can open in five years.
+  const { writeFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  writeFileSync(
+    join(artifacts.dir, 'results', `${runId}-op.csv`),
+    ['node,volts', ...Object.entries(nodeVoltages).map(([n, v]) => `${n},${v}`), ''].join('\n'),
+  );
+
   // Per-part net voltages, and resistor dissipation from V²/R.
   const ceiling = severityCeiling(netlist.provenance);
   const voltageByRef = new Map<string, number>();

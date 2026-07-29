@@ -12,7 +12,8 @@
     "@makerlord/sim": "workspace:*",
     "@makerlord/tools": "workspace:*",
     "dompurify": "^3.4.12",
-    "marked": "^18.0.7"
+    "marked": "^18.0.7",
+    "@makerlord/artifacts": "workspace:*"
   },
   "scripts": {
     "dev": "vite dev",

@@ -152,6 +152,9 @@ async function route(
         session,
         cwd: dirname(projectPath),
       });
+      if (result.ok) {
+        sessions.projectArtifacts(dirname(projectPath), `tool: ${name}`);
+      }
       json(res, 200, result);
     } catch (e) {
       json(res, 400, { error: e instanceof Error ? e.message : String(e) });

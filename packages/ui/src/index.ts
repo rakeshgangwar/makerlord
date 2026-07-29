@@ -6,7 +6,4 @@ export * from './lib/stale.js';
 export * from './lib/bridge.js';
 export * from './lib/selection.js';
 export * from './lib/bench.js';
-export * from './lib/renderers/breadboard.js';
-export * from './lib/renderers/blocks.js';
-export * from './lib/renderers/schematic.js';
-export * from './lib/renderers/waveform.js';
+export * from '@makerlord/artifacts';

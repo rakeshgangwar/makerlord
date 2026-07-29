@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
 import { AgentSession } from '@makerlord/agent';
 import { loadPack } from '@makerlord/agent';
+import { commitAll, initProjectRepo, writeAllArtifacts } from '@makerlord/artifacts';
 import type { SessionEvent } from '@makerlord/protocol';
 import { bundle, initProjectFile, loadSession } from '@makerlord/tools';
 
@@ -44,7 +45,20 @@ export class HostedSessions {
     const dir = join(resolve(this.opts.projectsRoot), projectId);
     mkdirSync(dir, { recursive: true });
     initProjectFile(join(dir, 'project.json'), intent);
+    // D34: each project is a REAL git repo from its first breath.
+    initProjectRepo(dir);
     return { projectId };
+  }
+
+  /** Project the per-stage files and commit whatever changed (D2 + D34). */
+  projectArtifacts(projectDir: string, message: string): void {
+    try {
+      const session = loadSession(join(projectDir, 'project.json'));
+      writeAllArtifacts(session);
+      commitAll(projectDir, message);
+    } catch {
+      // Artifact projection must never break a turn; the model is the truth.
+    }
   }
 
   createSession(projectId: string): { sessionId: string } {
@@ -117,6 +131,7 @@ export class HostedSessions {
       });
     } finally {
       s.turnActive = false;
+      this.projectArtifacts(s.projectDir, text);
     }
   }
 
