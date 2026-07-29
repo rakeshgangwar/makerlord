@@ -27,9 +27,22 @@ export function spiceNetlist(
   stimuli: Stimulus[],
   analyses: string[],
 ): SpiceNetlist {
-  // 1. Union pins through intent nets.
+  // 1. Union pins through intent nets — REAL pins only. Expand leaves
+  //    placeholder nets keyed by interface names; a member whose pin does
+  //    not exist on the part's definition is scaffolding, not topology,
+  //    and including it creates phantom 0 V nodes that poison the
+  //    dissipation accounting.
+  const isRealPin = (member: { ref: string; pin: string }): boolean => {
+    const inst = circuit.parts.find((p) => p.ref === member.ref);
+    if (!inst) return false;
+    return defs.get(inst.defId)?.pins.some((p) => p.name === member.pin) ?? false;
+  };
+
   const ds = new DisjointSet();
-  for (const net of circuit.intent) {
+  const realIntent = circuit.intent
+    .map((net) => ({ ...net, members: net.members.filter(isRealPin) }))
+    .filter((net) => net.members.length > 0);
+  for (const net of realIntent) {
     const members = net.members.map(pinKey);
     for (const m of members) ds.add(m);
     for (let i = 1; i < members.length; i += 1) ds.union(members[0]!, members[i]!);
@@ -38,7 +51,7 @@ export function spiceNetlist(
   // 2. Name nodes: prefer the intent-net name; ground nets become node 0.
   const nodeOf = new Map<string, string>();
   const rootName = new Map<string, string>();
-  for (const net of circuit.intent) {
+  for (const net of realIntent) {
     for (const member of net.members) {
       const key = pinKey(member);
       const root = ds.find(key);
@@ -50,7 +63,7 @@ export function spiceNetlist(
       if (!rootName.has(root)) rootName.set(root, net.name.replace(/[^A-Za-z0-9_]/g, '_'));
     }
   }
-  for (const net of circuit.intent) {
+  for (const net of realIntent) {
     for (const member of net.members) {
       const key = pinKey(member);
       nodeOf.set(key, rootName.get(ds.find(key))!);

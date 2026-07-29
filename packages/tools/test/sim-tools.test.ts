@@ -114,11 +114,22 @@ describe.skipIf(!available)('stimulus ergonomics — the bugs the agent found', 
       id: 'rail', target: 'U1.5V', kind: 'dc',
       params: { volts: 5 }, provenance: 'derived', rationale: 'the 5V rail',
     });
+    // The third agent-found bug: expand-style placeholder nets carry
+    // interface-named phantom pins; they must not become 0 V nodes or
+    // poison the dissipation accounting.
+    ctx.session!.file.project.circuit!.intent.push({
+      name: 'net_0_rail5v',
+      members: [{ ref: 'U1', pin: 'rail5v' }, { ref: 'R1', pin: 'vin' }],
+    });
     const run = await call('sim_run', { name: 'pin-target', analyses: ['op'] });
     expect(run.converged).toBe(true);
     expect(run.cir).toMatch(/V_rail \S+ 0 DC 5/);
     const volts = run.nodeVoltages as Record<string, number>;
     expect(Math.max(...Object.values(volts))).toBeCloseTo(5, 1);
+    expect(Object.keys(volts)).not.toContain('net_0_rail5v');
+    const power = run.deviceDissipationW as Record<string, number>;
+    expect(power.R1).toBeGreaterThan(0.03);   // ~41 mW, never 0
+    expect(power.R1).toBeLessThan(0.06);
   });
 
   it('a dc stimulus without params.volts is rejected with the key named', async () => {
