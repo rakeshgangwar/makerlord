@@ -713,7 +713,7 @@ git commit -m "feat(project): requirement rules over the Slice 1 engine"
 
 **The provenance rule (spec §3.2):** every input records whether it came from a curated safety profile or a default. `severityForComputed` turns that into BLOCKER or WARNING — this one function is where spec §4 becomes code.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/power.test.ts`:
 
@@ -833,12 +833,12 @@ describe('severityForComputed', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/power.test.ts`
 Expected: FAIL — cannot resolve `../src/architecture/power.js`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `packages/project/src/architecture/power.ts`:
 
@@ -963,12 +963,12 @@ export function severityForComputed(anyAssumed: boolean): Severity {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/power.test.ts`
 Expected: PASS, 11 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/architecture/power.ts packages/project/test/power.test.ts
