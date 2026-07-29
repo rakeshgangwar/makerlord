@@ -114,9 +114,13 @@ export function spiceNetlist(
     }
   }
 
-  // 4. Stimulus sources.
+  // 4. Stimulus sources. A target may be a pin reference ("U1.5V") — the
+  //    ergonomic form — which resolves to that pin's node; otherwise it is
+  //    taken as a net/node name.
   stimuli.forEach((s, i) => {
-    lines.push(`${stimulusLine(s, i, s.target.replace(/[^A-Za-z0-9_]/g, '_'))} ; ${s.provenance}`);
+    const node =
+      nodeOf.get(s.target) ?? s.target.replace(/[^A-Za-z0-9_]/g, '_');
+    lines.push(`${stimulusLine(s, i, node)} ; ${s.provenance}`);
   });
   const assumed = assumedStimulusFinding(stimuli);
   if (assumed) findings.push(assumed);

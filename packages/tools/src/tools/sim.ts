@@ -22,21 +22,44 @@ function simState(file: ProjectFile): SimState {
   return holder.sim;
 }
 
-const stimulusSchema = z.object({
-  id: z.string().min(1),
-  target: z.string().min(1),
-  kind: z.enum(['dc', 'pulse', 'pwl', 'sine', 'load_step']),
-  params: z.record(z.number()),
-  provenance: z.enum(['stated', 'derived', 'assumed']),
-  rationale: z.string().min(1),
-});
+/** The param keys each stimulus kind actually reads — enforced, not guessed. */
+const REQUIRED_PARAMS: Record<string, string[]> = {
+  dc: ['volts'],
+  pulse: ['low', 'high'],
+  sine: ['amplitude', 'freq'],
+  pwl: [],
+  load_step: ['activeMa'],
+};
+
+const stimulusSchema = z
+  .object({
+    id: z.string().min(1),
+    target: z.string().min(1),
+    kind: z.enum(['dc', 'pulse', 'pwl', 'sine', 'load_step']),
+    params: z.record(z.number()),
+    provenance: z.enum(['stated', 'derived', 'assumed']),
+    rationale: z.string().min(1),
+  })
+  .superRefine((s, ctx) => {
+    for (const key of REQUIRED_PARAMS[s.kind] ?? []) {
+      if (s.params[key] === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['params', key],
+          message: `a "${s.kind}" stimulus requires params.${key} (e.g. {"${key}": 5})`,
+        });
+      }
+    }
+  });
 
 const simStimulusSet: ToolDef = {
   name: 'sim_stimulus_set',
   summary:
-    'Call this before a transient run to declare what the circuit is doing — ' +
-    'a supply, a load step, a duty cycle. Every stimulus carries provenance ' +
-    'and a rationale; an assumed one caps the run at NOTE.',
+    'Call this before a run to declare what the circuit is doing. target is ' +
+    'a pin reference like "U1.5V" (preferred) or a net name. Param keys per ' +
+    'kind: dc→volts; pulse→low,high[,delay,width,period]; sine→amplitude,' +
+    'freq[,offset]; load_step→activeMa[,idleMa,delay,duration]. Provenance ' +
+    'is honest: an assumed stimulus caps the run at NOTE.',
   input: stimulusSchema,
   mutates: true,
   gated: false,

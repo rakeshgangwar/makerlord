@@ -101,3 +101,33 @@ describe.skipIf(available)('without ngspice', () => {
     ).rejects.toThrow(/ngspice/);
   });
 });
+
+describe.skipIf(!available)('stimulus ergonomics — the bugs the agent found', () => {
+  it('a pin reference target resolves to that pin\'s node', async () => {
+    await call('part_add', { ref: 'U1', defId: 'arduino_Uno_Rev3(fix)' });
+    await call('part_add', { ref: 'R1', defId: 'ResistorModuleID' });
+    await call('part_add', { ref: 'LED1', defId: '5mmColorLEDModuleID' });
+    await call('connect', { from: 'U1.5V', to: 'R1.Pin 0' });
+    await call('connect', { from: 'R1.Pin 1', to: 'LED1.anode' });
+    await call('connect', { from: 'LED1.cathode', to: 'U1.GND' });
+    await call('sim_stimulus_set', {
+      id: 'rail', target: 'U1.5V', kind: 'dc',
+      params: { volts: 5 }, provenance: 'derived', rationale: 'the 5V rail',
+    });
+    const run = await call('sim_run', { name: 'pin-target', analyses: ['op'] });
+    expect(run.converged).toBe(true);
+    expect(run.cir).toMatch(/V_rail \S+ 0 DC 5/);
+    const volts = run.nodeVoltages as Record<string, number>;
+    expect(Math.max(...Object.values(volts))).toBeCloseTo(5, 1);
+  });
+
+  it('a dc stimulus without params.volts is rejected with the key named', async () => {
+    await call('part_add', { ref: 'R1', defId: 'ResistorModuleID' });
+    await expect(
+      runTool('sim_stimulus_set', {
+        id: 'x', target: 'R1.Pin 0', kind: 'dc',
+        params: { voltage: 5 }, provenance: 'stated', rationale: 'r',
+      }, ctx),
+    ).rejects.toThrow(/params\.volts/);
+  });
+});
