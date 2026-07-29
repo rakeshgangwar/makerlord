@@ -32,3 +32,37 @@ TLS from day one — use Caddy (automatic Let's Encrypt) when deploying.
 systemd: makerlord.service → node server (SSE endpoint + hosted agent)
 caddy: makerlord.dev → localhost:<port>   (TLS automatic)
 ```
+
+## Agent backends — where the brain runs, and who pays
+
+The engine and gates are identical everywhere (cross-brain assertion); what
+varies is where the LLM process runs and which credential it uses.
+
+| Path | Brain runs | Credential lives | UI | State |
+|---|---|---|---|---|
+| **sdk** (default) | infra, our agent loop | `ANTHROPIC_API_KEY` in `/opt/makerlord/.env` | makerlord.dev | live |
+| **acp on server** | infra, spawned `claude-code-acp` | Claude Code login **on infra** (`claude` → `/login`, or `claude setup-token` for headless) | makerlord.dev | built, awaiting login |
+| **local Claude Code** | your laptop | your existing local login — nothing on the server | Claude Code itself | works today |
+| **local bridge + web UI** | your laptop via `maker-bridge` | local | makerlord.dev connects to localhost WS | the one unbuilt piece (bridge WS wiring) |
+
+Why the server needs its own login for the hosted ACP path: the web app's
+agent spawns **next to the projects** on infra, and Claude Code reads its
+subscription credential from the machine the process runs on. Any path where
+makerlord.dev does the driving needs *some* credential server-side — the
+choice is only API key vs subscription token.
+
+**Local Claude Code recipe** (no server credential at all): the repo itself
+carries the corpus and data, so from a checkout —
+
+```bash
+cd ~/Projects/makerlord
+mkdir -p projects/my-lamp && node packages/cli/dist/main.js project-init \
+  --intent "a desk lamp" --cwd projects/my-lamp   # or: maker project-init
+claude mcp add makerlord \
+  -e MAKERLORD_PROJECT=$PWD/projects/my-lamp/project.json \
+  -- node $PWD/packages/mcp/dist/main.js
+claude   # all 37 tools available; gates enforced by the engine, not the agent
+```
+
+The project is a real git repo (D34) — push it anywhere, including onto the
+server, and the web UI will render it.
