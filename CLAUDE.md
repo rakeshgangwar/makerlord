@@ -5,11 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is right now
 
 **MakerLord** is a complete assistant for the maker's journey — idea → simulate →
-prototype → product → production, across 17 stages. Implementation has just
-begun: the pnpm monorepo scaffold exists and development follows
-`docs/superpowers/plans/2026-07-28-slices-0-and-1.md` **task-by-task, strict
-TDD** — find the first unchecked `- [ ]` task there and continue from it. The
-specs and plans in `docs/` remain the source of truth for all design intent.
+prototype → product → production, across 17 stages. **Slices 0–1 are built**
+(the headless engine: `@makerlord/parts` and `@makerlord/circuit`, 196 tests
+incl. the Tier-1 danger corpus). Development follows the plans in
+`docs/superpowers/plans/` **task-by-task, strict TDD** — the next plan is the
+front door (`2026-07-29-front-door.md`, 12 tasks). The specs and plans in
+`docs/` remain the source of truth for all design intent.
+
+The Tier-1 danger corpus (`packages/circuit/test/danger-corpus.test.ts`) is
+release-blocking: a failure there is not a flaky test, it is a maker's
+destroyed board. Never weaken it to get to green.
 
 ## Commands
 

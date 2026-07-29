@@ -77,8 +77,8 @@ Phase 1 is genuinely good.
 
 | Slice | Scope | State |
 |---|---|---|
-| 0 | Foundation — ETL, part model, safety overlay | Planned |
-| 1 | Core engine — netlist, rules, gate, build sequence | Planned |
+| 0 | Foundation — ETL, part model, safety overlay | **Built** — 2026-07-29 |
+| 1 | Core engine — netlist, rules, gate, build sequence | **Built** — 2026-07-29, 8 rules, 196 tests |
 | 1 (UI) | Renderers, four postures, finding surface | **Specced** — needs a plan |
 | 1b | Phone companion | **Specced** — it is the app, responsive |
 | 2 | Sourcing — BOM, distributor APIs | Spec only |
@@ -88,7 +88,10 @@ Phase 1 is genuinely good.
 | — | Simulation | **Specced** — needs a plan |
 | — | PCB export, enclosure, production | **Vision only** — see [decisions.md D22](decisions.md) |
 
-Nothing is built yet. **Seven design specs exist; two have implementation
+**Slices 0–1 are built** (2026-07-29): the headless engine — ETL over the
+1,794-part corpus, safety profiles, netlist derivation, the 8-rule engine, DC
+prediction, substitution, and the build sequence — with the Tier-1 danger
+corpus green. **Seven design specs exist; two have implementation
 plans.** Phase 1 is fully specced and planned — 37 TDD tasks. The agent layer,
 the UI and simulation are specced and await plans. The production half of the
 arc is agreed in principle and not yet specified.

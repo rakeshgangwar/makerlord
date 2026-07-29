@@ -75,15 +75,19 @@ that were rejected and why.
 
 ## Current state
 
-Nothing is built. Twelve documents; no code, no `package.json`, no dependencies
-installed.
+**Slices 0–1 are built** (completed on the PopOS box, 2026-07-29). All 25 tasks
+of the first plan are done: `@makerlord/parts` (ETL, profiles, board grid,
+bundle) and `@makerlord/circuit` (model, netlist, 8 rules, DC, substitution,
+build sequence), 196 tests green including the Tier-1 danger corpus.
 
 ```
 main · github.com/rakeshgangwar/makerlord (private)
 ```
 
-**Start at Task 1** of the plan (PopOS environment bootstrap). Task 0 — publish
-the repo and write this handoff — is done.
+**Next:** the front-door plan
+([superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md),
+12 TDD tasks), or a plan for the specced-but-unplanned layers (tool surface,
+ACP host, agent runtime, UI).
 
 ## External dependencies
 
