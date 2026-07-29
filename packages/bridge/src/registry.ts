@@ -14,14 +14,21 @@ export interface AgentEntry {
 }
 
 /**
- * ⚠️ Package and binary names are UNVERIFIED (spec §3) — the ACP adapter
- * ecosystem is young and names move. A wrong entry costs a failed probe and a
- * "not found", never a crash. Confirm against each project before shipping.
+ * The ecosystem is 35+ agents (agentclientprotocol.com/get-started/agents);
+ * built-ins cover the majors with stdio transports, and anything else goes
+ * in ~/.makerlord/agents.json — a wrong entry costs a failed probe or a
+ * clear INIT_TIMEOUT, never a crash. claude-code is VERIFIED end-to-end
+ * (2026-07-29, live bridge run); the rest carry the spec §3 caveat: names
+ * move in a young ecosystem. Agents whose ACP is HTTP/SSE-only (e.g.
+ * `qwen serve` daemon mode) are NOT listed — this host speaks stdio.
  */
 export const BUILTIN_PROBES: Omit<AgentEntry, 'detected' | 'source'>[] = [
   { id: 'claude-code', displayName: 'Claude Code', command: 'claude-code-acp', args: [] },
   { id: 'codex', displayName: 'Codex', command: 'codex-acp', args: [] },
   { id: 'gemini', displayName: 'Gemini CLI', command: 'gemini', args: ['--experimental-acp'] },
+  { id: 'goose', displayName: 'Goose', command: 'goose', args: ['acp'] },
+  { id: 'qwen', displayName: 'Qwen Code', command: 'qwen', args: ['--experimental-acp'] },
+  { id: 'kimi', displayName: 'Kimi CLI', command: 'kimi', args: ['--acp'] },
 ];
 
 export function userAgentsPath(env: NodeJS.ProcessEnv = process.env): string {
@@ -83,12 +90,14 @@ export async function probeAgents(
   const out: AgentEntry[] = [];
   for (const entry of merged.values()) {
     const resolved = resolveOnPath(entry.command, env);
-    const detected =
-      resolved !== undefined && (await probeCommand(resolved, 2000, env));
+    // Presence on PATH is the detection signal. A --version probe is NOT —
+    // pure ACP adapters (claude-code-acp) have no --version and just start
+    // serving; a broken binary surfaces at initialize with a clear
+    // INIT_TIMEOUT instead.
     out.push({
       ...entry,
       command: resolved ?? entry.command,
-      detected,
+      detected: resolved !== undefined,
     });
   }
   return out;

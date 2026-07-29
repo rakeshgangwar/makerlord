@@ -14,6 +14,8 @@ export interface DaemonOptions {
   /** The ACP agent to spawn per connection (the maker's own brain). */
   agentCommand: string;
   agentArgs?: string[];
+  /** Human name shown in the app ("Claude Code", "Gemini CLI"). */
+  agentLabel?: string;
   /** The hosted engine the agent's tools execute against. */
   api: string;
   token: string;
@@ -103,7 +105,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
         if (frame.t === 'auth') {
           authed = pairing.verifyToken(origin, frame.token);
           send(ws, authed
-            ? { t: 'ready', agent: opts.agentCommand }
+            ? { t: 'ready', agent: opts.agentLabel ?? opts.agentCommand }
             : { t: 'error', message: 'bad token — re-pair (restart the bridge for a fresh code)' });
           return;
         }

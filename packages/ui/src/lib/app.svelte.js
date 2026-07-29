@@ -67,6 +67,7 @@ export const app = $state({
   commits: [],
   // the local brain (maker-bridge)
   bridgeStatus: 'off',   // off | pair | connecting | ready | error
+  bridgeAgent: '',
   bridgeSessionReady: false,
   bridgeCodeDraft: '',
   bridgeError: '',
@@ -357,6 +358,7 @@ export function bridgeConnect(quiet = false) {
       ws.send(JSON.stringify({ t: 'auth', token: f.token }));
     } else if (f.t === 'ready') {
       app.bridgeStatus = 'ready';
+      app.bridgeAgent = f.agent ?? '';
       app.bridgeError = '';
       if (app.projectId) ws.send(JSON.stringify({ t: 'session.new', projectId: app.projectId }));
     } else if (f.t === 'session.ready') {
@@ -374,7 +376,9 @@ export function bridgeConnect(quiet = false) {
   };
   ws.onclose = () => {
     bridgeWs = null;
-    app.bridgeStatus = 'off';
+    // onerror fires first when there is no bridge; keep the error state so
+    // the how-to-set-up help stays on screen.
+    if (app.bridgeStatus !== 'error') app.bridgeStatus = 'off';
     app.bridgeSessionReady = false;
   };
   ws.onerror = () => {

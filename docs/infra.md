@@ -72,9 +72,10 @@ server, and the web UI will render it.
 ```bash
 cd ~/Projects/makerlord
 set -a && . ./.env && set +a     # needs MAKERLORD_ACCESS_TOKEN
-node packages/bridge/dist/main.js \
-  --agent "$PWD/node_modules/.bin/claude-code-acp"
-# prints a 6-digit pairing code
+pnpm bridge                      # auto-detects your agent; prints the pairing code
+# or pick one: pnpm bridge --agent gemini   (claude-code, codex, gemini,
+# goose, qwen, kimi — or any stdio ACP command; custom entries go in
+# ~/.makerlord/agents.json)
 ```
 
 Then in makerlord.dev: **⚡ local brain** (bottom of the rail) → enter the

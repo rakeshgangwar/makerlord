@@ -32,15 +32,37 @@
   <div class="bridge-box">
     <button class="stage bridge-toggle" onclick={() => bridgeConnect()}>
       <span class="lamp-dot" class:on={app.bridgeStatus === 'ready'}></span>
-      {app.bridgeStatus === 'ready' ? 'local brain ✓' : '⚡ local brain'}
+      {app.bridgeStatus === 'ready'
+        ? `local brain ✓${app.bridgeAgent ? ` · ${app.bridgeAgent}` : ''}`
+        : '⚡ local brain'}
     </button>
     {#if app.bridgeStatus === 'pair'}
+      <div class="bridge-help">
+        <p>The bridge is running — its terminal printed a 6-digit
+          <strong>pairing code</strong>. Enter it once:</p>
+      </div>
       <form class="bridge-pair" onsubmit={(e) => { e.preventDefault(); bridgePair(); }}>
         <input bind:value={app.bridgeCodeDraft} name="paircode" placeholder="pairing code"
           inputmode="numeric" maxlength="6" />
       </form>
     {/if}
     {#if app.bridgeError}<p class="bridge-err">{app.bridgeError}</p>{/if}
+    {#if app.bridgeStatus === 'error'}
+      <details class="bridge-help" open>
+        <summary>how to set up</summary>
+        <ol>
+          <li>On this machine, in your MakerLord checkout, run
+            <code>pnpm bridge</code>
+            (it reads <code>MAKERLORD_ACCESS_TOKEN</code> from the environment).</li>
+          <li>It auto-detects your agent — Claude Code, Codex, Gemini CLI,
+            Goose, Qwen or Kimi — or takes any stdio ACP agent via
+            <code>--agent &lt;command&gt;</code>.</li>
+          <li>It prints a 6-digit pairing code. Click ⚡ again and enter it.</li>
+        </ol>
+        <p>Your agent runs here with your own login; every tool call still
+          executes on the hosted engine, gates intact.</p>
+      </details>
+    {/if}
   </div>
 </nav>
 
@@ -82,4 +104,15 @@
     margin: 0.3rem 0 0 0.25rem; letter-spacing: 0.2em;
   }
   .bridge-err { font-size: 0.68rem; color: #b3423a; margin: 0.3rem 0.25rem 0; max-width: 12rem; }
+  .bridge-help {
+    font-size: 0.68rem; color: var(--ink-soft); max-width: 12.5rem;
+    margin: 0.3rem 0.25rem 0;
+  }
+  .bridge-help summary { cursor: pointer; color: var(--mask); }
+  .bridge-help ol { margin: 0.3rem 0; padding-left: 1.1rem; }
+  .bridge-help li { margin: 0.25rem 0; }
+  .bridge-help code {
+    font-family: var(--font-mono); font-size: 0.62rem; background: #eef1f0;
+    padding: 0 0.25rem; border-radius: 3px;
+  }
 </style>
