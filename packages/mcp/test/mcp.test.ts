@@ -90,3 +90,46 @@ describe('maker-mcp', () => {
     expect(parsed.refused).toBe('STALE_PROJECT');
   });
 });
+
+describe('the remote adapter: local schemas, hosted execution', () => {
+  it('proxies tools/call to the hosted engine and returns its ToolResult verbatim', async () => {
+    const { createServer } = await import('node:http');
+    const { buildRemoteServer } = await import('../src/remote.js');
+    const seen: { url?: string; auth?: string; body?: unknown } = {};
+    const stub = createServer((req, res) => {
+      let data = '';
+      req.on('data', (c) => (data += c));
+      req.on('end', () => {
+        seen.url = req.url ?? '';
+        seen.auth = req.headers.authorization ?? '';
+        seen.body = JSON.parse(data);
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, refused: 'BLOCK_UNDECIDED', findings: [], message: 'no' }));
+      });
+    });
+    await new Promise<void>((r) => stub.listen(0, '127.0.0.1', r));
+    const port = (stub.address() as { port: number }).port;
+
+    const remote = buildRemoteServer({
+      api: `http://127.0.0.1:${port}`, token: 'sekrit', projectId: 'deadbeef',
+    });
+    const remoteClient = new Client({ name: 't', version: '0' });
+    const [ct, st] = InMemoryTransport.createLinkedPair();
+    await remote.connect(st);
+    await remoteClient.connect(ct);
+
+    const tools = await remoteClient.listTools();
+    expect(tools.tools.length).toBe(36);   // all but project_init
+    expect(tools.tools.map((t) => t.name)).not.toContain('project_init');
+
+    const result = await remoteClient.callTool({ name: 'expand', arguments: {} });
+    expect(seen.url).toBe('/api/projects/deadbeef/tool');
+    expect(seen.auth).toBe('Bearer sekrit');
+    expect(seen.body).toEqual({ name: 'expand', input: {} });
+    // The hosted refusal arrives as a NORMAL result — the gate holds remotely.
+    expect(result.isError ?? false).toBe(false);
+    const payload = JSON.parse((result.content as { text: string }[])[0]!.text);
+    expect(payload).toMatchObject({ ok: false, refused: 'BLOCK_UNDECIDED' });
+    stub.close();
+  });
+});

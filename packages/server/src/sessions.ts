@@ -124,6 +124,7 @@ export class HostedSessions {
       command: this.opts.acpCommand ?? 'claude-code-acp',
       args: this.opts.acpArgs ?? [],
       cwd: projectDir,
+      stripEnv: ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT'],
     });
     if (!started.ok) {
       throw new Error(`ACP agent failed to start (${started.reason}): ${started.message}`);

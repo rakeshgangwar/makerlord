@@ -43,7 +43,7 @@ varies is where the LLM process runs and which credential it uses.
 | **sdk** (default) | infra, our agent loop | `ANTHROPIC_API_KEY` in `/opt/makerlord/.env` | makerlord.dev | live |
 | **acp on server** | infra, spawned `claude-code-acp` | Claude Code login **on infra** (`claude` → `/login`, or `claude setup-token` for headless) | makerlord.dev | built, awaiting login |
 | **local Claude Code** | your laptop | your existing local login — nothing on the server | Claude Code itself | works today |
-| **local bridge + web UI** | your laptop via `maker-bridge` | local | makerlord.dev connects to localhost WS | the one unbuilt piece (bridge WS wiring) |
+| **local bridge + web UI** | your laptop via `maker-bridge` | local | makerlord.dev connects to localhost WS | **live** — see below |
 
 Why the server needs its own login for the hosted ACP path: the web app's
 agent spawns **next to the projects** on infra, and Claude Code reads its
@@ -66,3 +66,21 @@ claude   # all 37 tools available; gates enforced by the engine, not the agent
 
 The project is a real git repo (D34) — push it anywhere, including onto the
 server, and the web UI will render it.
+
+**Local bridge recipe** (the best-of-both path — web UI, local brain):
+
+```bash
+cd ~/Projects/makerlord
+set -a && . ./.env && set +a     # needs MAKERLORD_ACCESS_TOKEN
+node packages/bridge/dist/main.js \
+  --agent "$PWD/node_modules/.bin/claude-code-acp"
+# prints a 6-digit pairing code
+```
+
+Then in makerlord.dev: **⚡ local brain** (bottom of the rail) → enter the
+code once. The dot goes green; every prompt now runs on YOUR Claude Code,
+while every tool call executes on the hosted engine — project state, gates,
+artifacts and git commits stay server-side. Restarting the bridge burns the
+pairing; the app re-asks for a fresh code automatically. Known gaps: bridge
+turns are not yet in the hosted transcript (reload loses that conversation
+view, not the project), and mid-turn steering is hosted-only.

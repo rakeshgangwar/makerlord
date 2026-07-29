@@ -138,6 +138,11 @@
     toolActivity = [];
     turnActive = true;
     lastError = '';
+    // The local brain drives when connected — same events, same consumer.
+    if (bridgeStatus === 'ready' && bridgeSessionReady && bridgeWs) {
+      bridgeWs.send(JSON.stringify({ t: 'prompt', text }));
+      return;
+    }
     try {
       // Sessions are in-memory server-side: a redeploy drops them. Resume by
       // minting a fresh one against the same project — the artefact persists.
@@ -317,6 +322,65 @@
     if (r.status === 200) fileOpen = r.data;
   }
 
+  // ── the local brain: maker-bridge over paired localhost WS ──────────
+  // The maker's own Claude Code drives; tools execute on the hosted engine
+  // (maker-mcp remote mode), so project state and gates never leave the
+  // server. Same SessionEvent union, same consume() — one consumer.
+  let bridgeStatus = $state('off');   // off | pair | connecting | ready | error
+  let bridgeSessionReady = $state(false);
+  let bridgeCodeDraft = $state('');
+  let bridgeError = $state('');
+  /** @type {WebSocket | null} */
+  let bridgeWs = null;
+
+  function bridgeConnect() {
+    if (bridgeWs) { bridgeWs.close(); return; }
+    bridgeStatus = 'connecting';
+    bridgeError = '';
+    const ws = new WebSocket('ws://127.0.0.1:8790');
+    bridgeWs = ws;
+    ws.onopen = () => {
+      const token = localStorage.getItem('makerlord.bridgeToken');
+      if (token) ws.send(JSON.stringify({ t: 'auth', token }));
+      else bridgeStatus = 'pair';
+    };
+    ws.onmessage = (m) => {
+      const f = JSON.parse(m.data);
+      if (f.t === 'paired') {
+        localStorage.setItem('makerlord.bridgeToken', f.token);
+        ws.send(JSON.stringify({ t: 'auth', token: f.token }));
+      } else if (f.t === 'ready') {
+        bridgeStatus = 'ready';
+        if (projectId) ws.send(JSON.stringify({ t: 'session.new', projectId }));
+      } else if (f.t === 'session.ready') {
+        bridgeSessionReady = true;
+      } else if (f.t === 'event') {
+        consume(f.event);
+      } else if (f.t === 'error') {
+        bridgeError = f.message;
+        if (/bad token/.test(f.message)) {
+          localStorage.removeItem('makerlord.bridgeToken');
+          bridgeStatus = 'pair';
+        }
+        turnActive = false;
+      }
+    };
+    ws.onclose = () => {
+      bridgeWs = null;
+      bridgeStatus = 'off';
+      bridgeSessionReady = false;
+    };
+    ws.onerror = () => {
+      bridgeError = 'no bridge on ws://127.0.0.1:8790 — run `maker-bridge` on this machine';
+      bridgeStatus = 'error';
+    };
+  }
+
+  function bridgePair() {
+    bridgeWs?.send(JSON.stringify({ t: 'pair', code: bridgeCodeDraft.trim() }));
+    bridgeCodeDraft = '';
+  }
+
   const blockerCount = $derived(
     findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
   );
@@ -345,6 +409,19 @@
     {#if projectId}
       <button class="stage new-project" onclick={newProject}>⇤ projects</button>
     {/if}
+    <div class="bridge-box">
+      <button class="stage bridge-toggle" onclick={bridgeConnect}>
+        <span class="lamp-dot" class:on={bridgeStatus === 'ready'}></span>
+        {bridgeStatus === 'ready' ? 'local brain ✓' : '⚡ local brain'}
+      </button>
+      {#if bridgeStatus === 'pair'}
+        <form class="bridge-pair" onsubmit={(e) => { e.preventDefault(); bridgePair(); }}>
+          <input bind:value={bridgeCodeDraft} name="paircode" placeholder="pairing code"
+            inputmode="numeric" maxlength="6" />
+        </form>
+      {/if}
+      {#if bridgeError}<p class="bridge-err">{bridgeError}</p>{/if}
+    </div>
   </nav>
 
   <section class="workspace" aria-label="Workspace">
@@ -842,6 +919,20 @@
   }
   .file-doc { font-size: 0.85rem; max-height: 65vh; overflow: auto; }
   .file-list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
+
+  .bridge-box { margin-top: auto; padding-top: 0.8rem; }
+  .bridge-toggle { font-size: 0.72rem; color: var(--ink-soft); }
+  .lamp-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #9aa5a0;
+    display: inline-block; margin-right: 0.3rem;
+  }
+  .lamp-dot.on { background: #19c37d; box-shadow: 0 0 6px #19c37d; }
+  .bridge-pair input {
+    width: 8rem; font-family: var(--font-mono); font-size: 0.8rem;
+    padding: 0.25rem 0.5rem; border: 1px solid var(--line); border-radius: 4px;
+    margin: 0.3rem 0 0 0.25rem; letter-spacing: 0.2em;
+  }
+  .bridge-err { font-size: 0.68rem; color: #b3423a; margin: 0.3rem 0.25rem 0; max-width: 12rem; }
 
   .panel-tabs { display: flex; gap: 0.25rem; margin-bottom: 0.7rem; }
   .panel-tabs button {

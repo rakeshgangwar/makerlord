@@ -11,6 +11,9 @@ export interface AcpAgentOptions {
   args?: string[];
   env?: Record<string, string>;
   cwd?: string;
+  /** Env vars to REMOVE from the spawned agent (e.g. a parent Claude Code
+   *  session's CLAUDECODE marker, which makes the adapter refuse to nest). */
+  stripEnv?: string[];
   /** 10 s per spec §4.1; configurable so tests do not wait that long. */
   initTimeoutMs?: number;
   promptTimeoutMs?: number;
@@ -59,9 +62,11 @@ export class AcpAgent {
   static async start(options: AcpAgentOptions): Promise<AcpStartResult> {
     let child: ChildProcess;
     try {
+      const env = { ...process.env, ...options.env };
+      for (const k of options.stripEnv ?? []) delete env[k];
       child = spawn(options.command, options.args ?? [], {
         cwd: options.cwd,
-        env: { ...process.env, ...options.env },
+        env,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     } catch (e) {
@@ -182,9 +187,15 @@ export class AcpAgent {
   }
 
   async newSession(cwd: string, mcpServers: McpServerSpec[]): Promise<string> {
+    // ACP's EnvVariable is {name, value}[] — normalise our record form here
+    // so no caller can send the shape agents reject as Invalid params.
+    const wire = mcpServers.map(({ env, ...rest }) => ({
+      ...rest,
+      env: Object.entries(env ?? {}).map(([name, value]) => ({ name, value })),
+    }));
     const result = (await this.rpc.request(
       'session/new',
-      { cwd, mcpServers },
+      { cwd, mcpServers: wire },
       30_000,
     )) as { sessionId: string };
     return result.sessionId;

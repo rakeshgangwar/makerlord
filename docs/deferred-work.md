@@ -22,7 +22,7 @@ would produce untested claims — the thing this project exists to avoid.
 | Item | Why deferred | Scope when unblocked | Size |
 |---|---|---|---|
 | **Streaming transport** (agent) ✅ | Resolved 2026-07-29 with the go-live cluster: the agent streams by default, and the fake LLM speaks real Anthropic SSE so every loop test covers the streaming wire. | — | done |
-| **SSE / WS live wiring** ✅ hosted / ⚠️ bridge | Hosted path resolved 2026-07-29: makerlord.dev serves sessions over SSE with `Last-Event-ID` replay, verified end-to-end with real turns. Remaining: the bridge's localhost `ws` transport for the BYO-agent path (pairing + origin pinning are built and tested; the daemon loop isn't wired). | Bridge: a `ws` server behind `pairing.ts` feeding the same consumer. | ~1 day |
+| **SSE / WS live wiring** ✅ | Both paths resolved 2026-07-29. Hosted: SSE with `Last-Event-ID` replay. Bridge: `maker-bridge` daemon — origin-pinned, paired localhost WS spawning the maker's own agent, whose tools execute on the hosted engine via maker-mcp remote mode. Verified live: a browser turn answered by local Claude Code calling hosted `project_status`/`check_circuit`. | — | done |
 | **Server-side compaction beta** (agent) ⚠️ | Pass-through landed (a `compactionBeta` option adds the beta header); local gating + protected tail remain the active path. Remaining: the live eval asserting the protected tail survives a real server-side compaction, then flip the default. | Live eval + default flip. | ½ day |
 | **Web-research live execution** (agent) ⚠️ | Config landed (a `webResearch` option adds the server-tool defs), off by default. Remaining: enable on the hosted agent, verify the tool type against the live API, map citations → `evidence.url`/`fetchedAt`. | ½ day, live |
 
