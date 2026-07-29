@@ -60,4 +60,4 @@ projects were backfilled.
 
 ## Suggested order
 
-1. **CI** (an hour, protects everything else) → 2. **The three unblocked rules** (flyback, source capacity, decoupling — ~½ day each) → 3. **Playwright** on top of the live shell → 4. **The live-API residues** (bridge WS, compaction eval, web research) → 5. **Curation drip** running underneath it all (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them.
+1. **CI** (an hour, protects everything else) → 2. **The three unblocked rules** (flyback, source capacity, decoupling — ~½ day each) → 3. **Playwright** on top of the live shell → 4. **The live-API residues** (compaction eval, web research) → 5. **Curation drip** running underneath it all (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them.
