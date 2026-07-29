@@ -4,6 +4,35 @@
   let { projectFile = null, tab = null } = $props();
   const file = $derived(projectFile ?? app.projectFile);
   const activeTab = $derived(tab ?? app.panelTab);
+
+  /** Files grouped by MEANING, not just directory — the maker looks for
+   *  "the requirements doc", not a path. */
+  const DESIGN_DOCS = ['feasibility.md', 'requirements.md', 'DECISIONS.md', 'architecture.md', 'architecture.svg'];
+  const fileGroups = $derived.by(() => {
+    const g = { 'Design documents': [], 'Circuit': [], 'Simulation': [], 'Journal': [], 'Model': [] };
+    for (const f of app.fileList) {
+      if (DESIGN_DOCS.includes(f.path)) g['Design documents'].push(f);
+      else if (f.path.startsWith('circuit/')) g['Circuit'].push(f);
+      else if (f.path.startsWith('sim/')) g['Simulation'].push(f);
+      else if (f.path === 'transcript.jsonl') g['Journal'].push(f);
+      else g['Model'].push(f);
+    }
+    return Object.entries(g).filter(([, files]) => files.length > 0);
+  });
+
+  /** Strip the directory for display — the group already says where it lives. */
+  const basename = (p) => p.split('/').pop();
+
+  /** Curated hits grouped by family — the browse-first library view. */
+  const libraryGroups = $derived.by(() => {
+    const groups = new Map();
+    for (const hit of app.libraryHits) {
+      const fam = hit.family || 'other';
+      if (!groups.has(fam)) groups.set(fam, []);
+      groups.get(fam).push(hit);
+    }
+    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  });
 </script>
 
 <aside class="artifacts" aria-label="Artifacts">
@@ -11,7 +40,7 @@
     <button role="tab" aria-selected={activeTab === 'bench'} class:on={activeTab === 'bench'}
       onclick={() => (app.panelTab = 'bench')}>On the bench</button>
     <button role="tab" aria-selected={activeTab === 'library'} class:on={activeTab === 'library'}
-      onclick={() => { app.panelTab = 'library'; }}>Library</button>
+      onclick={() => { app.panelTab = 'library'; if (app.libraryHits.length === 0) searchLibrary(); }}>Library</button>
     <button role="tab" aria-selected={activeTab === 'files'} class:on={activeTab === 'files'}
       onclick={() => { app.panelTab = 'files'; app.fileOpen = null; loadFiles(); }}>Files</button>
   </div>
@@ -76,28 +105,37 @@
       {:else}
         <p class="empty">No safety profile yet — not usable in circuits.</p>
       {/if}
-    {:else if app.libraryHits.length > 0}
-      <ul class="panel-list">
-        {#each app.libraryHits as hit}
-          <li><button class="lib-hit" onclick={() => openPart(hit.id)}>{hit.title}</button>
-            <span class="mono small">{hit.family}</span></li>
-        {/each}
-      </ul>
+    {:else if libraryGroups.length > 0}
+      <p class="lib-count mono">{app.libraryHits.length} curated part{app.libraryHits.length === 1 ? '' : 's'} — only these can be used</p>
+      {#each libraryGroups as [family, hits]}
+        <details class="lib-group" open={libraryGroups.length <= 4}>
+          <summary class="mono">{family} <span class="small">({hits.length})</span></summary>
+          <ul class="panel-list">
+            {#each hits as hit}
+              <li><button class="lib-hit" onclick={() => openPart(hit.id)}>{hit.title}</button></li>
+            {/each}
+          </ul>
+        </details>
+      {/each}
     {:else}
-      <p class="empty">Search the curated library — only parts here can be used.</p>
+      <p class="empty">Nothing matches — clear the search to see the whole library.</p>
     {/if}
   {:else}
     {#if !app.projectId}
       <p class="empty">Start a project to see its files.</p>
     {:else}
-      <h3>Project files</h3>
-      <ul class="panel-list file-list">
-        {#each app.fileList as f}
-          <li><button class="lib-hit mono" class:open={app.fileOpen?.path === f.path}
-              onclick={() => openFile(f.path)}>{f.path}</button>
-            <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
-        {/each}
-      </ul>
+      {#each fileGroups as [group, files]}
+        <details class="file-group" open={group !== 'Journal' && group !== 'Model'}>
+          <summary class="mono">{group} <span class="small">({files.length})</span></summary>
+          <ul class="panel-list file-list">
+            {#each files as f}
+              <li><button class="lib-hit mono" class:open={app.fileOpen?.path === f.path}
+                  onclick={() => openFile(f.path)}>{basename(f.path)}</button>
+                <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
+            {/each}
+          </ul>
+        </details>
+      {/each}
       {#if app.commits.length > 0}
         <h3>History</h3>
         <ul class="panel-list">
@@ -137,5 +175,18 @@
   }
   .lib-hit.open { color: var(--mask); font-weight: 600; }
   .lib-back { border: none; background: transparent; color: var(--ink-soft); cursor: pointer; padding: 0; }
+  .lib-count { font-size: 0.68rem; color: var(--ink-soft); margin: 0.5rem 0 0.4rem; }
+  .lib-group summary {
+    cursor: pointer; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-soft); padding: 0.35rem 0;
+  }
+  .lib-group[open] summary { color: var(--mask); }
+  .lib-group ul { padding-left: 0.6rem; }
+  .file-group summary {
+    cursor: pointer; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-soft); padding: 0.35rem 0;
+  }
+  .file-group[open] summary { color: var(--mask); }
+  .file-group ul { padding-left: 0.6rem; }
   .file-list li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
 </style>

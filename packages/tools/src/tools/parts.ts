@@ -7,8 +7,9 @@ const partsSearch: ToolDef = {
   name: 'parts_search',
   summary:
     'Call this when you need a component — search the curated library before ' +
-    'naming any part. You cannot invent parts; only ids returned here exist.',
-  input: z.object({ query: z.string().min(1) }),
+    'naming any part. You cannot invent parts; only ids returned here exist. ' +
+    'An empty query lists the entire curated library.',
+  input: z.object({ query: z.string() }),
   mutates: false,
   gated: false,
   handler(input) {

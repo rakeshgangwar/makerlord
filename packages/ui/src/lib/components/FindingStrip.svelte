@@ -51,7 +51,7 @@
   }
   @keyframes lamp-pulse { 50% { box-shadow: 0 0 14px var(--sev-blocker); } }
   .readout-text { font-size: 0.78rem; letter-spacing: 0.06em; }
-  .cards { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.55rem; }
+  .cards { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.55rem; max-height: 28vh; overflow-y: auto; }
   .finding {
     background: #2c3236; border-left: 4px solid var(--sev);
     border-radius: 6px; padding: 0.5rem 0.85rem;

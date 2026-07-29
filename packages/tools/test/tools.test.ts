@@ -40,6 +40,16 @@ describe('project group', () => {
 });
 
 describe('parts group — over the real corpus', () => {
+  it('parts_search with an empty query lists the whole curated library', async () => {
+    const d = await data('parts_search', { query: '' });
+    expect(d.hits.length).toBeGreaterThanOrEqual(20);
+    // every hit carries what the browse view groups by
+    for (const h of d.hits) {
+      expect(typeof h.family).toBe('string');
+      expect(h.family.length).toBeGreaterThan(0);
+    }
+  });
+
   it('parts_search finds the curated LED', async () => {
     const d = await data('parts_search', { query: 'LED' });
     const hits = d.hits as { id: string }[];

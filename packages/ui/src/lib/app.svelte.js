@@ -284,7 +284,9 @@ export async function openGate() {
 }
 
 export async function searchLibrary() {
-  if (!app.projectId || !app.libraryQuery.trim()) return;
+  if (!app.projectId) return;
+  // Empty query lists the WHOLE curated library — the collection is the
+  // message; search narrows it.
   const r = await api(`projects/${app.projectId}/tool`, {
     name: 'parts_search', input: { query: app.libraryQuery.trim() },
   });

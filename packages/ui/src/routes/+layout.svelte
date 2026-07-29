@@ -56,9 +56,10 @@
   .frame {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   :global(button) { font-family: var(--font-body); }
   :global(:focus-visible) {
