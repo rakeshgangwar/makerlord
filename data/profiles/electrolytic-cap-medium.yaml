@@ -1,0 +1,10 @@
+# Generic aluminium electrolytic, POLARIZED — reverse connection vents or bursts.
+# 16 V is the conservative default rating for unmarked maker stock.
+partId: MediumElectrolyticCapacitorModuleID
+footprint:
+  pins:
+    "-": [0, 0]
+    "+": [1, 0]
+polarity: polarized
+absMaxVoltageV: 16
+hazardClass: none

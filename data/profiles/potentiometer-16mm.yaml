@@ -1,0 +1,13 @@
+# Rotary potentiometer 16 mm, 10 kΩ linear. Power rating 0.5 W is from the
+# part's own fzp property. Footprint offsets extracted from the breadboard
+# SVG geometry: legs at 0 and 4 holes, wiper centred at 2.
+partId: potentiometer_rotary_16mm_5_PotentiometerModuleID
+footprint:
+  pins:
+    leg1: [0, 0]
+    wiper: [2, 0]
+    leg2: [4, 0]
+polarity: nonpolarized
+resistanceOhms: 10000
+powerRatingW: 0.5
+hazardClass: none

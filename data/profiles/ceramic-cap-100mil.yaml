@@ -1,0 +1,10 @@
+# Generic ceramic capacitor, 100 mil (0.1") lead spacing — the name is the geometry.
+# 50 V is the common rating floor for maker-grade MLCC/disc parts.
+partId: 100milCeramicCapacitorModuleID
+footprint:
+  pins:
+    "0": [0, 0]
+    "1": [1, 0]
+polarity: nonpolarized
+absMaxVoltageV: 50
+hazardClass: none

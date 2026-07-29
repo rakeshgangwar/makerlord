@@ -1,0 +1,15 @@
+# RGB LED, common cathode, 4-pin inline (red-cathode-green-blue at 0.1").
+# forwardVoltageV is the RED channel (2.0 V) — the lowest Vf, which sizes
+# the series resistor for the worst-case current. Green/blue sit near 3.2 V.
+# 20 mA per channel.
+partId: d4d5af9700923b8a114f57961f29a8a0ColorLEDModuleID
+footprint:
+  pins:
+    "red anode": [0, 0]
+    "common cathode": [1, 0]
+    "green anode": [2, 0]
+    "blue anode": [3, 0]
+polarity: polarized
+forwardVoltageV: 2.0
+maxCurrentMa: 20
+hazardClass: none

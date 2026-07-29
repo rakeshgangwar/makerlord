@@ -12,6 +12,8 @@ export interface DeviceModel {
   provenance: ModelProvenance;
   /** Model card or .include line, if the device needs one. */
   card?: string;
+  /** The .model name the card declares (curated cards choose their own). */
+  modelName?: string;
   params: Record<string, number>;
 }
 
@@ -44,12 +46,13 @@ export function deviceModel(
 
   const curated = curatedModelCard(partId);
   if (curated !== undefined) {
-    return {
-      model: {
-        ref, partId, kind: 'diode', provenance: 'verified',
-        card: curated, params: {},
-      },
+    const declared = /\.model\s+(\S+)/i.exec(curated)?.[1];
+    const model: DeviceModel = {
+      ref, partId, kind: 'diode', provenance: 'verified',
+      card: curated, params: {},
     };
+    if (declared) model.modelName = declared;
+    return { model };
   }
 
   if (profile?.resistanceOhms !== undefined) {

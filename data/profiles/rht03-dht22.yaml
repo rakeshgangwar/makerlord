@@ -1,0 +1,15 @@
+# RHT03 / DHT22 / AM2302 humidity + temperature sensor. Datasheet-verified:
+# supply 3.3-6 V, measuring current 1-1.5 mA, standby 40-50 µA. Four pins
+# inline at 0.1": Vcc, data, and two ground pins.
+partId: Humidity_and_Temperature_Sensor_RHT03_6
+footprint:
+  pins:
+    Vcc: [0, 0]
+    Data-signal: [1, 0]
+    "GND 1": [2, 0]
+    "GND 2": [3, 0]
+polarity: polarized
+maxCurrentMa: 1.5
+quiescentMa: 0.05
+absMaxVoltageV: 6
+hazardClass: none

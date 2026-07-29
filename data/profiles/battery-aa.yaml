@@ -1,0 +1,9 @@
+# Single AA cell, 1.5 V nominal (~2500 mAh alkaline — capacity lives in the
+# requirement model, not here). Terminal offsets from the breadboard SVG.
+partId: 1000AFDF10011leg
+footprint:
+  pins:
+    "-": [0, 0]
+    "+": [0, -2]
+polarity: polarized
+hazardClass: none

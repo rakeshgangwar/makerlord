@@ -1,0 +1,13 @@
+# Generic brushed hobby DC motor (130-size class). No part number in the
+# corpus, so the stall figure is the conservative class estimate: ~800 mA
+# stall at 6 V (no-load ~70-200 mA). Inductive: needs a flyback diode when
+# switched. Footprint from SVG: terminals 4 holes apart, vertical.
+partId: 1000FADF10011leg
+footprint:
+  pins:
+    "pin 1": [0, 0]
+    "pin 2": [0, 4]
+polarity: nonpolarized
+maxCurrentMa: 800
+absMaxVoltageV: 6
+hazardClass: inductive

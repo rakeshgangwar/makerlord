@@ -1,0 +1,13 @@
+# Dagu 9g micro servo (SG90 class). 4.8-6 V supply; stall current ~800 mA —
+# far beyond any GPIO, and the pin-current rule should say so if the supply
+# path is wrong. Inductive: it contains a motor. Header pins at 0.1".
+partId: Dagu_DGServo_9g_End_view
+footprint:
+  pins:
+    gnd: [0, 0]
+    vcc: [1, 0]
+    pulse: [2, 0]
+polarity: polarized
+maxCurrentMa: 800
+absMaxVoltageV: 6
+hazardClass: inductive

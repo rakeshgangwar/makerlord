@@ -1,0 +1,16 @@
+# Generic NPN power transistor, TO-220, pins base-collector-emitter at 0.1"
+# (offsets extracted from the breadboard SVG). The fzp names no part number,
+# so ratings are the conservative TIP31-class floor: Ic 3 A, Vceo 60 V —
+# and powerRatingW is the FREE-AIR figure (~2 W), not the heatsinked 40 W,
+# because a breadboard has no heatsink.
+partId: 1238DBDC00
+footprint:
+  pins:
+    base: [0, 0]
+    collector: [1, 0]
+    emitter: [2, 0]
+polarity: polarized
+maxCurrentMa: 3000
+absMaxVoltageV: 60
+powerRatingW: 2
+hazardClass: none

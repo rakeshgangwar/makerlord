@@ -1,0 +1,20 @@
+# FiC FRS1B-S 5 V relay (part number from the fzp). Datasheet-verified:
+# coil 5 V / 56 Ω → ~89 mA coil draw (0.45 W); contacts 1 A @ 125 VAC / 30 VDC
+# (the -S sensitive-coil variant; the fzp's own contact-rating property
+# agrees). maxCurrentMa here is the COIL draw — it is what the pin-current
+# rule reads when a GPIO tries to drive the coil directly, and 89 mA > 20 mA
+# is exactly the finding that should fire. Inductive: flyback required.
+# Footprint offsets extracted from the breadboard SVG (two rows, 4 holes apart).
+partId: basic-re0750cfe91b854b78be2154ffc8101a37
+footprint:
+  pins:
+    C2: [0, 0]
+    COIL2: [4, 0]
+    B: [5, 0]
+    A: [5, -4]
+    COIL1: [4, -4]
+    C1: [0, -4]
+polarity: nonpolarized
+maxCurrentMa: 90
+absMaxVoltageV: 6
+hazardClass: inductive

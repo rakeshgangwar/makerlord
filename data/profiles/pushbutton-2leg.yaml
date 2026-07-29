@@ -1,0 +1,13 @@
+# Generic THT tactile pushbutton, 2-leg horizontal. 50 mA / 12 V is the
+# conservative contact rating for 6 mm tactile switches. Footprint is
+# hand-authored: the corpus ships only an icon SVG for this part; the
+# horizontal 2-leg body spans 0.3".
+partId: 20A9BBEE34_ST-2leadbutton-horizon
+footprint:
+  pins:
+    leg0: [0, 0]
+    leg1: [3, 0]
+polarity: nonpolarized
+maxCurrentMa: 50
+absMaxVoltageV: 12
+hazardClass: none

@@ -1,0 +1,12 @@
+# GL5528-class CdS photocell. Datasheet-verified: 100 mW max dissipation,
+# 150 V max. Resistance varies 10 kΩ (light) to ~1 MΩ (dark), so no fixed
+# resistanceOhms — a divider design reads the range from the datasheet.
+partId: 2010BBCD20113PhotocellModuleID
+footprint:
+  pins:
+    "pin 0": [0, 0]
+    "pin 1": [3, 0]
+polarity: nonpolarized
+powerRatingW: 0.1
+absMaxVoltageV: 150
+hazardClass: none

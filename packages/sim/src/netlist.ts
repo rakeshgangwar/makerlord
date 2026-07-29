@@ -90,7 +90,7 @@ export function spiceNetlist(
         const anode = pins.find((p) => p.name.toLowerCase().includes('anode'))?.name ?? pins[1]?.name ?? 'anode';
         const cathode = pins.find((p) => p.name.toLowerCase().includes('cathode'))?.name ?? pins[0]?.name ?? 'cathode';
         lines.push(
-          `D${inst.ref} ${node(anode)} ${node(cathode)} D_${inst.ref} ` +
+          `D${inst.ref} ${node(anode)} ${node(cathode)} ${model.modelName ?? `D_${inst.ref}`} ` +
             `; ${model.provenance}`,
         );
         if (model.card) cards.push(model.card);

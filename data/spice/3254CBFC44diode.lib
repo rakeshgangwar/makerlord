@@ -1,0 +1,2 @@
+* 1N4001 rectifier — widely published manufacturer-derived model (onsemi/Vishay lineage)
+.model D_1N4001 D(IS=14.11n N=1.984 RS=33.89m IKF=94.81 XTI=3 EG=1.11 CJO=25.89p M=.44 VJ=.3245 FC=.5 BV=75 IBV=10u TT=5.7u)

@@ -1,0 +1,10 @@
+# 9 V PP3 block. 9 V across a 5 V/3V3 part is the classic burnout — the
+# voltage-domain rule reads absMaxVoltageV on the LOAD side; the source
+# itself carries no limit fields beyond polarity.
+partId: 77c36646df552e9fe72f360837f556ccleg
+footprint:
+  pins:
+    "-": [0, 0]
+    "+": [0, -1]
+polarity: polarized
+hazardClass: none

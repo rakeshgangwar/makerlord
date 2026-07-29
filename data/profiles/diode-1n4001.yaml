@@ -1,0 +1,14 @@
+# 1N4001 rectifier (JEDEC standard values, e.g. onsemi datasheet):
+# 1 A average forward current, VRRM 50 V, Vf 1.1 V max at 1 A.
+# forwardVoltageV is deliberately OMITTED: that field marks LED-shaped parts
+# for RULE_LED_NO_CURRENT_LIMIT, and a rectifier must not trip it. The SPICE
+# model lives in data/spice/3254CBFC44diode.lib instead.
+partId: 3254CBFC44diode
+footprint:
+  pins:
+    cathode: [0, 0]
+    anode: [3, 0]
+polarity: polarized
+maxCurrentMa: 1000
+absMaxVoltageV: 50
+hazardClass: none
