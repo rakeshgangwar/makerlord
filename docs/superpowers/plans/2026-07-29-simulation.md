@@ -42,43 +42,43 @@ data/spice/          curated .lib models, keyed by partId (verified provenance)
 
 ### Task 1: Provenance model (the executable D43)
 
-- [ ] `ModelProvenance = 'verified' | 'computed' | 'sourced' | 'assumed'`; `weakest()`; `severityCeiling()`; `capFinding()`
-- [ ] Tests: ceilings per D43's table; weakest-not-average
+- [x] `ModelProvenance = 'verified' | 'computed' | 'sourced' | 'assumed'`; `weakest()`; `severityCeiling()`; `capFinding()`
+- [x] Tests: ceilings per D43's table; weakest-not-average
 
 ### Task 2: Device models
 
-- [ ] Resistor from profile `resistanceOhms` → `computed`; LED from profile `forwardVoltageV` → diode card, `computed`; curated `data/spice/<partId>.lib` → `verified`; MCU (has `pinMaxMa`) → behavioural stub, `assumed`; nothing → stub + `SIM_MODEL_MISSING`
-- [ ] Tests incl. the missing-model fixture: part named, run capped at NOTE
+- [x] Resistor from profile `resistanceOhms` → `computed`; LED from profile `forwardVoltageV` → diode card, `computed`; curated `data/spice/<partId>.lib` → `verified`; MCU (has `pinMaxMa`) → behavioural stub, `assumed`; nothing → stub + `SIM_MODEL_MISSING`
+- [x] Tests incl. the missing-model fixture: part named, run capped at NOTE
 
 ### Task 3: Stimulus
 
-- [ ] `Stimulus` per spec §5 with provenance + rationale; projection to `V`/`I` SPICE sources (`dc`, `pulse`, `pwl`, `sine`, `load_step`)
-- [ ] `SIM_STIMULUS_ASSUMED` NOTE listing every assumed stimulus with rationale
-- [ ] Tests: derived/stated/assumed carry weight; assumed caps at NOTE
+- [x] `Stimulus` per spec §5 with provenance + rationale; projection to `V`/`I` SPICE sources (`dc`, `pulse`, `pwl`, `sine`, `load_step`)
+- [x] `SIM_STIMULUS_ASSUMED` NOTE listing every assumed stimulus with rationale
+- [x] Tests: derived/stated/assumed carry weight; assumed caps at NOTE
 
 ### Task 4: Netlist projection
 
-- [ ] Intent-net connectivity → node map (gnd-role pin net = node 0); readable, hand-runnable `circuit.cir` with a provenance comment per device
-- [ ] Golden-file tests: fixture project in, exact `.cir` out (deterministic projection, D2 — equality is the right assertion)
+- [x] Intent-net connectivity → node map (gnd-role pin net = node 0); readable, hand-runnable `circuit.cir` with a provenance comment per device
+- [x] Golden-file tests: fixture project in, exact `.cir` out (deterministic projection, D2 — equality is the right assertion)
 
 ### Task 5: Parsers and findings
 
-- [ ] `parse.ts`: `.op` `name = value` output; `wrdata` column output for `.tran`/`.ac`
-- [ ] `findings.ts`: `SIM_ABSMAX_EXCEEDED`, `SIM_POWER_DISSIPATION`, `SIM_RAIL_SAG` (min over window vs part minimum), `SIM_AC_CORNER_MISMATCH` (−3 dB corner vs numeric requirement), all capped by run provenance
-- [ ] Tests over canned ngspice output: known-answer arithmetic (divider ratio, RC corner within 2% of 1/(2πRC), one-τ charge ≈ 63.2%)
+- [x] `parse.ts`: `.op` `name = value` output; `wrdata` column output for `.tran`/`.ac`
+- [x] `findings.ts`: `SIM_ABSMAX_EXCEEDED`, `SIM_POWER_DISSIPATION`, `SIM_RAIL_SAG` (min over window vs part minimum), `SIM_AC_CORNER_MISMATCH` (−3 dB corner vs numeric requirement), all capped by run provenance
+- [x] Tests over canned ngspice output: known-answer arithmetic (divider ratio, RC corner within 2% of 1/(2πRC), one-τ charge ≈ 63.2%)
 
 ### Task 6: Ladder, runner, discharge
 
-- [ ] `ladder.ts`: default → gmin stepping → source stepping → relaxed tolerances → gear → give up; each successful rung recorded in the result; results at relaxed tolerance labelled as the weaker claim
-- [ ] `run.ts`: ngspice `-b` subprocess, `sim/` artifacts (`circuit.cir`, `results/*.csv`, `report.md`); missing binary throws a clear error
-- [ ] `discharge.ts`: metric → analysis table; **explicit `not-simulable`** verdicts; verdict severity obeys D43
-- [ ] Integration tests `describe.skipIf(noNgspice)` — skip prints a loud warning naming the install command
-- [ ] Tests: convergence-failure fixture (no circuit findings, nothing passed, rungs listed); discharge fixture pair (checkable vs not)
+- [x] `ladder.ts`: default → gmin stepping → source stepping → relaxed tolerances → gear → give up; each successful rung recorded in the result; results at relaxed tolerance labelled as the weaker claim
+- [x] `run.ts`: ngspice `-b` subprocess, `sim/` artifacts (`circuit.cir`, `results/*.csv`, `report.md`); missing binary throws a clear error
+- [x] `discharge.ts`: metric → analysis table; **explicit `not-simulable`** verdicts; verdict severity obeys D43
+- [x] Integration tests `describe.skipIf(noNgspice)` — skip prints a loud warning naming the install command
+- [x] Tests: convergence-failure fixture (no circuit findings, nothing passed, rungs listed); discharge fixture pair (checkable vs not)
 
 ### Task 7: The four tools, 32 → 36
 
-- [ ] `sim_stimulus_set`, `sim_run`, `sim_results` (progressive disclosure — summary + run id, traces fetched on demand, downsampled), `sim_check_requirements` — none gated
-- [ ] Registry invariants updated: 36 tools, gated set unchanged; CLI + MCP grow them for free
-- [ ] Full suite + typecheck green; commit
+- [x] `sim_stimulus_set`, `sim_run`, `sim_results` (progressive disclosure — summary + run id, traces fetched on demand, downsampled), `sim_check_requirements` — none gated
+- [x] Registry invariants updated: 36 tools, gated set unchanged; CLI + MCP grow them for free
+- [x] Full suite + typecheck green; commit
 
 **Deferred, named:** PNG derivation from CSV (needs a plot renderer; CSV canonical ships), Monte Carlo / tolerance analysis (v2 per spec §9), thermal, firmware-in-the-loop (explicitly out, spec §9).

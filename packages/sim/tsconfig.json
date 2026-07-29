@@ -5,7 +5,6 @@
   "references": [
     { "path": "../parts" },
     { "path": "../circuit" },
-    { "path": "../project" },
-    { "path": "../sim" }
+    { "path": "../project" }
   ]
 }

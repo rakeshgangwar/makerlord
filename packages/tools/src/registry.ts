@@ -11,6 +11,7 @@ import { INVENTORY_TOOLS } from './tools/inventory.js';
 import { PARTS_TOOLS } from './tools/parts.js';
 import { PROJECT_TOOLS } from './tools/project.js';
 import { REQUIREMENT_TOOLS } from './tools/requirements.js';
+import { SIM_TOOLS } from './tools/sim.js';
 
 /** The registry name is canonical; adapters map onto it. */
 export const ALL_TOOLS: readonly ToolDef[] = [
@@ -23,6 +24,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...CIRCUIT_TOOLS,
   ...CHECK_TOOLS,
   ...GATED_TOOLS,
+  ...SIM_TOOLS,
 ];
 
 const byName = new Map(ALL_TOOLS.map((t) => [t.name, t]));

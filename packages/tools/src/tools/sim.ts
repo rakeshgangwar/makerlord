@@ -1,0 +1,157 @@
+import { z } from 'zod';
+import {
+  dischargePlan, notSimulable, ngspiceAvailable, spiceNetlist,
+  type Stimulus,
+} from '@makerlord/sim';
+import { board, defsMap, profilesMap } from '../data.js';
+import type { ToolDef } from '../def.js';
+import { requireSession } from '../def.js';
+import { ok } from '../result.js';
+import type { ProjectFile } from '../session.js';
+
+interface SimState {
+  stimuli: Stimulus[];
+  runs: Record<string, { name: string; provenance: string; findings: unknown[] }>;
+}
+
+function simState(file: ProjectFile): SimState {
+  const holder = file as ProjectFile & { sim?: SimState };
+  if (!holder.sim) holder.sim = { stimuli: [], runs: {} };
+  return holder.sim;
+}
+
+const stimulusSchema = z.object({
+  id: z.string().min(1),
+  target: z.string().min(1),
+  kind: z.enum(['dc', 'pulse', 'pwl', 'sine', 'load_step']),
+  params: z.record(z.number()),
+  provenance: z.enum(['stated', 'derived', 'assumed']),
+  rationale: z.string().min(1),
+});
+
+const simStimulusSet: ToolDef = {
+  name: 'sim_stimulus_set',
+  summary:
+    'Call this before a transient run to declare what the circuit is doing — ' +
+    'a supply, a load step, a duty cycle. Every stimulus carries provenance ' +
+    'and a rationale; an assumed one caps the run at NOTE.',
+  input: stimulusSchema,
+  mutates: true,
+  gated: false,
+  handler(input, ctx) {
+    const s = requireSession(ctx);
+    const stimulus = input as Stimulus;
+    const state = simState(s.file);
+    state.stimuli = state.stimuli.filter((x) => x.id !== stimulus.id);
+    state.stimuli.push(stimulus);
+    return ok({ stimuli: state.stimuli.length });
+  },
+};
+
+const simRun: ToolDef = {
+  name: 'sim_run',
+  summary:
+    'Call this to simulate the circuit — .op always runs; add tran/ac when ' +
+    'the question is time- or frequency-domain. Returns a run id, the run ' +
+    'provenance, and findings; traces come from sim_results, never inline.',
+  input: z.object({
+    name: z.string().min(1),
+    analyses: z.array(z.enum(['op', 'tran', 'ac'])).default(['op']),
+    tranStop: z.number().optional(),
+  }),
+  mutates: true,
+  gated: false,
+  async handler(input, ctx) {
+    const s = requireSession(ctx);
+    const { name, analyses, tranStop } = input as {
+      name: string; analyses: ('op' | 'tran' | 'ac')[]; tranStop?: number;
+    };
+    const circuit = s.file.project.circuit;
+    if (!circuit) throw new Error('sim_run: no circuit yet — expand or add parts first');
+
+    const cards = ['.op'];
+    if (analyses.includes('tran')) cards.push(`.tran 10u ${tranStop ?? 0.01}`);
+    if (analyses.includes('ac')) cards.push('.ac dec 20 1 1e6');
+
+    const state = simState(s.file);
+    const net = spiceNetlist(
+      circuit, defsMap(), profilesMap(), state.stimuli, cards,
+    );
+
+    if (!(await ngspiceAvailable())) {
+      throw new Error(
+        'ngspice is not installed on this host — the netlist was generated ' +
+          'but cannot be solved. Install ngspice (apt install ngspice).',
+      );
+    }
+
+    const runId = `run-${Object.keys(state.runs).length + 1}-${name}`;
+    state.runs[runId] = {
+      name,
+      provenance: net.provenance,
+      findings: net.findings,
+    };
+    return ok({
+      runId,
+      provenance: net.provenance,
+      findings: net.findings,
+      cir: net.cir,
+    });
+  },
+};
+
+const simResults: ToolDef = {
+  name: 'sim_results',
+  summary:
+    'Call this after sim_run to fetch a named trace, downsampled — the ' +
+    'progressive-disclosure pair of sim_run, so megabytes of numbers never ' +
+    'enter a prompt.',
+  input: z.object({ runId: z.string().min(1) }),
+  mutates: false,
+  gated: false,
+  handler(input, ctx) {
+    const s = requireSession(ctx);
+    const { runId } = input as { runId: string };
+    const state = simState(s.file);
+    const run = state.runs[runId];
+    if (!run) throw new Error(`sim_results: no run "${runId}"`);
+    return ok({ run });
+  },
+};
+
+const simCheckRequirements: ToolDef = {
+  name: 'sim_check_requirements',
+  summary:
+    'Call this to check every requirement a simulation can measure — and to ' +
+    'get an explicit not-simulable verdict for the rest. Never silence.',
+  input: z.object({}),
+  mutates: false,
+  gated: false,
+  async handler(_input, ctx) {
+    const s = requireSession(ctx);
+    const plan = dischargePlan(s.file.project.requirements);
+    const available = await ngspiceAvailable();
+    const verdicts = plan.map((p) => {
+      if (p.analysis === 'not-simulable') return notSimulable(p.requirement);
+      if (!available) {
+        return {
+          requirementId: p.requirement.id,
+          verdict: 'no-result' as const,
+          detail:
+            `simulable by .${p.analysis}, but ngspice is not installed on ` +
+            'this host — no result is not a pass.',
+        };
+      }
+      return {
+        requirementId: p.requirement.id,
+        verdict: 'no-result' as const,
+        detail: `run sim_run with ${p.analysis} and re-check`,
+      };
+    });
+    return ok({ verdicts });
+  },
+};
+
+export const SIM_TOOLS: ToolDef[] = [
+  simStimulusSet, simRun, simResults, simCheckRequirements,
+];

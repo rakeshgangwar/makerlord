@@ -114,6 +114,21 @@ importers:
         specifier: workspace:*
         version: link:../tools
 
+  packages/sim:
+    dependencies:
+      '@makerlord/circuit':
+        specifier: workspace:*
+        version: link:../circuit
+      '@makerlord/parts':
+        specifier: workspace:*
+        version: link:../parts
+      '@makerlord/project':
+        specifier: workspace:*
+        version: link:../project
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+
   packages/tools:
     dependencies:
       '@makerlord/circuit':
@@ -125,6 +140,9 @@ importers:
       '@makerlord/project':
         specifier: workspace:*
         version: link:../project
+      '@makerlord/sim':
+        specifier: workspace:*
+        version: link:../sim
       zod:
         specifier: ^3.23.0
         version: 3.25.76

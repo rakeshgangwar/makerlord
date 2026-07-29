@@ -47,7 +47,7 @@ async function turn(agent: AgentSession, text: string): Promise<SessionEvent[]> 
 describe('apiTools — the fourth consumer of one schema', () => {
   it('exposes every registry tool with its canonical name and summary', () => {
     const tools = apiTools();
-    expect(tools).toHaveLength(32);
+    expect(tools).toHaveLength(36);
     const propose = tools.find((t) => t.name === 'req_propose')!;
     expect(propose.description).toMatch(/call this/i);
   });
