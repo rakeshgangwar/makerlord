@@ -61,7 +61,10 @@ EOF
 
 echo "== services + nginx"
 scp -q deploy/makerlord-api.service deploy/makerlord-ui.service "$HOST:/etc/systemd/system/"
-scp -q deploy/nginx-makerlord.conf "$HOST:/etc/nginx/sites-available/makerlord.dev"
+# The vhost is installed ONCE; after that certbot (TLS) and auth edits own
+# the live file — overwriting it on redeploy would strip them.
+ssh "$HOST" '[ -f /etc/nginx/sites-available/makerlord.dev ]' || \
+  scp -q deploy/nginx-makerlord.conf "$HOST:/etc/nginx/sites-available/makerlord.dev"
 ssh "$HOST" bash -s <<'EOF'
 set -euo pipefail
 ln -sf /etc/nginx/sites-available/makerlord.dev /etc/nginx/sites-enabled/makerlord.dev
