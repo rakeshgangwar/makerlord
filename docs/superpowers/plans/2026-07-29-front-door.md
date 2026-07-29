@@ -2176,7 +2176,7 @@ git commit -m "feat(project): feasibility evidence validation at the schema"
 
 **Spec §5.2:** archetypes are **hints, not gates**. An unusual project gets the universal core plus whatever conversation surfaces. `default` exists so an unanswered slot becomes an *assumed* requirement rather than a missing one.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/archetypes.test.ts`:
 
@@ -2259,12 +2259,12 @@ describe('slotsFor', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/archetypes.test.ts`
 Expected: FAIL — cannot resolve `../src/requirements/archetypes.js`.
 
-- [ ] **Step 3: Write the library**
+- [x] **Step 3: Write the library**
 
 Create `packages/project/src/requirements/archetypes.ts`:
 
@@ -2453,12 +2453,12 @@ export function slotsFor(archetypeId?: string): RequirementSlot[] {
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/archetypes.test.ts`
 Expected: PASS, 12 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/requirements/archetypes.ts packages/project/test/archetypes.test.ts
