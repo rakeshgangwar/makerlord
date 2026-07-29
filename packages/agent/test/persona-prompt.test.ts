@@ -34,9 +34,21 @@ describe('personas', () => {
     expect(activePersona(pack, 3)).toBeUndefined();
   });
 
-  it('an empty project has no pack, and that is fine', () => {
+  it('a project without a pack falls back to the shipped default pack', () => {
+    // vitest runs from the repo root, so the default ./data/personas resolves.
     const pack = loadPack(mkdtempSync(join(tmpdir(), 'makerlord-nopack-')));
-    expect(personaNames(pack)).toEqual([]);
+    expect(personaNames(pack)).toEqual([
+      '2: feasibility', '3: requirements', '4: architecture', '6: prototype',
+    ]);
+    expect(activePersona(pack, 6)).toContain('Build coach');
+    // The gate stance is in the prose, verbatim from D15.
+    expect(activePersona(pack, 6)).toMatch(/never consent|readings, never/i);
+  });
+
+  it('a project pack wins outright over the default — D34', () => {
+    const project = packDir();   // has its own 02 + 06 personas
+    const pack = loadPack(project);
+    expect(personaNames(pack)).toEqual(['2: feasibility', '6: prototype']);
   });
 
   it('effort follows how expensive and silent a mistake is', () => {

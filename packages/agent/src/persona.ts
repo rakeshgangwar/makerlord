@@ -27,11 +27,21 @@ export function personasDir(projectDir: string): string {
   return join(projectDir, '.makerlord', 'personas');
 }
 
+/** The default pack shipped with the product, used when a project has none. */
+export function defaultPersonasDir(): string {
+  return process.env.MAKERLORD_PERSONAS_PACK ?? './data/personas';
+}
+
 const PERSONA_FILE = /^(\d{2})-(.+)\.persona\.md$/;
 
-/** Discover the pack: manifest defaults plus one file per stage. */
+/**
+ * Discover the pack: manifest defaults plus one file per stage. A maker's
+ * project-repo pack (D34 — versioned, diffable, travels with the project)
+ * wins outright; the shipped default pack is the fallback, never merged.
+ */
 export function loadPack(projectDir: string): PersonaPack {
-  const dir = personasDir(projectDir);
+  const projectPack = join(projectDir, '.makerlord', 'personas');
+  const dir = existsSync(projectPack) ? projectPack : defaultPersonasDir();
   const pack: PersonaPack = { defaults: {}, personas: new Map(), dir };
   if (!existsSync(dir)) return pack;
 
