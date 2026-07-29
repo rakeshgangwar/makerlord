@@ -62,11 +62,16 @@ export function deviceModel(
   }
 
   if (profile?.forwardVoltageV !== undefined) {
-    // Diode derived from curated datasheet parameters: Vf sets N·Vt scaling.
+    // Diode derived from curated datasheet parameters: choose N so the diode
+    // drops Vf at its rated current — N = Vf / (Vt · ln(If/Is)).
+    const IS = 1e-20;
+    const VT = 0.02585;
+    const ratedA = (profile.maxCurrentMa ?? 20) / 1000;
+    const n = profile.forwardVoltageV / (VT * Math.log(ratedA / IS));
     return {
       model: {
         ref, partId, kind: 'diode', provenance: 'computed',
-        card: `.model D_${ref} D(Is=1e-20 N=${(profile.forwardVoltageV / 0.7).toFixed(3)})`,
+        card: `.model D_${ref} D(Is=1e-20 N=${n.toFixed(3)})`,
         params: { vf: profile.forwardVoltageV },
       },
     };

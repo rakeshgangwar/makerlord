@@ -33,7 +33,7 @@ describe.skipIf(!available)('ngspice integration — known answers', () => {
     const dir = mkdtempSync(join(tmpdir(), 'makerlord-ng-'));
     const cir = [
       '* led branch', 'V1 vcc 0 DC 5', 'R1 vcc a 220',
-      'D1 a 0 DLED', '.model DLED D(Is=1e-20 N=2.857)',
+      'D1 a 0 DLED', '.model DLED D(Is=1e-20 N=1.836)',
       '.control', 'op', 'print i(V1)', '.endc', '.end', '',
     ].join('\n');
     const run = await runNgspice(dir, 'led', cir);

@@ -201,7 +201,7 @@ describe('netlist projection — golden file', () => {
         'RR1 vcc mid 220 ; computed',
         'DLED1 mid 0 D_LED1 ; computed',
         'V_rail vcc 0 DC 5 ; derived',
-        '.model D_LED1 D(Is=1e-20 N=2.857)',
+        '.model D_LED1 D(Is=1e-20 N=1.836)',
         '.op',
         '.end',
         '',
