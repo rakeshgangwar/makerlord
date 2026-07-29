@@ -1,0 +1,17 @@
+# partId and pin names verified against core/arduino_Uno_Rev3(fix).fzp —
+# the corpus names D13 as "D13/SCK".
+partId: arduino_Uno_Rev3(fix)
+footprint:
+  pins:
+    GND: [0, 0]
+    "5V": [1, 0]
+    "3V3": [2, 0]
+    "D13/SCK": [3, 0]
+    A0: [4, 0]
+logicLevelV: 5.0
+pinMaxMa: 20
+portTotalMaxMa: 100
+regulatorMaxMa: 400
+absMaxVoltageV: 5.5
+quiescentMa: 45
+hazardClass: none

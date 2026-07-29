@@ -1,0 +1,10 @@
+# Pin names verified against core/resistor.fzp: connectors are "Pin 0"/"Pin 1"
+partId: ResistorModuleID
+footprint:
+  pins:
+    "Pin 0": [0, 0]
+    "Pin 1": [4, 0]
+polarity: nonpolarized
+resistanceOhms: 220
+powerRatingW: 0.25
+hazardClass: none

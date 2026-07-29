@@ -1,0 +1,9 @@
+partId: 5mmColorLEDModuleID
+footprint:
+  pins:
+    cathode: [0, 0]
+    anode: [1, 0]
+polarity: polarized
+forwardVoltageV: 2.0
+maxCurrentMa: 20
+hazardClass: none
