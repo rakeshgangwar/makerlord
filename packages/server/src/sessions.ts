@@ -197,6 +197,20 @@ export class HostedSessions {
     appendFileSync(this.transcriptPath(projectDir), `${JSON.stringify(record)}\n`);
   }
 
+  /** Bridge turns happen off-server (the maker's own agent); the bridge
+   *  flushes them here after each turn so a reload replays ONE history —
+   *  the transcript belongs to the project, not to whichever brain drove. */
+  appendTranscriptRecords(projectId: string, records: unknown[]): void {
+    const dir = this.projectDir(projectId);
+    for (const record of records) {
+      const kind = (record as { kind?: string }).kind;
+      if (kind !== 'maker' && kind !== 'event') {
+        throw new Error('records must be {kind: "maker"|"event", ...}');
+      }
+      this.appendTranscript(dir, record);
+    }
+  }
+
   /** The conversation survives reloads and redeploys: it lives with the
    *  project, not with the in-memory session. */
   readTranscript(projectId: string): unknown[] {

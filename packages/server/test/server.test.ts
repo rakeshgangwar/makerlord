@@ -350,3 +350,25 @@ describe('the ACP backend — a spawned agent instead of the API key', () => {
     expect(events.at(-1)!.t).toBe('turn.end');
   });
 });
+
+describe('the transcript flush endpoint — bridge turns join the history', () => {
+  it('appends records that then replay from GET, and rejects junk', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'bridge history' });
+    const pid = p.projectId as string;
+    const r = await post(`/api/projects/${pid}/transcript`, {
+      records: [
+        { kind: 'maker', text: 'over the bridge' },
+        { kind: 'event', event: { t: 'turn.end', reason: 'end_turn' } },
+      ],
+    });
+    expect(r.status).toBe(200);
+    const read = await fetch(`${base}/api/projects/${pid}/transcript`);
+    const { records } = (await read.json()) as { records: { kind: string }[] };
+    expect(records.map((x) => x.kind)).toEqual(['maker', 'event']);
+
+    const bad = await post(`/api/projects/${pid}/transcript`, {
+      records: [{ kind: 'sneaky' }],
+    });
+    expect(bad.status).toBe(400);
+  });
+});

@@ -257,6 +257,8 @@
   }
 
   onMount(async () => {
+    // If this browser has paired before, quietly re-attach to the bridge.
+    if (localStorage.getItem('makerlord.bridgeToken')) bridgeConnect(true);
     if (sessionId) openEvents();
     await replayTranscript();
     if (projectId) refreshProjections();
@@ -333,7 +335,7 @@
   /** @type {WebSocket | null} */
   let bridgeWs = null;
 
-  function bridgeConnect() {
+  function bridgeConnect(quiet = false) {
     if (bridgeWs) { bridgeWs.close(); return; }
     bridgeStatus = 'connecting';
     bridgeError = '';
@@ -351,6 +353,7 @@
         ws.send(JSON.stringify({ t: 'auth', token: f.token }));
       } else if (f.t === 'ready') {
         bridgeStatus = 'ready';
+        bridgeError = '';
         if (projectId) ws.send(JSON.stringify({ t: 'session.new', projectId }));
       } else if (f.t === 'session.ready') {
         bridgeSessionReady = true;
@@ -371,8 +374,14 @@
       bridgeSessionReady = false;
     };
     ws.onerror = () => {
-      bridgeError = 'no bridge on ws://127.0.0.1:8790 — run `maker-bridge` on this machine';
-      bridgeStatus = 'error';
+      // A silent auto-reconnect attempt just goes back to off; only a
+      // deliberate click earns the "run maker-bridge" hint.
+      if (!quiet) {
+        bridgeError = 'no bridge on ws://127.0.0.1:8790 — run `maker-bridge` on this machine';
+        bridgeStatus = 'error';
+      } else {
+        bridgeStatus = 'off';
+      }
     };
   }
 

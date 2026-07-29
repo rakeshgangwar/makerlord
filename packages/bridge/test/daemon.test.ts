@@ -1,3 +1,5 @@
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { resolve } from 'node:path';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import WebSocket from 'ws';
@@ -7,21 +9,42 @@ const FAKE = resolve('packages/bridge/test/fake-agent.mjs');
 const ORIGIN = 'https://makerlord.dev';
 
 let daemon: Daemon;
+let engine: Server;
+/** What the stub hosted engine received. */
+let flushed: { url: string; auth: string; body: { records: { kind: string }[] } }[];
 
 beforeEach(async () => {
+  flushed = [];
+  engine = createServer((req, res) => {
+    let data = '';
+    req.on('data', (c) => (data += c));
+    req.on('end', () => {
+      flushed.push({
+        url: req.url ?? '',
+        auth: req.headers.authorization ?? '',
+        body: JSON.parse(data || '{}'),
+      });
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end('{"appended":0}');
+    });
+  });
+  await new Promise<void>((r) => engine.listen(0, '127.0.0.1', r));
   daemon = await startDaemon({
     port: 0,
     origins: [ORIGIN],
     agentCommand: process.execPath,
     agentArgs: [FAKE],
-    api: 'http://127.0.0.1:1',   // never reached — fake agent calls no tools
+    api: `http://127.0.0.1:${(engine.address() as AddressInfo).port}`,
     token: 'test-token',
     mcpMain: resolve('packages/mcp/dist/main.js'),
     initTimeoutMs: 5000,
   });
 });
 
-afterEach(() => daemon.close());
+afterEach(() => {
+  daemon.close();
+  engine.close();
+});
 
 function connect(origin?: string): WebSocket {
   return new WebSocket(`ws://127.0.0.1:${daemon.port}`, {
@@ -108,6 +131,16 @@ describe('the paired path: local brain, hosted authority', () => {
     const text = events.filter((e) => e.t === 'message.delta').map((e) => e.text).join('');
     expect(text).toContain('echo: hello local brain');
     expect(events.at(-1)!.t).toBe('turn.end');
+
+    // The turn was flushed into the HOSTED transcript: one continuous
+    // history whichever brain drove — a reload replays this turn.
+    await new Promise((r) => setTimeout(r, 300));
+    const flush = flushed.find((f) => f.url === '/api/projects/abc123/transcript');
+    expect(flush).toBeDefined();
+    expect(flush!.auth).toBe('Bearer test-token');
+    const kinds = flush!.body.records.map((r) => r.kind);
+    expect(kinds[0]).toBe('maker');
+    expect(kinds.filter((k) => k === 'event').length).toBeGreaterThanOrEqual(2);
     ws.close();
   });
 });

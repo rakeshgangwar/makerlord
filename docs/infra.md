@@ -81,6 +81,8 @@ Then in makerlord.dev: **⚡ local brain** (bottom of the rail) → enter the
 code once. The dot goes green; every prompt now runs on YOUR Claude Code,
 while every tool call executes on the hosted engine — project state, gates,
 artifacts and git commits stay server-side. Restarting the bridge burns the
-pairing; the app re-asks for a fresh code automatically. Known gaps: bridge
-turns are not yet in the hosted transcript (reload loses that conversation
-view, not the project), and mid-turn steering is hosted-only.
+pairing; the app re-asks for a fresh code automatically. The bridge flushes each turn into the hosted transcript, so reloads
+replay one continuous history whichever brain drove, and the app quietly
+re-attaches to a running bridge on load. Known gaps: mid-turn steering is
+hosted-only, and a bridge session starts without the prior conversation in
+its context (the project state and transcript are a tool call away).

@@ -59,7 +59,27 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
     let authed = false;
     let agent: AcpAgent | undefined;
     let acpSessionId: string | undefined;
+    let projectId: string | undefined;
     let turnActive = false;
+
+    /** Flush a completed turn into the hosted transcript so a reload
+     *  replays one continuous history. Best-effort: a flush failure must
+     *  never break the turn the maker just watched succeed. */
+    const flushTranscript = async (records: unknown[]): Promise<void> => {
+      if (!projectId) return;
+      try {
+        await fetch(`${opts.api}/api/projects/${projectId}/transcript`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${opts.token}`,
+          },
+          body: JSON.stringify({ records }),
+        });
+      } catch {
+        // offline or engine unreachable — the turn itself already happened
+      }
+    };
 
     ws.on('message', (raw: Buffer) => {
       void (async () => {
@@ -128,6 +148,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
               MAKERLORD_REMOTE_PROJECT: frame.projectId,
             },
           }]);
+          projectId = frame.projectId;
           send(ws, { t: 'session.ready' });
           return;
         }
@@ -142,12 +163,15 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
             return;
           }
           turnActive = true;
+          const records: unknown[] = [{ kind: 'maker', text: frame.text }];
           try {
             await agent.prompt(acpSessionId, frame.text, (event: SessionEvent) => {
+              records.push({ kind: 'event', event });
               send(ws, { t: 'event', event });
             });
           } finally {
             turnActive = false;
+            await flushTranscript(records);
           }
         }
       })().catch((e: Error) => send(ws, { t: 'error', message: e.message }));

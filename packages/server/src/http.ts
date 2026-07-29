@@ -152,6 +152,23 @@ async function route(
     return;
   }
 
+  // Bridge-driven turns flush their records here (same shape the hosted
+  // path appends), so reloads replay one continuous history.
+  if (req.method === 'POST' && transcriptMatch) {
+    const { records } = await readBody(req);
+    if (!Array.isArray(records)) {
+      json(res, 400, { error: 'records array is required' });
+      return;
+    }
+    try {
+      sessions.appendTranscriptRecords(transcriptMatch[1]!, records);
+      json(res, 200, { appended: records.length });
+    } catch (e) {
+      json(res, 400, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
   // Build steps + gate state for the Bench posture.
   const stepsMatch = /^\/api\/projects\/([0-9a-f]+)\/steps$/.exec(path);
   if (req.method === 'GET' && stepsMatch) {
