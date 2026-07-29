@@ -1,0 +1,59 @@
+<script>
+  import { app } from '$lib/app.svelte.js';
+  import { presentSeverity } from '$lib/severity.js';
+
+  const blockerCount = $derived(
+    app.findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
+  );
+</script>
+
+<!-- The finding strip is an instrument, not a notification tray. -->
+<footer class="meter" aria-live="polite" aria-label="Findings">
+  <div class="meter-readout">
+    <span class="lamp" class:alert={blockerCount > 0} class:warn={blockerCount === 0 && app.findings.length > 0}></span>
+    <span class="mono readout-text">
+      {#if app.findings.length === 0}READY · no open findings{:else}{app.findings.length} finding{app.findings.length === 1 ? '' : 's'} · {blockerCount} blocking{/if}
+    </span>
+  </div>
+  {#if app.findings.length > 0}
+    <div class="cards">
+      {#each app.findings as f}
+        {@const p = presentSeverity(f.severity)}
+        <article class="finding" style={`--sev: ${p.color}`}>
+          <span class="sev">{p.icon} {p.label}</span>
+          <span class="rule mono">{f.ruleId}</span>
+          <p class="claim">{f.message}</p>
+          {#if f.suggestedFix}<p class="fix">→ {f.suggestedFix}</p>{/if}
+        </article>
+      {/each}
+    </div>
+  {/if}
+</footer>
+
+<style>
+  .meter {
+    background: var(--meter-face); color: #dfe5e2; padding: 0.55rem 1.5rem 0.7rem;
+    border-top: 3px solid #171b1e;
+  }
+  .meter-readout { display: flex; align-items: center; gap: 0.6rem; }
+  .lamp {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--meter-glow); box-shadow: 0 0 6px var(--meter-glow);
+  }
+  .lamp.warn { background: var(--sev-warning); box-shadow: 0 0 6px var(--sev-warning); }
+  .lamp.alert {
+    background: var(--sev-blocker); box-shadow: 0 0 8px var(--sev-blocker);
+    animation: lamp-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes lamp-pulse { 50% { box-shadow: 0 0 14px var(--sev-blocker); } }
+  .readout-text { font-size: 0.78rem; letter-spacing: 0.06em; }
+  .cards { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.55rem; }
+  .finding {
+    background: #2c3236; border-left: 4px solid var(--sev);
+    border-radius: 6px; padding: 0.5rem 0.85rem;
+  }
+  .finding .sev { font-weight: 700; color: var(--sev); font-size: 0.85rem; filter: brightness(1.5); }
+  .finding .rule { margin-left: 0.6rem; font-size: 0.75rem; color: #9aa4ab; }
+  .finding .claim { margin: 0.25rem 0 0; font-size: 0.92rem; }
+  .finding .fix { margin: 0.2rem 0 0; font-size: 0.85rem; color: #b9c3c0; }
+</style>

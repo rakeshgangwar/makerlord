@@ -1,0 +1,381 @@
+import { browser } from '$app/environment';
+import { inferStage } from '$lib/postures.js';
+
+/**
+ * The one store. Every surface reads and mutates this shared runes state;
+ * components stay thin and the invariants stay in one place: ONE
+ * SessionEvent consumer, findings only ever from engine data, stage follows
+ * the project unless the maker pins it.
+ */
+export const app = $state({
+  // shell
+  stage: 1,
+  stagePinned: false,
+  // project + session
+  projectId: browser ? localStorage.getItem('makerlord.projectId') : null,
+  sessionId: browser ? localStorage.getItem('makerlord.sessionId') : null,
+  intentDraft: '',
+  promptDraft: '',
+  turnActive: false,
+  lastError: '',
+  // conversation
+  /** @type {{role: string, text: string}[]} */
+  messages: [],
+  streamingText: '',
+  /** @type {{name: string, done: boolean, refused?: string}[]} */
+  toolActivity: [],
+  /** @type {{severity: string, ruleId: string, message: string, suggestedFix?: string}[]} */
+  findings: [],
+  /** @type {{projectId: string, intent: string, updatedAt: string}[]} */
+  projectList: [],
+  // projections + build
+  renderTick: 0,
+  /** @type {{steps: any[], currentStep: number, gateOpen: boolean, measurements: any[]} | null} */
+  build: null,
+  /** @type {any} */
+  projectFile: null,
+  // the gate (D15: number first, prediction after)
+  measureName: 'rail-to-rail resistance',
+  measureValue: '',
+  measureUnit: 'Ω',
+  /** @type {any} */
+  prediction: null,
+  // simulation (stage ⑤)
+  /** @type {any} */
+  simResult: null,
+  simRunning: false,
+  // right panel
+  panelTab: 'bench',
+  libraryQuery: '',
+  /** @type {{id: string, title: string, family: string}[]} */
+  libraryHits: [],
+  /** @type {any} */
+  libraryPart: null,
+  /** @type {{path: string, size: number}[]} */
+  fileList: [],
+  /** @type {{path: string, content: string} | null} */
+  fileOpen: null,
+  /** @type {{subject: string, date: string}[]} */
+  commits: [],
+  // the local brain (maker-bridge)
+  bridgeStatus: 'off',   // off | pair | connecting | ready | error
+  bridgeSessionReady: false,
+  bridgeCodeDraft: '',
+  bridgeError: '',
+  // docked chat
+  dockOpen: false,
+});
+
+/** @type {EventSource | null} */
+let eventSource = null;
+/** @type {WebSocket | null} */
+let bridgeWs = null;
+
+export async function api(path, body) {
+  const res = await fetch(`/app-api/${path}`, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  return { status: res.status, data: await res.json().catch(() => ({})) };
+}
+
+function openEvents() {
+  if (!app.sessionId || eventSource) return;
+  eventSource = new EventSource(`/app-api/sessions/${app.sessionId}/events`);
+  eventSource.addEventListener('session', (e) => {
+    consume(JSON.parse(e.data));
+  });
+}
+
+/** The one SessionEvent consumer — findings only ever from engine data. */
+export function consume(ev, replay = false) {
+  if (ev.t === 'message.delta') {
+    app.streamingText += ev.text;
+  } else if (ev.t === 'tool.start') {
+    app.toolActivity = [...app.toolActivity, { name: ev.name, done: false }];
+  } else if (ev.t === 'tool.end') {
+    const last = app.toolActivity.findLast((a) => a.name && !a.done);
+    if (last) last.done = true;
+    app.toolActivity = [...app.toolActivity];
+    if (!ev.result.ok) {
+      if (last) last.refused = ev.result.refused;
+      app.findings = ev.result.findings.length ? ev.result.findings : app.findings;
+    }
+  } else if (ev.t === 'turn.end') {
+    if (app.streamingText) {
+      app.messages = [...app.messages, { role: 'agent', text: app.streamingText }];
+    }
+    app.streamingText = '';
+    app.turnActive = false;
+    if (!replay) refreshProjections();
+  } else if (ev.t === 'session.error') {
+    if (!replay) app.lastError = ev.message;
+    app.turnActive = false;
+  }
+}
+
+/** Rebuild the conversation from the persisted transcript. */
+async function replayTranscript() {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}/transcript`);
+  if (r.status !== 200) return;
+  for (const record of r.data.records ?? []) {
+    if (record.kind === 'maker') {
+      app.messages = [...app.messages, { role: 'maker', text: record.text }];
+      app.toolActivity = [];
+    } else if (record.kind === 'event') {
+      consume(record.event, true);
+    }
+  }
+}
+
+async function ensureSession(intent) {
+  if (!app.projectId) {
+    const p = await api('projects', { intent });
+    app.projectId = p.data.projectId;
+    localStorage.setItem('makerlord.projectId', app.projectId);
+  }
+  if (!app.sessionId) {
+    const s = await api('sessions', { projectId: app.projectId });
+    app.sessionId = s.data.sessionId;
+    localStorage.setItem('makerlord.sessionId', app.sessionId);
+  }
+  openEvents();
+}
+
+export async function startProject() {
+  if (!app.intentDraft.trim()) return;
+  try {
+    await ensureSession(app.intentDraft.trim());
+    await sendPrompt(app.intentDraft.trim());
+    app.intentDraft = '';
+  } catch (e) {
+    // A transient network failure must be visible and retryable, not an
+    // unhandled rejection. State is resumable: retry picks up where it got to.
+    app.lastError = `Could not start: ${e instanceof Error ? e.message : e}. Press Start again.`;
+  }
+}
+
+export async function sendPrompt(text) {
+  if (!text.trim() || !app.projectId) return;
+  app.messages = [...app.messages, { role: 'maker', text }];
+  app.toolActivity = [];
+  app.turnActive = true;
+  app.lastError = '';
+  // The local brain drives when connected — same events, same consumer.
+  if (app.bridgeStatus === 'ready' && app.bridgeSessionReady && bridgeWs) {
+    bridgeWs.send(JSON.stringify({ t: 'prompt', text }));
+    return;
+  }
+  try {
+    // Sessions are in-memory server-side: a redeploy drops them. Resume by
+    // minting a fresh one against the same project — the artefact persists.
+    if (!app.sessionId) await ensureSession(text);
+    let r = await api(`sessions/${app.sessionId}/prompt`, { text });
+    if (r.status === 404) {
+      app.sessionId = null;
+      localStorage.removeItem('makerlord.sessionId');
+      if (eventSource) { eventSource.close(); eventSource = null; }
+      await ensureSession(text);
+      r = await api(`sessions/${app.sessionId}/prompt`, { text });
+    }
+    if (r.status === 409) {
+      await api(`sessions/${app.sessionId}/steer`, { text });
+    }
+  } catch (e) {
+    app.turnActive = false;
+    app.lastError = `Could not reach the agent: ${e instanceof Error ? e.message : e}. Try again.`;
+  }
+}
+
+export function newProject() {
+  localStorage.removeItem('makerlord.projectId');
+  localStorage.removeItem('makerlord.sessionId');
+  location.reload();
+}
+
+export async function loadProjectList() {
+  const r = await api('projects');
+  if (r.status === 200) app.projectList = r.data.projects ?? [];
+}
+
+export function openProject(id) {
+  localStorage.setItem('makerlord.projectId', id);
+  localStorage.removeItem('makerlord.sessionId');
+  location.reload();
+}
+
+function followStage() {
+  if (!app.stagePinned && app.projectFile) {
+    app.stage = inferStage(app.projectFile.project);
+  }
+}
+
+export async function refreshProjections() {
+  app.renderTick += 1;
+  if (app.projectId) {
+    const r = await api(`projects/${app.projectId}/steps`);
+    if (r.status === 200) app.build = r.data;
+    await refreshProjectFile();
+    followStage();
+  }
+}
+
+async function refreshProjectFile() {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}`);
+  if (r.status === 200) app.projectFile = r.data.file;
+}
+
+export async function runCheck(name) {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}/tool`, { name, input: {} });
+  if (r.data.ok === false) app.findings = r.data.findings;
+  else if (r.data.ok) app.findings = r.data.data.findings ?? [];
+}
+
+export async function recordMeasurement() {
+  const value = Number(app.measureValue);
+  if (!Number.isFinite(value) || !app.projectId) return;
+  await api(`projects/${app.projectId}/tool`, {
+    name: 'measure',
+    input: { name: app.measureName, value, unit: app.measureUnit },
+  });
+  // Only AFTER the number is recorded does the prediction appear (D15).
+  const r = await api(`projects/${app.projectId}/tool`, { name: 'predict_dc', input: {} });
+  app.prediction = r.data.ok ? r.data.data.prediction : null;
+  app.measureValue = '';
+  await refreshProjections();
+}
+
+export async function runSimulation() {
+  if (!app.projectId || app.simRunning) return;
+  app.simRunning = true;
+  try {
+    const r = await api(`projects/${app.projectId}/tool`, {
+      name: 'sim_run', input: { name: 'ui', analyses: ['op'] },
+    });
+    if (r.data.ok) {
+      app.simResult = r.data.data;
+      if (app.simResult.findings?.length) app.findings = app.simResult.findings;
+    } else {
+      app.lastError = r.data.error ?? 'simulation failed';
+    }
+  } finally {
+    app.simRunning = false;
+  }
+}
+
+export async function openGate() {
+  const r = await api(`projects/${app.projectId}/tool`, { name: 'gate_open', input: {} });
+  if (r.data.ok === false) {
+    app.findings = r.data.findings.length ? r.data.findings : app.findings;
+  }
+  await refreshProjections();
+}
+
+export async function searchLibrary() {
+  if (!app.projectId || !app.libraryQuery.trim()) return;
+  const r = await api(`projects/${app.projectId}/tool`, {
+    name: 'parts_search', input: { query: app.libraryQuery.trim() },
+  });
+  app.libraryHits = r.data.ok ? r.data.data.hits : [];
+  app.libraryPart = null;
+}
+
+export async function openPart(id) {
+  const r = await api(`projects/${app.projectId}/tool`, {
+    name: 'parts_get', input: { id },
+  });
+  app.libraryPart = r.data.ok ? r.data.data : null;
+}
+
+export async function loadFiles() {
+  if (!app.projectId) return;
+  // Fetched independently: a blip on one must not blank the other, and a
+  // failed load just leaves the previous list for the next tab click.
+  try {
+    const f = await api(`projects/${app.projectId}/files`);
+    if (f.status === 200) app.fileList = f.data.files;
+  } catch { /* transient — retried on next open */ }
+  try {
+    const l = await api(`projects/${app.projectId}/log`);
+    if (l.status === 200) app.commits = l.data.commits;
+  } catch { /* transient — retried on next open */ }
+}
+
+export async function openFile(path) {
+  const r = await api(`projects/${app.projectId}/file?path=${encodeURIComponent(path)}`);
+  if (r.status === 200) app.fileOpen = r.data;
+}
+
+// ── the local brain: maker-bridge over paired localhost WS ────────────
+// The maker's own Claude Code drives; tools execute on the hosted engine
+// (maker-mcp remote mode), so project state and gates never leave the
+// server. Same SessionEvent union, same consume() — one consumer.
+
+export function bridgeConnect(quiet = false) {
+  if (bridgeWs) { bridgeWs.close(); return; }
+  app.bridgeStatus = 'connecting';
+  app.bridgeError = '';
+  const ws = new WebSocket('ws://127.0.0.1:8790');
+  bridgeWs = ws;
+  ws.onopen = () => {
+    const token = localStorage.getItem('makerlord.bridgeToken');
+    if (token) ws.send(JSON.stringify({ t: 'auth', token }));
+    else app.bridgeStatus = 'pair';
+  };
+  ws.onmessage = (m) => {
+    const f = JSON.parse(m.data);
+    if (f.t === 'paired') {
+      localStorage.setItem('makerlord.bridgeToken', f.token);
+      ws.send(JSON.stringify({ t: 'auth', token: f.token }));
+    } else if (f.t === 'ready') {
+      app.bridgeStatus = 'ready';
+      app.bridgeError = '';
+      if (app.projectId) ws.send(JSON.stringify({ t: 'session.new', projectId: app.projectId }));
+    } else if (f.t === 'session.ready') {
+      app.bridgeSessionReady = true;
+    } else if (f.t === 'event') {
+      consume(f.event);
+    } else if (f.t === 'error') {
+      app.bridgeError = f.message;
+      if (/bad token/.test(f.message)) {
+        localStorage.removeItem('makerlord.bridgeToken');
+        app.bridgeStatus = 'pair';
+      }
+      app.turnActive = false;
+    }
+  };
+  ws.onclose = () => {
+    bridgeWs = null;
+    app.bridgeStatus = 'off';
+    app.bridgeSessionReady = false;
+  };
+  ws.onerror = () => {
+    // A silent auto-reconnect attempt just goes back to off; only a
+    // deliberate click earns the "run maker-bridge" hint.
+    if (!quiet) {
+      app.bridgeError = 'no bridge on ws://127.0.0.1:8790 — run `maker-bridge` on this machine';
+      app.bridgeStatus = 'error';
+    } else {
+      app.bridgeStatus = 'off';
+    }
+  };
+}
+
+export function bridgePair() {
+  bridgeWs?.send(JSON.stringify({ t: 'pair', code: app.bridgeCodeDraft.trim() }));
+  app.bridgeCodeDraft = '';
+}
+
+/** Session boot — called once from the page's onMount. */
+export async function boot() {
+  // If this browser has paired before, quietly re-attach to the bridge.
+  if (localStorage.getItem('makerlord.bridgeToken')) bridgeConnect(true);
+  if (app.sessionId) openEvents();
+  await replayTranscript();
+  if (app.projectId) refreshProjections();
+  else loadProjectList();
+}
