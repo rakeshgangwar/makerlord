@@ -1,0 +1,4 @@
+[
+  { "file": "core/LED-generic-5mm.fzp", "partId": "5mmColorLEDModuleID" },
+  { "file": "core/resistor.fzp", "partId": "ResistorModuleID" }
+]
