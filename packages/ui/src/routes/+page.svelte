@@ -9,6 +9,7 @@
   import RequirementsView from '$lib/components/RequirementsView.svelte';
   import ArchitectureView from '$lib/components/ArchitectureView.svelte';
   import InspectView from '$lib/components/InspectView.svelte';
+  import SimulateView from '$lib/components/SimulateView.svelte';
   import BenchView from '$lib/components/BenchView.svelte';
   import ChatDock from '$lib/components/ChatDock.svelte';
   import ArtifactsPanel from '$lib/components/ArtifactsPanel.svelte';
@@ -27,6 +28,7 @@
       if (app.stage === 4) return 'architecture';
       return app.messages.length === 0 && !app.projectId ? 'start' : 'conversation';
     }
+    if (app.stage === 5) return 'simulate';
     return posture;
   });
 
@@ -52,6 +54,8 @@
         <RequirementsView />
       {:else if lens === 'architecture'}
         <ArchitectureView />
+      {:else if lens === 'simulate'}
+        <SimulateView />
       {:else if lens === 'inspect'}
         <InspectView />
       {:else if lens === 'bench'}

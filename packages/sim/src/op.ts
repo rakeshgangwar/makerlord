@@ -8,11 +8,61 @@ import { runNgspice, type RunArtifacts } from './run.js';
 
 export interface OpResult {
   nodeVoltages: Record<string, number>;
+  /** Keyed by INTENT net name — what the schematic's data-net attrs use. */
+  netVoltages: Record<string, number>;
+  /** Per-element current, mA. Resistors from ΔV/R; series neighbours
+   *  inherit their chain's current. Solver-derived, never estimated. */
+  branchCurrentsMa: Record<string, number>;
+  /** What the virtual bench needs to judge each element. */
+  elementMeta: Record<string, { kind: string; maxCurrentMa?: number; powerRatingW?: number }>;
   deviceDissipationW: Record<string, number>;
   findings: Finding[];
   rung: string;
   converged: boolean;
   artifacts: RunArtifacts;
+}
+
+/**
+ * Pure: per-element branch currents from solved node voltages. Resistors
+ * compute directly; every other two-node element inherits through series
+ * junctions (nodes touching exactly two elements) until fixed point.
+ */
+export function computeBranchCurrents(
+  elements: { ref: string; kind: string; ohms?: number; nodes: [string, string] }[],
+  voltageOf: (node: string) => number,
+): Map<string, number> {
+  const currents = new Map<string, number>();
+  const byNode = new Map<string, string[]>();
+  for (const el of elements) {
+    for (const n of el.nodes) {
+      if (!byNode.has(n)) byNode.set(n, []);
+      byNode.get(n)!.push(el.ref);
+    }
+  }
+  for (const el of elements) {
+    if (el.kind === 'resistor' && el.ohms) {
+      const drop = Math.abs(voltageOf(el.nodes[0]) - voltageOf(el.nodes[1]));
+      currents.set(el.ref, (drop / el.ohms) * 1000);
+    }
+  }
+  for (let pass = 0; pass < elements.length; pass += 1) {
+    let changed = false;
+    for (const el of elements) {
+      if (currents.has(el.ref)) continue;
+      for (const n of el.nodes) {
+        const touching = byNode.get(n) ?? [];
+        if (touching.length !== 2) continue;
+        const other = touching.find((r) => r !== el.ref);
+        if (other && currents.has(other)) {
+          currents.set(el.ref, currents.get(other)!);
+          changed = true;
+          break;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+  return currents;
 }
 
 /**
@@ -36,6 +86,9 @@ export async function runOpAnalysis(
   if (!artifacts.outcome.converged) {
     return {
       nodeVoltages: {},
+      netVoltages: {},
+      branchCurrentsMa: {},
+      elementMeta: {},
       deviceDissipationW: {},
       findings: [],
       rung: 'none',
@@ -88,8 +141,39 @@ export async function runOpAnalysis(
     ...checkDissipation(powerByRef, profilesByRef, ceiling),
   ];
 
+  // Intent-net voltages + branch currents + judgement metadata for the bench.
+  const netVoltages: Record<string, number> = {};
+  for (const [netName, node] of netlist.netNodes) {
+    netVoltages[netName] = voltageOf(node);
+  }
+  const twoNode: { ref: string; kind: string; nodes: [string, string]; ohms?: number }[] = [];
+  for (const m of netlist.models) {
+    const nodes = [...netlist.nodeOf.entries()]
+      .filter(([pin]) => pin.startsWith(`${m.ref}.`))
+      .map(([, node]) => node);
+    if (nodes.length !== 2) continue;
+    const el: { ref: string; kind: string; nodes: [string, string]; ohms?: number } =
+      { ref: m.ref, kind: m.kind, nodes: [nodes[0]!, nodes[1]!] };
+    if (m.params.ohms !== undefined) el.ohms = m.params.ohms;
+    twoNode.push(el);
+  }
+  const currents = computeBranchCurrents(twoNode, voltageOf);
+  const elementMeta: Record<string, { kind: string; maxCurrentMa?: number; powerRatingW?: number }> = {};
+  for (const m of netlist.models) {
+    const profile = profilesByRef.get(m.ref) as
+      | { maxCurrentMa?: number; powerRatingW?: number }
+      | undefined;
+    const meta: { kind: string; maxCurrentMa?: number; powerRatingW?: number } = { kind: m.kind };
+    if (profile?.maxCurrentMa !== undefined) meta.maxCurrentMa = profile.maxCurrentMa;
+    if (profile?.powerRatingW !== undefined) meta.powerRatingW = profile.powerRatingW;
+    elementMeta[m.ref] = meta;
+  }
+
   return {
     nodeVoltages,
+    netVoltages,
+    branchCurrentsMa: Object.fromEntries(currents),
+    elementMeta,
     deviceDissipationW: Object.fromEntries(powerByRef),
     findings,
     rung: artifacts.outcome.rung?.name ?? 'default',

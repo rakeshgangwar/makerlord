@@ -9,6 +9,8 @@ import type { Stimulus } from './stimulus.js';
 import { assumedStimulusFinding, stimulusLine } from './stimulus.js';
 
 export interface SpiceNetlist {
+  /** Intent net name → solved node name — the UI's data-net vocabulary. */
+  netNodes: Map<string, string>;
   cir: string;
   nodeOf: Map<string, string>;      // pinKey -> node name
   models: DeviceModel[];
@@ -63,10 +65,12 @@ export function spiceNetlist(
       if (!rootName.has(root)) rootName.set(root, net.name.replace(/[^A-Za-z0-9_]/g, '_'));
     }
   }
+  const netNodes = new Map<string, string>();
   for (const net of realIntent) {
     for (const member of net.members) {
       const key = pinKey(member);
       nodeOf.set(key, rootName.get(ds.find(key))!);
+      if (!netNodes.has(net.name)) netNodes.set(net.name, rootName.get(ds.find(key))!);
     }
   }
 
@@ -150,5 +154,5 @@ export function spiceNetlist(
     ),
   ]);
 
-  return { cir: lines.join('\n'), nodeOf, models, provenance, findings };
+  return { cir: lines.join('\n'), nodeOf, netNodes, models, provenance, findings };
 }
