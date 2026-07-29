@@ -1,10 +1,12 @@
 <script>
   import { app, recordMeasurement, openGate } from '$lib/app.svelte.js';
+  import SvgViewer from '$lib/SvgViewer.svelte';
 
   let { build = null } = $props();
   const b = $derived(build ?? app.build);
 </script>
 
+<div class="bench-row">
 <div class="bench">
   {#if b && b.steps.length > 0}
     {#each b.steps as step, i}
@@ -40,9 +42,30 @@
   {/if}
 </div>
 
+{#if app.projectId}
+  <figure class="board">
+    <figcaption class="mono">the board <span class="fig-hint">scroll to zoom · drag to pan</span></figcaption>
+    <SvgViewer url={`/render/${app.projectId}/breadboard?t=${app.renderTick}`}
+      alt="breadboard" emptyNote="fills in as parts are placed" />
+  </figure>
+{/if}
+</div>
+
 <style>
-  /* ── bench: readable at arm's length ── */
-  .bench { max-width: 44rem; }
+  /* ── bench: steps left, the board at your side — like the real bench ── */
+  .bench-row { display: flex; gap: 1.4rem; align-items: flex-start; flex-wrap: wrap; }
+  .bench { flex: 1; max-width: 44rem; min-width: 22rem; }
+  .board {
+    margin: 0; background: var(--panel); border-radius: 10px; padding: 0.7rem;
+    box-shadow: 0 1px 3px rgb(20 24 27 / 8%); width: 26rem; max-width: 100%;
+    position: sticky; top: 0;
+  }
+  .board figcaption {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
+  }
+  .board :global(.viewer) { height: 300px; }
+  .fig-hint { text-transform: none; letter-spacing: 0; opacity: 0.6; float: right; }
   .step { display: flex; gap: 0.9rem; padding: 0.7rem 1rem; margin: 0.45rem 0; background: var(--panel); border-radius: 8px; }
   .step.current { font-size: 1.35rem; box-shadow: 0 2px 8px rgb(20 24 27 / 10%); border-left: 4px solid var(--mask); }
   .step.dimmed { opacity: 0.45; }
