@@ -41,6 +41,7 @@ export const UNO_PROFILE: SafetyProfile = {
   portTotalMaxMa: 100,
   regulatorMaxMa: 400,
   absMaxVoltageV: 5.5,
+  quiescentMa: 45,
   hazardClass: 'none',
 };
 
