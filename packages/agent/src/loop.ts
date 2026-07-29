@@ -28,7 +28,20 @@ export interface AgentSessionOptions {
   model?: string;
   maxTokens?: number;
   pressureLimitBytes?: number;
+  /** Streaming is the default transport; deltas arrive as they are produced. */
+  stream?: boolean;
+  /** Adds the server-side compaction beta header (needs the live API). */
+  compactionBeta?: boolean;
+  /** Adds the web_search/web_fetch server tools (needs the live API). */
+  webResearch?: boolean;
 }
+
+/** Server tools the agent may request; executed on Anthropic infra (§8). */
+export const WEB_RESEARCH_TOOLS = [
+  { type: 'web_search_20250305', name: 'web_search', max_uses: 8 },
+] as const;
+
+export const COMPACTION_BETA = 'compact-2026-01-12';
 
 /** Tools come from the registry, unchanged — the fourth consumer (spec §2). */
 export function apiTools(): { name: string; description: string; input_schema: unknown }[] {
@@ -85,24 +98,55 @@ export class AgentSession {
         openFindings: [],
       });
 
+      const useStream = this.opts.stream !== false;
+      const tools: unknown[] = [...apiTools()];
+      if (this.opts.webResearch) tools.push(...WEB_RESEARCH_TOOLS);
+      // The SDK's types may trail the live parameter surface (adaptive
+      // thinking, effort); the boundary cast is deliberate and local.
+      const params = {
+        model: this.opts.model ?? 'claude-opus-5',
+        max_tokens: this.opts.maxTokens ?? 64_000,
+        system,
+        messages: this.messages,
+        tools,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: effortFor(this.opts.stage, this.opts.pack) },
+      } as never;
+      const requestOptions: { timeout: number; headers?: Record<string, string> } = {
+        timeout: 10 * 60 * 1000,
+      };
+      if (this.opts.compactionBeta) {
+        requestOptions.headers = { 'anthropic-beta': COMPACTION_BETA };
+      }
+
       let response: ApiMessage;
+      let deltasAlreadyEmitted = false;
       try {
-        // The SDK's types may trail the live parameter surface (adaptive
-        // thinking, effort); the boundary cast is deliberate and local. The
-        // explicit timeout satisfies the SDK's long-request check — streaming
-        // transport is the production wiring, deferred with the UI.
-        response = (await this.opts.client.messages.create(
-          {
-            model: this.opts.model ?? 'claude-opus-5',
-            max_tokens: this.opts.maxTokens ?? 64_000,
-            system,
-            messages: this.messages,
-            tools: apiTools(),
-            thinking: { type: 'adaptive' },
-            output_config: { effort: effortFor(this.opts.stage, this.opts.pack) },
-          } as never,
-          { timeout: 10 * 60 * 1000 },
-        )) as ApiMessage;
+        if (useStream) {
+          // Streaming is transport, not semantics: the same union, earlier.
+          const stream = this.opts.client.messages.stream(params, requestOptions);
+          for await (const ev of stream) {
+            const anyEv = ev as {
+              type: string;
+              delta?: { type?: string; text?: string; thinking?: string };
+            };
+            if (anyEv.type === 'content_block_delta') {
+              if (anyEv.delta?.type === 'text_delta' && anyEv.delta.text) {
+                onEvent({ t: 'message.delta', text: anyEv.delta.text });
+                deltasAlreadyEmitted = true;
+              } else if (anyEv.delta?.type === 'thinking_delta' && anyEv.delta.thinking) {
+                onEvent({ t: 'thought.delta', text: anyEv.delta.thinking });
+                deltasAlreadyEmitted = true;
+              }
+            }
+          }
+          response = (await stream.finalMessage()) as ApiMessage;
+        } else {
+          response = (await this.opts.client.messages.create(
+            params,
+            requestOptions,
+          )) as ApiMessage;
+        }
       } catch (e) {
         onEvent({
           t: 'session.error',
@@ -119,7 +163,9 @@ export class AgentSession {
         return;
       }
 
-      for (const event of contentEvents(response)) onEvent(event);
+      if (!deltasAlreadyEmitted) {
+        for (const event of contentEvents(response)) onEvent(event);
+      }
 
       // Append response.content back into messages WHOLE — compaction blocks
       // and tool_use blocks must survive the round trip (spec §5).

@@ -114,6 +114,21 @@ importers:
         specifier: workspace:*
         version: link:../tools
 
+  packages/server:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.57.0
+        version: 0.57.0
+      '@makerlord/agent':
+        specifier: workspace:*
+        version: link:../agent
+      '@makerlord/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@makerlord/tools':
+        specifier: workspace:*
+        version: link:../tools
+
   packages/sim:
     dependencies:
       '@makerlord/circuit':

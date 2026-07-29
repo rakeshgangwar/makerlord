@@ -29,14 +29,20 @@ export class FakeLlm {
         body += c.toString('utf8');
       });
       req.on('end', () => {
-        fake.requests.push(JSON.parse(body) as Record<string, unknown>);
+        const parsed = JSON.parse(body) as Record<string, unknown>;
+        fake.requests.push(parsed);
         const next = fake.queue.shift();
-        res.setHeader('content-type', 'application/json');
         if (!next) {
           res.statusCode = 500;
+          res.setHeader('content-type', 'application/json');
           res.end(JSON.stringify({ error: { message: 'fake-llm: queue empty' } }));
           return;
         }
+        if (parsed.stream === true) {
+          serveSse(res, fake.requests.length, next);
+          return;
+        }
+        res.setHeader('content-type', 'application/json');
         res.end(
           JSON.stringify({
             id: `msg_${fake.requests.length}`,
@@ -67,6 +73,58 @@ export class FakeLlm {
   close(): void {
     this.server.close();
   }
+}
+
+/** Real Anthropic SSE framing, so the streaming path is tested on the wire. */
+function serveSse(
+  res: import('node:http').ServerResponse,
+  n: number,
+  canned: CannedResponse,
+): void {
+  res.setHeader('content-type', 'text/event-stream');
+  const send = (event: string, data: unknown): void => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  send('message_start', {
+    type: 'message_start',
+    message: {
+      id: `msg_${n}`, type: 'message', role: 'assistant',
+      model: 'claude-opus-5', content: [], stop_reason: null,
+      stop_sequence: null, usage: { input_tokens: 100, output_tokens: 0 },
+    },
+  });
+
+  (canned.content as Record<string, unknown>[]).forEach((block, index) => {
+    if (block.type === 'text') {
+      send('content_block_start', {
+        type: 'content_block_start', index,
+        content_block: { type: 'text', text: '' },
+      });
+      send('content_block_delta', {
+        type: 'content_block_delta', index,
+        delta: { type: 'text_delta', text: block.text },
+      });
+    } else if (block.type === 'tool_use') {
+      send('content_block_start', {
+        type: 'content_block_start', index,
+        content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} },
+      });
+      send('content_block_delta', {
+        type: 'content_block_delta', index,
+        delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input ?? {}) },
+      });
+    }
+    send('content_block_stop', { type: 'content_block_stop', index });
+  });
+
+  send('message_delta', {
+    type: 'message_delta',
+    delta: { stop_reason: canned.stop_reason, stop_sequence: null },
+    usage: { output_tokens: 50 },
+  });
+  send('message_stop', { type: 'message_stop' });
+  res.end();
 }
 
 export function textTurn(text: string): CannedResponse {

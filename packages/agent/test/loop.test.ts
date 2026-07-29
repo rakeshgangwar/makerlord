@@ -9,7 +9,7 @@ import { loadPack } from '../src/persona.js';
 import { AgentSession, apiTools } from '../src/loop.js';
 import {
   classifierRefusal, FakeLlm, textTurn, toolTurn,
-} from './fake-llm.js';
+} from '../src/testing/fake-llm.js';
 
 let fake: FakeLlm;
 let dir: string;

@@ -1,0 +1,129 @@
+import { randomBytes } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import Anthropic from '@anthropic-ai/sdk';
+import { AgentSession } from '@makerlord/agent';
+import { loadPack } from '@makerlord/agent';
+import type { SessionEvent } from '@makerlord/protocol';
+import { bundle, initProjectFile, loadSession } from '@makerlord/tools';
+
+export interface NumberedEvent {
+  id: number;
+  event: SessionEvent;
+}
+
+interface Hosted {
+  projectDir: string;
+  agent: AgentSession;
+  events: NumberedEvent[];
+  listeners: Set<(e: NumberedEvent) => void>;
+  turnActive: boolean;
+}
+
+export interface HostOptions {
+  projectsRoot: string;
+  apiKey: string;
+  baseURL?: string;
+  model?: string;
+  stage?: number;
+}
+
+/**
+ * The hosted surface: one project per session, in-memory event log with
+ * monotonic ids so SSE clients replay from Last-Event-ID (UI spec §10).
+ */
+export class HostedSessions {
+  private sessions = new Map<string, Hosted>();
+
+  constructor(private opts: HostOptions) {
+    mkdirSync(resolve(opts.projectsRoot), { recursive: true });
+  }
+
+  createProject(intent: string): { projectId: string } {
+    const projectId = randomBytes(8).toString('hex');
+    const dir = join(resolve(this.opts.projectsRoot), projectId);
+    mkdirSync(dir, { recursive: true });
+    initProjectFile(join(dir, 'project.json'), intent);
+    return { projectId };
+  }
+
+  createSession(projectId: string): { sessionId: string } {
+    const projectDir = join(resolve(this.opts.projectsRoot), projectId);
+    const toolSession = loadSession(join(projectDir, 'project.json'));
+    const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
+      apiKey: this.opts.apiKey,
+      timeout: 600_000,
+    };
+    if (this.opts.baseURL) clientConfig.baseURL = this.opts.baseURL;
+    const agentOpts: ConstructorParameters<typeof AgentSession>[0] = {
+      client: new Anthropic(clientConfig),
+      toolSession,
+      cwd: projectDir,
+      pack: loadPack(projectDir),
+      stage: this.opts.stage ?? 1,
+      bundle: bundle(),
+    };
+    if (this.opts.model) agentOpts.model = this.opts.model;
+    const sessionId = randomBytes(12).toString('hex');
+    this.sessions.set(sessionId, {
+      projectDir,
+      agent: new AgentSession(agentOpts),
+      events: [],
+      listeners: new Set(),
+      turnActive: false,
+    });
+    return { sessionId };
+  }
+
+  private get(sessionId: string): Hosted {
+    const s = this.sessions.get(sessionId);
+    if (!s) throw new Error(`no session "${sessionId}"`);
+    return s;
+  }
+
+  /** One prompt at a time per session; events flow to the log + listeners. */
+  async prompt(sessionId: string, text: string): Promise<void> {
+    const s = this.get(sessionId);
+    if (s.turnActive) throw new Error('a turn is already active on this session');
+    s.turnActive = true;
+    try {
+      await s.agent.send(text, (event) => {
+        const numbered: NumberedEvent = { id: s.events.length + 1, event };
+        s.events.push(numbered);
+        for (const l of s.listeners) l(numbered);
+      });
+    } finally {
+      s.turnActive = false;
+    }
+  }
+
+  steer(sessionId: string, text: string): void {
+    this.get(sessionId).agent.steer(text);
+  }
+
+  isTurnActive(sessionId: string): boolean {
+    return this.get(sessionId).turnActive;
+  }
+
+  /** Replay everything after lastEventId, then live events. */
+  subscribe(
+    sessionId: string,
+    lastEventId: number,
+    listener: (e: NumberedEvent) => void,
+  ): () => void {
+    const s = this.get(sessionId);
+    for (const e of s.events) {
+      if (e.id > lastEventId) listener(e);
+    }
+    s.listeners.add(listener);
+    return () => s.listeners.delete(listener);
+  }
+
+  projectDirOf(sessionId: string): string {
+    return this.get(sessionId).projectDir;
+  }
+
+  count(): number {
+    return this.sessions.size;
+  }
+}
