@@ -1,0 +1,16 @@
+{
+  "name": "@makerlord/agent",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.57.0",
+    "@makerlord/circuit": "workspace:*",
+    "@makerlord/parts": "workspace:*",
+    "@makerlord/protocol": "workspace:*",
+    "@makerlord/tools": "workspace:*",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.23.0"
+  }
+}

@@ -1008,6 +1008,36 @@ degradation and the general provenance-bounds-severity rule.
 
 ---
 
+## D44 — Manual agent loop, not the beta tool runner
+*2026-07-29*
+
+The agent runtime uses a hand-written loop over `client.messages.create`
+rather than the SDK's beta `tool_runner`.
+
+**Why:** the agent-runtime spec (§2 ⚠️) itself named the condition — if
+mid-turn steering cannot be verified to work by pushing a message between
+runner turns, "that single requirement forces the manual loop." The beta
+runner's iteration contract could not be verified at implementation time, and
+the fake-LLM harness needs deterministic control of exactly the places the
+runner abstracts: refusal handling before content is read, steering fold-in at
+round boundaries, and the bounded-objections stop.
+
+**Rejected — the beta tool runner:** preferred by the spec for its per-turn
+hooks; revisit when its steering semantics are documented. The loop keeps the
+runner's shape (one round per API call, results appended whole) so a swap
+stays cheap.
+
+**Rejected — streaming transport now:** `stream: true` is a production
+concern (request timeouts) with no observable effect on the event union — the
+events are already delta-shaped. Wire it with the UI. Until then the SDK's
+long-request check requires an explicit client-level `timeout`.
+
+**Consequence:** `ai-implementation.md` §10's "verify the runner permits
+mid-turn steering" open item is resolved: it wasn't verifiable, so the manual
+loop it warned about is what shipped.
+
+---
+
 ## Adding to this log
 
 Record the decision, the date, **the alternatives you rejected**, and the

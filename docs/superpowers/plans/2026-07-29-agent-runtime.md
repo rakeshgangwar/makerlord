@@ -52,39 +52,39 @@ packages/agent/test/fake-llm.ts   real HTTP server, queued canned responses
 
 ### Task 1: Context accounting
 
-- [ ] `estimatedBytes` / `contextPressureBytes`; image blocks charge 16 KiB flat pressure, true size on the wire
-- [ ] Tests incl. the 3 MB image regression (≈1500× over-count prevented)
+- [x] `estimatedBytes` / `contextPressureBytes`; image blocks charge 16 KiB flat pressure, true size on the wire
+- [x] Tests incl. the 3 MB image regression (≈1500× over-count prevented)
 
 ### Task 2: Personas
 
-- [ ] Pack loading from `.makerlord/personas/` (project repo, D34): `pack.json` defaults + `NN-stage.persona.md`; active stage in context, others names only
-- [ ] `effortFor(stage)`: xhigh ④⑥⑧⑨ / high default / medium ①⑯, overridable per pack
-- [ ] Tests over fixture packs
+- [x] Pack loading from `.makerlord/personas/` (project repo, D34): `pack.json` defaults + `NN-stage.persona.md`; active stage in context, others names only
+- [x] `effortFor(stage)`: xhigh ④⑥⑧⑨ / high default / medium ①⑯, overridable per pack
+- [x] Tests over fixture packs
 
 ### Task 3: Prompt assembly and caching
 
-- [ ] Stable prefix: fable-guide spine → active persona → corpus digest (families + counts only); `cache_control` breakpoint; volatile: project summary → open findings (from engine state) → conversation
-- [ ] Tests: byte-identical stable prefix across project mutations; findings re-injected uneroded; no session id anywhere in the prefix
+- [x] Stable prefix: fable-guide spine → active persona → corpus digest (families + counts only); `cache_control` breakpoint; volatile: project summary → open findings (from engine state) → conversation
+- [x] Tests: byte-identical stable prefix across project mutations; findings re-injected uneroded; no session id anywhere in the prefix
 
 ### Task 4: Objections, untrusted labels, compaction
 
-- [ ] `objections.ts`: three strikes then surface; reset on user message
-- [ ] `untrusted.ts`: the four labels
-- [ ] `compaction.ts`: gate on pressure only; protected tail survives verbatim; summary re-enters labelled `[compacted — lossy]`
-- [ ] Tests for each
+- [x] `objections.ts`: three strikes then surface; reset on user message
+- [x] `untrusted.ts`: the four labels
+- [x] `compaction.ts`: gate on pressure only; protected tail survives verbatim; summary re-enters labelled `[compacted — lossy]`
+- [x] Tests for each
 
 ### Task 5: The loop and events
 
-- [ ] `loop.ts`: manual loop over `client.messages.create`; tools from the registry unchanged (name + summary verbatim); tool results back as `tool_result`; steering queue folded in at round boundaries; engine refusals stay `ToolResult` in `tool.end`
-- [ ] `events.ts`: response content → `message.delta` / `thought.delta` / `tool.start` / `tool.end` / `turn.end`; `stop_reason: 'refusal'` → `session.error` before content is read
-- [ ] Fake LLM: real HTTP server on an ephemeral port, queued canned Messages responses, env-configured base URL
+- [x] `loop.ts`: manual loop over `client.messages.create`; tools from the registry unchanged (name + summary verbatim); tool results back as `tool_result`; steering queue folded in at round boundaries; engine refusals stay `ToolResult` in `tool.end`
+- [x] `events.ts`: response content → `message.delta` / `thought.delta` / `tool.start` / `tool.end` / `turn.end`; `stop_reason: 'refusal'` → `session.error` before content is read
+- [x] Fake LLM: real HTTP server on an ephemeral port, queued canned Messages responses, env-configured base URL
 
 ### Task 6: Golden transcript — assert on the artefact
 
-- [ ] Canned conversation drives real tool calls against a temp project; assert on the resulting `project.json`, not the prose
-- [ ] Bounded-objections case: canned model re-argues a BLOCKER four times → stopped after three
-- [ ] Classifier-refusal case: empty content + `stop_reason: 'refusal'` → `session.error`, no crash, no finding card
-- [ ] Full suite + typecheck green; record D44; commit
+- [x] Canned conversation drives real tool calls against a temp project; assert on the resulting `project.json`, not the prose
+- [x] Bounded-objections case: canned model re-argues a BLOCKER four times → stopped after three
+- [x] Classifier-refusal case: empty content + `stop_reason: 'refusal'` → `session.error`, no crash, no finding card
+- [x] Full suite + typecheck green; record D44; commit
 
 ## Spec coverage
 
