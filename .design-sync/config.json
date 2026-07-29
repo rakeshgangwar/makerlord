@@ -1,7 +1,9 @@
 {
   "shape": "package",
-  "identityOnly": true,
+  "identityOnly": false,
   "readmeHeader": ".design-sync/conventions.md",
   "pkg": "packages/ui",
-  "projectId": "1500ddd4-14cb-4716-9d04-84297830970c"
+  "projectId": "1500ddd4-14cb-4716-9d04-84297830970c",
+  "bridgeBuild": "scripts/build-ds-bridge.mjs",
+  "cardsGen": "scripts/gen-ds-cards.mjs"
 }
