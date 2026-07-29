@@ -1,29 +1,37 @@
 # Building MakerLord screens
 
-This design system ships **no components** — MakerLord's UI is Svelte; you
-are designing future screens for it, on-brand. Build with plain elements
-styled by the tokens in `styles.css` (its `@import` closure carries
-everything). Read `guidelines/bench-identity.md` first — it defines the
-bench identity, the four postures, and the safety rules for findings.
+This design system ships MakerLord's **actual UI components** — compiled
+Svelte 5 wrapped in React. Use them from `window.MakerLord.*` as normal
+React elements: `StageRail`, `FindingStrip`, `BenchView`, `ChatDock`,
+`ArtifactsPanel`, `Conversation`, `ConverseStart`, `MessageList`,
+`ToolTrail`, `Composer`, `SvgViewer`. Each renders its own markup and
+styles; **do not pass children** — configure via props (each component's
+`.d.ts` and `.prompt.md` carry the exact contract). Omitted props render a
+sensible empty state.
 
-- Style ONLY via the CSS custom properties: surfaces `--mat`, `--panel`,
-  `--ink`, `--ink-soft`, `--line`; brand `--mask`, `--mask-deep`, `--copper`;
-  meter `--meter-face`, `--meter-glow`; severity `--sev-refuse`,
-  `--sev-blocker`, `--sev-warning`, `--sev-note`; phases `--phase-1..4`;
-  type `--font-body`, `--font-mono`. Do not invent hex values or class
-  vocabularies.
-- Fonts: Archivo (body/controls) + IBM Plex Mono (labels, numbers, paths)
-  load via the Google Fonts `@import` in `styles.css`.
-- Every screen keeps the bottom finding strip: dark `--meter-face` bar, LED
-  dot, mono readout in `--meter-glow`. Severity is icon + label + colour,
-  never colour alone, and findings get NO dismiss control.
-- Minimal snippet of the idiom:
+Layout glue you write yourself styles ONLY via the CSS custom properties
+in `styles.css`'s closure: surfaces `--mat`, `--panel`, `--ink`,
+`--ink-soft`, `--line`; brand `--mask`, `--mask-deep`, `--copper`; meter
+`--meter-face`, `--meter-glow`; severity `--sev-refuse`, `--sev-blocker`,
+`--sev-warning`, `--sev-note`; phases `--phase-1..4`; type `--font-body`,
+`--font-mono`. Utility classes `.mono`, `.small`, `.empty`, `.primary`,
+`.secondary`, `.badge-assumed` exist. Do not invent hex values. Fonts
+(Archivo + IBM Plex Mono) load via the Google Fonts `@import`.
 
-```html
-<button style="background:var(--mask);color:#fff;border:none;
-  border-radius:6px;padding:.55rem 1.3rem;font-family:var(--font-body);
-  font-weight:600">Run checks</button>
-<span style="font-family:var(--font-mono);font-size:.68rem;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)">
-  schematic · run-5-ui</span>
+The canonical screen shape (see `guidelines/bench-identity.md` for the
+four postures and safety rules):
+
+```jsx
+const ML = window.MakerLord;
+<div style={{display:'flex', gap:'1.5rem', padding:'1.25rem 1.5rem'}}>
+  <ML.StageRail stage={5} />
+  <main style={{flex:1}}>{/* posture surface */}</main>
+  <ML.ArtifactsPanel tab="bench" projectFile={file} />
+</div>
+<ML.FindingStrip findings={findings} />   {/* ALWAYS last, full width */}
 ```
+
+Safety rules that are design rules: `FindingStrip` appears on every
+screen at every breakpoint; findings never get a dismiss/close control;
+severity is always icon + label + colour (the components do this — never
+rebuild findings out of plain divs).

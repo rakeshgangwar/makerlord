@@ -2,22 +2,26 @@
   import { app } from '$lib/app.svelte.js';
   import { presentSeverity } from '$lib/severity.js';
 
+  /** Optional prop with store fallback: the app passes nothing; a design
+   *  tool or test passes findings directly. */
+  let { findings = null } = $props();
+  const list = $derived(findings ?? app.findings);
   const blockerCount = $derived(
-    app.findings.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
+    list.filter((f) => f.severity === 'BLOCKER' || f.severity === 'REFUSE').length,
   );
 </script>
 
 <!-- The finding strip is an instrument, not a notification tray. -->
 <footer class="meter" aria-live="polite" aria-label="Findings">
   <div class="meter-readout">
-    <span class="lamp" class:alert={blockerCount > 0} class:warn={blockerCount === 0 && app.findings.length > 0}></span>
+    <span class="lamp" class:alert={blockerCount > 0} class:warn={blockerCount === 0 && list.length > 0}></span>
     <span class="mono readout-text">
-      {#if app.findings.length === 0}READY · no open findings{:else}{app.findings.length} finding{app.findings.length === 1 ? '' : 's'} · {blockerCount} blocking{/if}
+      {#if list.length === 0}READY · no open findings{:else}{list.length} finding{list.length === 1 ? '' : 's'} · {blockerCount} blocking{/if}
     </span>
   </div>
-  {#if app.findings.length > 0}
+  {#if list.length > 0}
     <div class="cards">
-      {#each app.findings as f}
+      {#each list as f}
         {@const p = presentSeverity(f.severity)}
         <article class="finding" style={`--sev: ${p.color}`}>
           <span class="sev">{p.icon} {p.label}</span>

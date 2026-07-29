@@ -1,16 +1,19 @@
 <script>
   import { app, recordMeasurement, openGate } from '$lib/app.svelte.js';
+
+  let { build = null } = $props();
+  const b = $derived(build ?? app.build);
 </script>
 
 <div class="bench">
-  {#if app.build && app.build.steps.length > 0}
-    {#each app.build.steps as step, i}
-      <div class="step" class:current={i === app.build.currentStep} class:dimmed={i !== app.build.currentStep}>
+  {#if b && b.steps.length > 0}
+    {#each b.steps as step, i}
+      <div class="step" class:current={i === b.currentStep} class:dimmed={i !== b.currentStep}>
         <span class="step-n">{String(i).padStart(2, '0')}</span>
         <div class="step-body">
           <span class="step-kind">{step.kind.replace(/_/g, ' ')}</span>
           <p>{step.instruction}</p>
-          {#if step.kind === 'GATE' && i === app.build.currentStep}
+          {#if step.kind === 'GATE' && i === b.currentStep}
             <div class="gate">
               <p class="gate-title">Preflight — enter what the meter reads.</p>
               <div class="gate-entry">
@@ -23,8 +26,8 @@
                   Predicted ~{app.prediction.totalCurrentMa?.toFixed(1)} mA
                   {app.prediction.railVoltage ? `on the ${app.prediction.railVoltage} V rail` : ''}
                 </p>
-                <button class="primary" onclick={openGate} disabled={app.build.gateOpen}>
-                  {app.build.gateOpen ? 'Gate open ✓' : 'Open the gate'}
+                <button class="primary" onclick={openGate} disabled={b.gateOpen}>
+                  {b.gateOpen ? 'Gate open ✓' : 'Open the gate'}
                 </button>
               {/if}
             </div>

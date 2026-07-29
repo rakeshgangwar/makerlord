@@ -1,10 +1,13 @@
 <script>
   import { app } from '$lib/app.svelte.js';
+
+  let { activity = null } = $props();
+  const list = $derived(activity ?? app.toolActivity);
 </script>
 
-{#if app.toolActivity.length > 0}
+{#if list.length > 0}
   <div class="tools">
-    {#each app.toolActivity as t}
+    {#each list as t}
       <span class="tool" class:refused={t.refused} class:running={!t.done}>
         {t.done ? (t.refused ? '⛔' : '✓') : '·'} {t.name}{t.refused ? ` ${t.refused}` : ''}
       </span>

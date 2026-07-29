@@ -2,6 +2,9 @@
   import { stagePhase } from '$lib/postures.js';
   import { app, newProject, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
 
+  let { stage = null } = $props();
+  const current = $derived(stage ?? app.stage);
+
   const STAGE_NAMES = [
     'Idea', 'Feasibility', 'Requirements', 'Architecture', 'Simulate',
     'Prototype ★', 'Firmware', 'Debug', 'PCB', 'Mechanical',
@@ -15,7 +18,7 @@
   {#each STAGE_NAMES as name, i}
     <button
       class="stage"
-      class:active={app.stage === i + 1}
+      class:active={current === i + 1}
       data-phase={stagePhase(i + 1)}
       onclick={() => { app.stage = i + 1; app.stagePinned = true; }}
     >

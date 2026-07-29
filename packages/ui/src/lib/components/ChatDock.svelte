@@ -3,6 +3,10 @@
   import MessageList from './MessageList.svelte';
   import ToolTrail from './ToolTrail.svelte';
 
+  let { messages = null, streaming = null, open = null } = $props();
+  const msgs = $derived(messages ?? app.messages);
+  const stream = $derived(streaming ?? app.streamingText);
+
   /** @type {HTMLElement | null} */
   let dockLog = $state(null);
 
@@ -17,13 +21,13 @@
     if (app.streamingText) app.dockOpen = true;
   });
 
-  const showLog = $derived(app.dockOpen || app.turnActive || !!app.streamingText);
+  const showLog = $derived(open ?? (app.dockOpen || app.turnActive || !!stream));
 </script>
 
 <div class="dock" class:open={showLog}>
   {#if showLog}
     <div class="dock-log" bind:this={dockLog}>
-      <MessageList list={app.messages.slice(-4)} streaming={app.streamingText} />
+      <MessageList list={msgs.slice(-4)} streaming={stream} />
       <ToolTrail />
     </div>
   {/if}

@@ -1,6 +1,14 @@
 import { browser } from '$app/environment';
 import { inferStage } from '$lib/postures.js';
 
+/** localStorage can throw in sandboxed iframes (design previews, embeds) —
+ *  degrade to memory-less rather than crash the bundle. */
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* sandboxed */ } },
+  del(k) { try { localStorage.removeItem(k); } catch { /* sandboxed */ } },
+};
+
 /**
  * The one store. Every surface reads and mutates this shared runes state;
  * components stay thin and the invariants stay in one place: ONE
@@ -12,8 +20,8 @@ export const app = $state({
   stage: 1,
   stagePinned: false,
   // project + session
-  projectId: browser ? localStorage.getItem('makerlord.projectId') : null,
-  sessionId: browser ? localStorage.getItem('makerlord.sessionId') : null,
+  projectId: browser ? store.get('makerlord.projectId') : null,
+  sessionId: browser ? store.get('makerlord.sessionId') : null,
   intentDraft: '',
   promptDraft: '',
   turnActive: false,
@@ -134,12 +142,12 @@ async function ensureSession(intent) {
   if (!app.projectId) {
     const p = await api('projects', { intent });
     app.projectId = p.data.projectId;
-    localStorage.setItem('makerlord.projectId', app.projectId);
+    store.set('makerlord.projectId', app.projectId);
   }
   if (!app.sessionId) {
     const s = await api('sessions', { projectId: app.projectId });
     app.sessionId = s.data.sessionId;
-    localStorage.setItem('makerlord.sessionId', app.sessionId);
+    store.set('makerlord.sessionId', app.sessionId);
   }
   openEvents();
 }
@@ -175,7 +183,7 @@ export async function sendPrompt(text) {
     let r = await api(`sessions/${app.sessionId}/prompt`, { text });
     if (r.status === 404) {
       app.sessionId = null;
-      localStorage.removeItem('makerlord.sessionId');
+      store.del('makerlord.sessionId');
       if (eventSource) { eventSource.close(); eventSource = null; }
       await ensureSession(text);
       r = await api(`sessions/${app.sessionId}/prompt`, { text });
@@ -190,8 +198,8 @@ export async function sendPrompt(text) {
 }
 
 export function newProject() {
-  localStorage.removeItem('makerlord.projectId');
-  localStorage.removeItem('makerlord.sessionId');
+  store.del('makerlord.projectId');
+  store.del('makerlord.sessionId');
   location.reload();
 }
 
@@ -201,8 +209,8 @@ export async function loadProjectList() {
 }
 
 export function openProject(id) {
-  localStorage.setItem('makerlord.projectId', id);
-  localStorage.removeItem('makerlord.sessionId');
+  store.set('makerlord.projectId', id);
+  store.del('makerlord.sessionId');
   location.reload();
 }
 
@@ -322,14 +330,14 @@ export function bridgeConnect(quiet = false) {
   const ws = new WebSocket('ws://127.0.0.1:8790');
   bridgeWs = ws;
   ws.onopen = () => {
-    const token = localStorage.getItem('makerlord.bridgeToken');
+    const token = store.get('makerlord.bridgeToken');
     if (token) ws.send(JSON.stringify({ t: 'auth', token }));
     else app.bridgeStatus = 'pair';
   };
   ws.onmessage = (m) => {
     const f = JSON.parse(m.data);
     if (f.t === 'paired') {
-      localStorage.setItem('makerlord.bridgeToken', f.token);
+      store.set('makerlord.bridgeToken', f.token);
       ws.send(JSON.stringify({ t: 'auth', token: f.token }));
     } else if (f.t === 'ready') {
       app.bridgeStatus = 'ready';
@@ -342,7 +350,7 @@ export function bridgeConnect(quiet = false) {
     } else if (f.t === 'error') {
       app.bridgeError = f.message;
       if (/bad token/.test(f.message)) {
-        localStorage.removeItem('makerlord.bridgeToken');
+        store.del('makerlord.bridgeToken');
         app.bridgeStatus = 'pair';
       }
       app.turnActive = false;
@@ -373,7 +381,7 @@ export function bridgePair() {
 /** Session boot — called once from the page's onMount. */
 export async function boot() {
   // If this browser has paired before, quietly re-attach to the bridge.
-  if (localStorage.getItem('makerlord.bridgeToken')) bridgeConnect(true);
+  if (store.get('makerlord.bridgeToken')) bridgeConnect(true);
   if (app.sessionId) openEvents();
   await replayTranscript();
   if (app.projectId) refreshProjections();

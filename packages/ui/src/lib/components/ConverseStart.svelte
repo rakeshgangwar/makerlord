@@ -1,5 +1,8 @@
 <script>
   import { app, startProject, openProject } from '$lib/app.svelte.js';
+
+  let { projects = null } = $props();
+  const list = $derived(projects ?? app.projectList);
 </script>
 
 <div class="converse-start">
@@ -17,10 +20,10 @@
     Start
   </button>
   {#if app.lastError}<p class="error">{app.lastError}</p>{/if}
-  {#if app.projectList.length > 0}
+  {#if list.length > 0}
     <div class="project-list">
       <h2 class="mono list-head">On the bench</h2>
-      {#each app.projectList as p}
+      {#each list as p}
         <button class="project-row" onclick={() => openProject(p.projectId)}>
           <span class="project-intent">{p.intent}</span>
           <span class="mono project-meta">{p.projectId.slice(0, 6)} · {p.updatedAt.slice(0, 10)}</span>

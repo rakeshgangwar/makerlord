@@ -1,21 +1,25 @@
 <script>
   import { app, searchLibrary, openPart, loadFiles, openFile } from '$lib/app.svelte.js';
+
+  let { projectFile = null, tab = null } = $props();
+  const file = $derived(projectFile ?? app.projectFile);
+  const activeTab = $derived(tab ?? app.panelTab);
 </script>
 
 <aside class="artifacts" aria-label="Artifacts">
   <div class="panel-tabs" role="tablist">
-    <button role="tab" aria-selected={app.panelTab === 'bench'} class:on={app.panelTab === 'bench'}
+    <button role="tab" aria-selected={activeTab === 'bench'} class:on={activeTab === 'bench'}
       onclick={() => (app.panelTab = 'bench')}>On the bench</button>
-    <button role="tab" aria-selected={app.panelTab === 'library'} class:on={app.panelTab === 'library'}
+    <button role="tab" aria-selected={activeTab === 'library'} class:on={activeTab === 'library'}
       onclick={() => { app.panelTab = 'library'; }}>Library</button>
-    <button role="tab" aria-selected={app.panelTab === 'files'} class:on={app.panelTab === 'files'}
+    <button role="tab" aria-selected={activeTab === 'files'} class:on={activeTab === 'files'}
       onclick={() => { app.panelTab = 'files'; app.fileOpen = null; loadFiles(); }}>Files</button>
   </div>
 
-  {#if app.panelTab === 'bench'}
+  {#if activeTab === 'bench'}
     <p class="mono panel-id">project.json{app.projectId ? ` · ${app.projectId.slice(0, 6)}` : ''}</p>
-    {#if app.projectFile}
-      {@const p = app.projectFile.project}
+    {#if file}
+      {@const p = file.project}
       {#if p.requirements.length > 0}
         <h3>Requirements</h3>
         <ul class="panel-list">
@@ -47,7 +51,7 @@
     {:else}
       <p class="empty">No project on the bench.</p>
     {/if}
-  {:else if app.panelTab === 'library'}
+  {:else if activeTab === 'library'}
     <form class="lib-search" onsubmit={(e) => { e.preventDefault(); searchLibrary(); }}>
       <input bind:value={app.libraryQuery} name="library" placeholder="search parts…" />
     </form>
