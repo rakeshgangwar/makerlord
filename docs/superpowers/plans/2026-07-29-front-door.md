@@ -1450,7 +1450,7 @@ git commit -m "feat(project): interface and voltage architecture rules"
 
 **This is spec §3.3 — the rule that earns the front door.** Both rules degrade from BLOCKER to WARNING when any load-bearing input was assumed, and both name the assumption in the message.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/computed-rules.test.ts`:
 
@@ -1609,12 +1609,12 @@ describe('requirementUnsatisfiedRule', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/computed-rules.test.ts`
 Expected: FAIL — `powerBudgetRule` is not exported.
 
-- [ ] **Step 3: Append the computed rules**
+- [x] **Step 3: Append the computed rules**
 
 Add to `packages/project/src/architecture/rules.ts`:
 
@@ -1708,12 +1708,12 @@ export const requirementUnsatisfiedRule: ProjectRule = {
 };
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm vitest run packages/project/test/computed-rules.test.ts`
 Expected: PASS, 9 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/project/src/architecture/rules.ts packages/project/test/computed-rules.test.ts
