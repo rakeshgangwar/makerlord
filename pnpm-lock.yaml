@@ -39,6 +39,18 @@ importers:
         specifier: ^3.23.0
         version: 3.25.76
 
+  packages/project:
+    dependencies:
+      '@makerlord/circuit':
+        specifier: workspace:*
+        version: link:../circuit
+      '@makerlord/parts':
+        specifier: workspace:*
+        version: link:../parts
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+
 packages:
 
   '@esbuild/aix-ppc64@0.21.5':

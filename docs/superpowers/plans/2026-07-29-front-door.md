@@ -66,7 +66,7 @@ packages/project/
   - `interface Project { intent: string; inventory: InventoryItem[]; feasibility?: Feasibility; requirements: Requirement[]; architecture: { blocks: Block[]; links: BlockLink[] }; circuit?: Circuit }`
   - `emptyProject(intent: string): Project`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/project/test/model.test.ts`:
 
@@ -100,12 +100,12 @@ describe('emptyProject', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm vitest run packages/project/test/model.test.ts`
 Expected: FAIL — cannot resolve `../src/model.js`.
 
-- [ ] **Step 3: Create the package files**
+- [x] **Step 3: Create the package files**
 
 `packages/project/package.json`:
 
@@ -135,7 +135,7 @@ Expected: FAIL — cannot resolve `../src/model.js`.
 }
 ```
 
-- [ ] **Step 4: Write the model**
+- [x] **Step 4: Write the model**
 
 Create `packages/project/src/model.ts`:
 
@@ -275,12 +275,12 @@ export * from './architecture/types.js';
 export * from './feasibility/types.js';
 ```
 
-- [ ] **Step 5: Install and run**
+- [x] **Step 5: Install and run**
 
 Run: `pnpm install && pnpm vitest run packages/project/test/model.test.ts`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/project

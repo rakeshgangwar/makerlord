@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc -b packages/parts packages/circuit"
+    "typecheck": "tsc -b packages/parts packages/circuit packages/project"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
