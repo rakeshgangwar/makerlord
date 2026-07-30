@@ -1,4 +1,5 @@
 <script>
+  import { displayFamily } from '$lib/taxonomy.js';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import {
@@ -18,7 +19,7 @@
   const groups = $derived.by(() => {
     const m = new Map();
     for (const hit of app.libraryHits) {
-      const fam = hit.family || 'other';
+      const fam = displayFamily(hit.family);
       if (!m.has(fam)) m.set(fam, []);
       m.get(fam).push(hit);
     }
@@ -102,7 +103,7 @@
             <ul class="rows">
               {#each inventory as item, i}
                 <li>
-                  <span>{item.freeText ?? item.partId}{item.quantity ? ` ×${item.quantity}` : ''}</span>
+                  <span>{item.freeText ?? item.title ?? item.partId}{item.quantity ? ` ×${item.quantity}` : ''}</span>
                   <button class="own-inline" title="remove from inventory"
                     onclick={() => removeInventory(i)}>remove</button>
                 </li>

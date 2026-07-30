@@ -1,3 +1,5 @@
+import { humanNetName } from '@makerlord/circuit';
+import { describeFault } from './faults.js';
 import type { FaultCandidate } from '@makerlord/project';
 import { contradicts } from './prune.js';
 
@@ -40,12 +42,17 @@ export function nextProbe(
   }
   if (best === null) return null;
 
+  // The rationale is maker prose (2026-07-30 audit): human fault
+  // descriptions, at most two named per group — the hypotheses list
+  // below the proposal already carries the full roster.
   const named = best.groups.map((g) => {
     const v = g[0]!.signature.netVoltages[best!.net]!;
-    return `${g.map((c) => c.id).join('/')} (~${v.toFixed(1)} V)`;
+    const speak = g.slice(0, 2).map((c) => describeFault(c.fault));
+    const more = g.length > 2 ? ` + ${g.length - 2} more` : '';
+    return `"${speak.join('" / "')}"${more} (~${v.toFixed(1)} V)`;
   });
   return {
     net: best.net,
-    why: `a reading at ${best.net} separates ${named.join(' from ')}`,
+    why: `a reading at ${humanNetName(best.net)} separates ${named.join(' from ')}`,
   };
 }

@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { page } from '$app/state';
   import { postureFor } from '$lib/postures.js';
   import { adoptUrlParams, app, boot, refreshProjections } from '$lib/app.svelte.js';
@@ -59,11 +59,18 @@
 
   // A deploy restarts the API mid-boot sometimes; a failed first fetch must
   // not leave the bench empty. When a lens needs build state and none is
-  // loaded, retry.
+  // loaded, retry — ONCE per lens entry, and untracked: refreshProjections
+  // mutates reactive state (renderTick), and a tracked call would make this
+  // effect subscribe to the very counter it bumps. That exact loop starved
+  // Chrome at 3,900 requests before the 2026-07-30 audit caught it.
+  let retriedBuild = false;
   $effect(() => {
-    if ((lens === 'bench' || lens === 'simulate') && app.projectId && !app.build) {
-      refreshProjections();
+    const needsBuild = (lens === 'bench' || lens === 'simulate') && app.projectId;
+    if (needsBuild && !untrack(() => app.build) && !retriedBuild) {
+      retriedBuild = true;
+      untrack(() => refreshProjections());
     }
+    if (!needsBuild) retriedBuild = false;
   });
 </script>
 

@@ -15,13 +15,23 @@ function list<T>(v: T | T[] | undefined): T[] {
 }
 
 /** A node is either a bare scalar or an object carrying attributes plus #text. */
+/** The corpus writes Ω as &#8486; — the parser decodes named entities
+ *  but leaves numeric ones, and a literal "&#8486;" then leaks into
+ *  every title consumer (UI, CLI, agent prose). Decode them here. */
+function decodeNumericEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(Number(dec)))
+    .normalize('NFC');   // U+2126 OHM SIGN → the canonical Ω
+}
+
 function text(node: unknown): string {
   if (node === null || node === undefined) return '';
   if (typeof node === 'object') {
     const t = (node as Record<string, unknown>)['#text'];
-    return t === undefined ? '' : String(t);
+    return t === undefined ? '' : decodeNumericEntities(String(t));
   }
-  return String(node);
+  return decodeNumericEntities(String(node));
 }
 
 function pin(viewNode: unknown): RawPin | undefined {

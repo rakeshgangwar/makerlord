@@ -68,12 +68,23 @@ describe('nextProbe', () => {
     ])).toBeNull();
   });
 
-  it('the why names what the reading would separate', () => {
+  it('the why describes what the reading would separate, in maker language', () => {
     const p = nextProbe([
-      cand('open-mid', { mid: 0.0 }),
-      cand('reversed-LED1', { mid: 4.3 }),
+      { id: 'open-mid', fault: { kind: 'open_joint', net: 'net_U1_5V__LED1_anode' },
+        status: 'live', signature: { netVoltages: { mid: 0.0 }, provenance: 'computed' } },
+      { id: 'reversed-LED1', fault: { kind: 'reversed_part', ref: 'LED1' },
+        status: 'live', signature: { netVoltages: { mid: 4.3 }, provenance: 'computed' } },
     ])!;
-    expect(p.why).toContain('open-mid');
-    expect(p.why).toContain('reversed-LED1');
+    // Both groups named, as descriptions — and no raw net_ ids anywhere.
+    expect(p.why).toContain('U1.5V → LED1.anode');
+    expect(p.why).toContain('LED1 is in backwards');
+    expect(p.why).not.toMatch(/net_/);
+  });
+
+  it('big groups are capped at two named members (the audit wall-of-text fix)', () => {
+    const many = ['a', 'b', 'c', 'd', 'e'].map((id) => cand(id, { mid: 0.0 }));
+    const lone = cand('z', { mid: 4.0 });
+    const p = nextProbe([...many, lone])!;
+    expect(p.why).toContain('+ 3 more');
   });
 });

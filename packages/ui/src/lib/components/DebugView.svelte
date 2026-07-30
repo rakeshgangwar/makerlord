@@ -1,4 +1,6 @@
 <script>
+  import { humanNetName } from '@makerlord/circuit';
+  import { describeFault } from '@makerlord/debug';
   import {
     app, debugClose, debugObserveSelftest, debugObserveVoltage, debugStart,
   } from '$lib/app.svelte.js';
@@ -9,23 +11,13 @@
   const dead = $derived(session?.candidates.filter((c) => c.status === 'contradicted') ?? []);
   const obsById = $derived(new Map((session?.observations ?? []).map((o) => [o.id, o])));
 
-  /** Plain language for a fault — the maker reads faults, not JSON. */
-  function faultLabel(fault) {
-    switch (fault.kind) {
-      case 'no_fault': return 'nothing is wrong (the circuit is fine)';
-      case 'open_joint': return `a connection at ${fault.net} is not actually made`;
-      case 'bridge': return `${fault.netA} and ${fault.netB} are touching`;
-      case 'reversed_part': return `${fault.ref} is in backwards`;
-      case 'wrong_value': return `${fault.ref} is a ×${fault.factor} wrong value`;
-      case 'dead_rail': return 'the supply rail is dead';
-      default: return fault.kind;
-    }
-  }
+  // One vocabulary: the engine's describeFault (same words in CLI + why).
+  const faultLabel = describeFault;
 
   function obsLabel(id) {
     const o = obsById.get(id);
     if (!o) return id;
-    if (o.kind === 'voltage') return `${o.value} ${o.unit} at ${o.net}`;
+    if (o.kind === 'voltage') return `${o.value} ${o.unit} at ${humanNetName(o.net)}`;
     if (o.kind === 'selftest') return `SELFTEST ${o.role} ${o.ok ? 'ok' : 'fail'}`;
     return `${o.behavior} = ${o.value}`;
   }
@@ -64,7 +56,7 @@
     {#if session.status === 'open' && session.proposed}
       <section class="panel-block proposal">
         <p class="prop-eyebrow mono">measure now — then the hypotheses show their numbers</p>
-        <p class="prop-net">Voltage at <strong class="mono">{session.proposed.net}</strong></p>
+        <p class="prop-net">Voltage at <strong class="mono">{humanNetName(session.proposed.net)}</strong></p>
         <p class="prop-why">{session.proposed.why}</p>
         <form class="row" onsubmit={(e) => {
           e.preventDefault();

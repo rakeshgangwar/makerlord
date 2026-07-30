@@ -26,7 +26,7 @@
       {#each list as p}
         <button class="project-row" onclick={() => openProject(p.projectId)}>
           <span class="project-intent">{p.intent}</span>
-          <span class="mono project-meta">{p.projectId.slice(0, 6)} · {p.updatedAt.slice(0, 10)}</span>
+          <span class="mono project-meta">{p.updatedAt.slice(0, 10)}</span>
         </button>
       {/each}
     </div>

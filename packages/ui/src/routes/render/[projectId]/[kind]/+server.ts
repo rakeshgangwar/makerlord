@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import type { RequestHandler } from '@sveltejs/kit';
@@ -22,7 +23,7 @@ interface ProjectResponse {
   };
 }
 
-export const GET: RequestHandler = async ({ params, url, locals }) => {
+export const GET: RequestHandler = async ({ params, url, locals, request }) => {
   const headers: Record<string, string> = {};
   if (env.MAKERLORD_ACCESS_TOKEN) {
     headers.authorization = `Bearer ${env.MAKERLORD_ACCESS_TOKEN}`;
@@ -60,7 +61,12 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
       throw error(404, `unknown renderer "${params.kind}"`);
   }
 
+  // Deterministic projection ⇒ cheap revalidation: same model, same SVG.
+  const etag = `"${createHash('sha1').update(svg).digest('hex').slice(0, 16)}"`;
+  if (request.headers.get('if-none-match') === etag) {
+    return new Response(null, { status: 304, headers: { etag } });
+  }
   return new Response(svg, {
-    headers: { 'content-type': 'image/svg+xml', 'cache-control': 'no-cache' },
+    headers: { 'content-type': 'image/svg+xml', 'cache-control': 'no-cache', etag },
   });
 };

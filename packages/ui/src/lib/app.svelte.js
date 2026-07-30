@@ -83,6 +83,8 @@ export const app = $state({
   libraryPart: null,
   /** @type {{partId: string, title: string, needed: number, owned: number}[]} */
   inventoryGap: [],
+  /** @type {Record<string, string>} */
+  partTitles: {},
   /** @type {{path: string, size: number}[]} */
   fileList: [],
   /** @type {{path: string, content: string} | null} */
@@ -275,14 +277,23 @@ function followStage() {
   }
 }
 
-export async function refreshProjections() {
-  app.renderTick += 1;
-  if (app.projectId) {
-    const r = await api(`projects/${app.projectId}/steps`);
-    if (r.status === 200) app.build = r.data;
-    await refreshProjectFile();
-    followStage();
-  }
+let projectionsInFlight = null;
+
+export function refreshProjections() {
+  // Coalesce: overlapping callers share one round-trip. A caller storm
+  // (agent turn end + lens retry + user action) must cost one fetch set,
+  // not N — the audit's 3,900-request loop is the cautionary tale.
+  if (projectionsInFlight) return projectionsInFlight;
+  projectionsInFlight = (async () => {
+    app.renderTick += 1;
+    if (app.projectId) {
+      const r = await api(`projects/${app.projectId}/steps`);
+      if (r.status === 200) app.build = r.data;
+      await refreshProjectFile();
+      followStage();
+    }
+  })().finally(() => { projectionsInFlight = null; });
+  return projectionsInFlight;
 }
 
 async function refreshProjectFile() {
@@ -447,6 +458,9 @@ export async function searchLibrary() {
     input: { query: app.libraryQuery.trim(), includeGeometry: app.libraryIncludeGeometry },
   });
   app.libraryHits = r.data.ok ? r.data.data.hits : [];
+  for (const hit of app.libraryHits) {
+    if (hit.id && hit.title) app.partTitles[hit.id] = hit.title;
+  }
   app.libraryPart = null;
 }
 
@@ -495,7 +509,19 @@ export function researchPart(part, uploadRef) {
 export async function loadInventoryGap() {
   if (!app.projectId) return;
   const r = await api(`projects/${app.projectId}/tool`, { name: 'inventory_gap', input: {} });
-  if (r.data.ok) app.inventoryGap = r.data.data.toAcquire;
+  if (r.data.ok) {
+    app.inventoryGap = r.data.data.toAcquire;
+    for (const row of [...r.data.data.toAcquire, ...(r.data.data.owned ?? [])]) {
+      if (row.partId && row.title) app.partTitles[row.partId] = row.title;
+    }
+  }
+}
+
+/** Display title for a part id — filled by every list the app loads;
+ *  a maker reads "Red LED - 5mm", machines keep the id. */
+export function titleFor(partId) {
+  if (!partId) return partId;
+  return app.partTitles[partId] ?? partId;
 }
 
 export async function openPart(id) {

@@ -8,6 +8,7 @@
     "@makerlord/artifacts": "workspace:*",
     "@makerlord/auth": "workspace:*",
     "@makerlord/circuit": "workspace:*",
+    "@makerlord/debug": "workspace:*",
     "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
     "@makerlord/protocol": "workspace:*",

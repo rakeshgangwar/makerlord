@@ -1,3 +1,4 @@
+import { humanNetName } from '@makerlord/circuit';
 import type { Circuit, IntentNet } from '@makerlord/circuit';
 import type { Fault, Symptom } from '@makerlord/project';
 
@@ -147,6 +148,19 @@ export function generateCandidates(
       break;
   }
   return faults;
+}
+
+/** Maker-language description of a fault — every display surface
+ *  (UI hypotheses, probe rationale, CLI) reads THIS, never the id. */
+export function describeFault(fault: Fault): string {
+  switch (fault.kind) {
+    case 'no_fault': return 'nothing is wrong (the circuit is fine)';
+    case 'open_joint': return `a connection at ${humanNetName(fault.net)} is not actually made`;
+    case 'bridge': return `${humanNetName(fault.netA)} and ${humanNetName(fault.netB)} are touching`;
+    case 'reversed_part': return `${fault.ref} is in backwards`;
+    case 'wrong_value': return `${fault.ref} is a ×${fault.factor} wrong value`;
+    case 'dead_rail': return 'the supply rail is dead';
+  }
 }
 
 /** Stable id for a fault — the facet's candidate key. */

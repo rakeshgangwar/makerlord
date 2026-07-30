@@ -39,3 +39,19 @@ test('back walks to the previous stage', async ({ page }) => {
   await expect(page).toHaveURL(/stage=5/);
   await expect(page.getByText('⑤ Simulate', { exact: false })).toBeVisible();
 });
+
+test('a cold bench deep-link renders the steps without a fetch storm', async ({ page }) => {
+  // Regression for the 2026-07-30 audit P0: the bench retry effect
+  // subscribed to the renderTick it bumps and fired thousands of
+  // fetches until Chrome starved, leaving the flagship stage blank.
+  let apiHits = 0;
+  page.on('request', (r) => {
+    if (/\/(app-api|render)\//.test(r.url())) apiHits += 1;
+  });
+  await signIn(page);
+  await page.goto(`/?p=${GOLDEN}&stage=6`);
+  await expect(page.getByText('POWER OFF', { exact: false })).toBeVisible();
+  await expect(page.getByText('THE BOARD', { exact: false })).toBeVisible();
+  await page.waitForTimeout(2500);   // long enough for a loop to reveal itself
+  expect(apiHits).toBeLessThan(30);
+});

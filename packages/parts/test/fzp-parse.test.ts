@@ -93,3 +93,15 @@ describe('parseFzp', () => {
     expect(parseFzp(one).connectors).toHaveLength(1);
   });
 });
+
+describe('XML entities in titles (2026-07-30 audit)', () => {
+  it('decodes numeric and named entities — "220 &#8486; Resistor" is 220 Ω', () => {
+    const fzp = `<module moduleId="ResistorModuleID">
+      <title>220 &#8486; Resistor &amp; friends &#x2126;</title>
+      <connectors><connector id="c0" name="Pin 0" type="male"/></connectors>
+    </module>`;
+    const parsed = parseFzp(fzp);
+    expect(parsed.title).toBe('220 Ω Resistor & friends Ω');
+    expect(parsed.title).not.toMatch(/&#|&amp/);
+  });
+});

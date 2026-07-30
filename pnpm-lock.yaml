@@ -300,6 +300,9 @@ importers:
       '@makerlord/circuit':
         specifier: workspace:*
         version: link:../circuit
+      '@makerlord/debug':
+        specifier: workspace:*
+        version: link:../debug
       '@makerlord/parts':
         specifier: workspace:*
         version: link:../parts

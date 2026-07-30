@@ -94,7 +94,13 @@ const inventoryGap: ToolDef = {
       }))
       .filter((t) => t.owned < t.needed)
       .sort((a, b) => a.partId.localeCompare(b.partId));
-    return ok({ toAcquire, owned: s.file.project.inventory });
+    // Titles ride along (2026-07-30 audit): a maker owns "Red LED - 5mm",
+    // not "5mmColorLEDModuleID" — ids stay for machines.
+    const ownedTitled = s.file.project.inventory.map((item) => ({
+      ...item,
+      title: item.partId ? (defsMap().get(item.partId)?.title ?? item.partId) : undefined,
+    }));
+    return ok({ toAcquire, owned: ownedTitled });
   },
 };
 

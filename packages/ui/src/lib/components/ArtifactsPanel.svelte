@@ -1,5 +1,5 @@
 <script>
-  import { app, searchLibrary, openPart, ownPart, loadInventoryGap, loadFiles, openFile } from '$lib/app.svelte.js';
+  import { titleFor, app, searchLibrary, openPart, ownPart, loadInventoryGap, loadFiles, openFile } from '$lib/app.svelte.js';
 
   let { projectFile = null, tab = null } = $props();
   const file = $derived(projectFile ?? app.projectFile);
@@ -47,7 +47,7 @@
   </div>
 
   {#if activeTab === 'bench'}
-    <p class="mono panel-id">project.json{app.projectId ? ` · ${app.projectId.slice(0, 6)}` : ''}</p>
+    <p class="mono panel-id" title={app.projectId}>project.json</p>
     {#if file}
       {@const p = file.project}
       {#if p.requirements.length > 0}
@@ -65,14 +65,14 @@
         <h3>Blocks</h3>
         <ul class="panel-list">
           {#each p.architecture.blocks as b}
-            <li><strong>{b.name}</strong> — <span class="mono">{b.sourcing.type === 'buy' ? b.sourcing.partId : b.sourcing.type}</span></li>
+            <li><strong>{b.name}</strong> — <span class="mono">{b.sourcing.type === 'buy' ? titleFor(b.sourcing.partId) : b.sourcing.type}</span></li>
           {/each}
         </ul>
       {/if}
       {#if p.inventory.length > 0}
         <h3>Inventory</h3>
         <ul class="panel-list">
-          {#each p.inventory as item}<li>{item.freeText ?? item.partId}{item.quantity ? ` ×${item.quantity}` : ''}</li>{/each}
+          {#each p.inventory as item}<li>{item.freeText ?? titleFor(item.partId)}{item.quantity ? ` ×${item.quantity}` : ''}</li>{/each}
         </ul>
       {/if}
       {#if p.requirements.length === 0 && p.architecture.blocks.length === 0 && p.inventory.length === 0}

@@ -85,9 +85,16 @@ export function buildSequence(ctx: RuleContext): BuildStep[] {
   );
 
   for (const n of signalNets) {
+    // Name the endpoints, never the net id — a net id is a hole name in
+    // disguise, and hole ids are opaque (CLAUDE.md): "A98" tells a maker
+    // nothing, "LED1.anode to R1.Pin 0" is the actual instruction.
+    const ends = n.pins.map((p) => `${p.ref}.${p.pin}`);
     steps.push({
       kind: 'ROUTE_SIGNAL',
-      instruction: `Run the signal wire for net "${n.id}".`,
+      instruction:
+        ends.length >= 2
+          ? `Run the signal wire connecting ${ends.join(' to ')}.`
+          : `Run the signal wire to ${ends[0]!}.`,
       holes: n.holes,
     });
   }

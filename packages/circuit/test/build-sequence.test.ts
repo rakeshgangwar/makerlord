@@ -69,3 +69,13 @@ describe('buildSequence', () => {
     expect(buildSequence(c).some((s) => s.kind === 'PLACE_MODULE')).toBe(false);
   });
 });
+
+it('ROUTE_SIGNAL names part pins, never a bare net/hole id (2026-07-30 audit)', () => {
+  const steps = buildSequence(ctx());
+  const routes = steps.filter((s) => s.kind === 'ROUTE_SIGNAL');
+  expect(routes.length).toBeGreaterThan(0);
+  for (const r of routes) {
+    expect(r.instruction).toMatch(/connecting .+\..+ to .+\..+|wire to .+\..+/);
+    expect(r.instruction).not.toMatch(/net "/);
+  }
+});
