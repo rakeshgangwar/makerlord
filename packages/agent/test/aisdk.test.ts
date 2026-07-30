@@ -100,6 +100,9 @@ describe('AiSdkSession — any provider, same engine, same gates', () => {
     expect(second.tools.length).toBeGreaterThan(40);   // the whole registry rides along
     // Provider-portable schemas: no \ anywhere (Moonshot 400s on them).
     expect(JSON.stringify(second.tools)).not.toContain(String.raw`"$ref"`);
+    // Tuple schemas must arrive as object-form items, unstamped.
+    expect(JSON.stringify(second.tools)).not.toMatch(/"items":\s*\[/);
+    expect(JSON.stringify(second.tools)).not.toContain(String.raw`"$schema"`);
   });
 
   it('a session.error surfaces instead of a hang when the provider dies', async () => {

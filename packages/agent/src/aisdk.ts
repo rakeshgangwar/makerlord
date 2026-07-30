@@ -81,6 +81,26 @@ export class AiSdkSession {
     this.steeringQueue.push(text);
   }
 
+  /** Draft-07 emits tuple schemas as `items: [a, b]` and stamps $schema
+   *  keys; several providers (Moonshot, observed live 2026-07-31) refuse
+   *  both. Loosening a tuple to `items: {anyOf}` costs nothing: the
+   *  ENGINE re-validates every input with the real zod schema at
+   *  execution — the wire schema only guides the model. */
+  private static portable(node: unknown): unknown {
+    if (Array.isArray(node)) return node.map((n) => AiSdkSession.portable(n));
+    if (typeof node !== 'object' || node === null) return node;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node)) {
+      if (k === '$schema') continue;
+      if (k === 'items' && Array.isArray(v)) {
+        out[k] = { anyOf: v.map((m) => AiSdkSession.portable(m)) };
+      } else {
+        out[k] = AiSdkSession.portable(v);
+      }
+    }
+    return out;
+  }
+
   private registryTools(): ToolSet {
     return Object.fromEntries(
       ALL_TOOLS.map((t) => [
@@ -92,7 +112,9 @@ export class AiSdkSession {
           // $refStrategy none: inline schemas — Moonshot et al refuse
           // '#/definitions/' refs (observed live 2026-07-31).
           inputSchema: jsonSchema(
-            zodToJsonSchema(t.input, { $refStrategy: 'none' }) as Record<string, unknown>,
+            AiSdkSession.portable(
+              zodToJsonSchema(t.input, { $refStrategy: 'none' }),
+            ) as Record<string, unknown>,
           ),
         }),
       ]),
