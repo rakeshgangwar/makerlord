@@ -41,12 +41,12 @@ would produce untested claims — the thing this project exists to avoid.
 
 | Item | Why deferred | Scope | Size |
 |---|---|---|---|
-| **Playwright e2e** | The no-LLM golden path is already covered where it's deterministic (tool layer + cross-brain). Browser-level assertions add value once the shell has real *flows* to walk — today it would screenshot a static frame. | Install browsers; seed a project; drive front door → gate through the UI; the §14 DOM safety sweep (no dismiss control anywhere; BLOCKER visible at every breakpoint; prose doesn't remove cards). | 1–2 days, after A |
+| **Playwright e2e** ✅ | Resolved 2026-07-30: `packages/ui/e2e/` — the real stack (API server + built SvelteKit app), projects seeded through the real tool registry (§7 golden script + a live-BLOCKER danger project), no LLM. Twelve tests: front door, lens walk, the §14 sweep (BLOCKER at 1440/1024/390, no dismiss control on any stage of either project, rule-id provenance, agent prose claiming a fix does not clear the card, the advance refuses in the browser), bridge-absent help. CI `e2e` job with cached chromium. | — | done |
 | **svelte-check in CI** ✅ | Resolved 2026-07-29: `.github/workflows/ci.yml` on push/PR — corpus submodule cached by pinned SHA, ngspice installed so the known-answer suite runs for real, `pnpm test` (typecheck + all 526), then `svelte-check` (first run ever: 332 files, 0 errors, 0 warnings). First run green. | — | done |
 | **three.js GLB viewer** | Stage ⑩ (mechanical) has no spec — a viewer with nothing to view. UI spec §5 reserves the surface. | Arrives inside the mechanical-stage spec: CadQuery → GLB server-side, `three.js` scene with the board inside the case, collision highlights from engine findings. | With stage ⑩ |
 | **Schematic layout + symbols** ✅ | Resolved 2026-07-29 (D45): ELK layered layout + per-family glyphs (resistor zigzag, LED/diode, battery, capacitor, IC box). Interactivity (zoom/pan/hover) had landed the same day. Remaining polish: breadboard label de-collision, part glyphs on the breadboard view. | — | done |
 | **PNG derivation from CSV** | Needs a rendering dependency choice (resvg/node-canvas); CSV is canonical and the repo-archival PNG is a convenience, not a capability. | `waveformView` points → SVG → PNG via `@resvg/resvg-js` in `sim/results/`; wire into `report.md`. | ½ day |
-| **Bridge packaging, signing, update** | UI spec §15 and ACP spec §9 both push it out: it's an install story (certs, platforms, update channel), operationally real and orthogonal to behaviour — the bridge *runs* today via node. | Its own spec first: single-binary build (Node SEA or bun), macOS/Windows signing, update check against a release feed, the §11 install prompts already exist in the UI core. | Spec + 2–3 days + cert ops |
+| **Bridge packaging, signing, update** ⚠️ | Mostly resolved 2026-07-29: one-file `dist/bridge.cjs` (esbuild, self-spawning MCP role), `install.sh` → `maker-bridge` + `mlb` with `~/.makerlord/bridge.json`, CI uploads the bundle as an artifact. Still needs Node on the machine. Remaining: true single-binary (Node SEA/bun), macOS/Windows signing, update channel against a release feed. | The remainder is cert ops + a release feed — deliberately deferred until there are external users to update. | Cert ops, later |
 
 ## Resolved outside this ledger
 
@@ -60,4 +60,4 @@ projects were backfilled.
 
 ## Suggested order
 
-1. ~~CI~~ ✅ → 2. ~~The three unblocked rules~~ ✅ → 3. **Playwright** on top of the live shell → 4. **The live-API residues** (compaction eval, web research) → 5. **Curation drip** running underneath it all (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them.
+1. ~~CI~~ ✅ → 2. ~~The three unblocked rules~~ ✅ → 3. ~~Playwright~~ ✅ → 4. **The live-API residues** (compaction eval, web research) → 5. **Curation drip** running underneath it all (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them.

@@ -10,25 +10,25 @@
   ],
   "references": [
     {
-      "path": "../circuit"
+      "path": "../circuit/tsconfig.json"
     },
     {
-      "path": "../parts"
+      "path": "../parts/tsconfig.json"
     },
     {
-      "path": "../project"
+      "path": "../project/tsconfig.json"
     },
     {
-      "path": "../protocol"
+      "path": "../protocol/tsconfig.json"
     },
     {
-      "path": "../tools"
+      "path": "../tools/tsconfig.json"
     },
     {
-      "path": "../sim"
+      "path": "../sim/tsconfig.json"
     },
     {
-      "path": "../artifacts"
+      "path": "../artifacts/tsconfig.json"
     }
   ]
 }

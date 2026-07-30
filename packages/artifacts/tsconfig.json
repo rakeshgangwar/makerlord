@@ -3,10 +3,10 @@
   "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
   "include": ["src/**/*"],
   "references": [
-    { "path": "../parts" },
-    { "path": "../circuit" },
-    { "path": "../project" },
-    { "path": "../sim" },
-    { "path": "../tools" }
+    { "path": "../parts/tsconfig.json" },
+    { "path": "../circuit/tsconfig.json" },
+    { "path": "../project/tsconfig.json" },
+    { "path": "../sim/tsconfig.json" },
+    { "path": "../tools/tsconfig.json" }
   ]
 }

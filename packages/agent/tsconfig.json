@@ -3,9 +3,9 @@
   "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
   "include": ["src/**/*"],
   "references": [
-    { "path": "../protocol" },
-    { "path": "../tools" },
-    { "path": "../circuit" },
-    { "path": "../parts" }
+    { "path": "../protocol/tsconfig.json" },
+    { "path": "../tools/tsconfig.json" },
+    { "path": "../circuit/tsconfig.json" },
+    { "path": "../parts/tsconfig.json" }
   ]
 }

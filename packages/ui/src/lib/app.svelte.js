@@ -388,7 +388,7 @@ export function bridgeConnect(quiet = false) {
     // A silent auto-reconnect attempt just goes back to off; only a
     // deliberate click earns the "run maker-bridge" hint.
     if (!quiet) {
-      app.bridgeError = 'no bridge on ws://127.0.0.1:8790 — run `maker-bridge` on this machine';
+      app.bridgeError = `no bridge on ws://127.0.0.1:${port} — run \`maker-bridge\` on this machine`;
       app.bridgeStatus = 'error';
     } else {
       app.bridgeStatus = 'off';

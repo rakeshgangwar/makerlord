@@ -9,22 +9,22 @@
   ],
   "references": [
     {
-      "path": "../agent"
+      "path": "../agent/tsconfig.json"
     },
     {
-      "path": "../protocol"
+      "path": "../protocol/tsconfig.json"
     },
     {
-      "path": "../tools"
+      "path": "../tools/tsconfig.json"
     },
     {
-      "path": "../circuit"
+      "path": "../circuit/tsconfig.json"
     },
     {
-      "path": "../artifacts"
+      "path": "../artifacts/tsconfig.json"
     },
     {
-      "path": "../bridge"
+      "path": "../bridge/tsconfig.json"
     }
   ]
 }

@@ -2,5 +2,5 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
   "include": ["src/**/*"],
-  "references": [{ "path": "../protocol" }, { "path": "../tools" }, { "path": "../mcp" }]
+  "references": [{ "path": "../protocol/tsconfig.json" }, { "path": "../tools/tsconfig.json" }, { "path": "../mcp/tsconfig.json" }]
 }
