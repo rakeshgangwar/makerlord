@@ -9,6 +9,8 @@ WorkingDirectory=/opt/makerlord
 EnvironmentFile=/opt/makerlord/.env
 Environment=MAKERLORD_USERS_PATH=/opt/makerlord/users
 Environment=PORT=3000
+# nginx is the only front door — never expose the node server directly.
+Environment=HOST=127.0.0.1
 Environment=ORIGIN=https://makerlord.dev
 Environment=MAKERLORD_API_URL=http://127.0.0.1:8787
 ExecStart=/opt/node-v22/bin/node packages/ui/build/index.js
