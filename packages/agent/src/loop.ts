@@ -43,14 +43,12 @@ export interface AgentSessionOptions {
 export const WEB_RESEARCH_TOOLS = [
   { type: 'web_search_20260209', name: 'web_search', max_uses: 8 },
   { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 8 },
-  // Opus 5 runs code execution ANYWAY when the web tools are on — but
-  // only an EXPLICIT declaration makes the stream deliver the container
-  // id (message_delta), without which code-called client tools wedge the
-  // session (probed live 2026-07-30). Declaring it is how we capture it.
-  { type: 'code_execution_20250825', name: 'code_execution' },
+  // NOTE code execution: Opus 5 AUTO-INJECTS it when the web tools are
+  // on — declaring it explicitly CONFLICTS ("each tool name must be
+  // unique", probed live 2026-07-30). The stream delivers its container
+  // id in message_delta exactly when a code-called tool is pending; the
+  // loop captures it there and echoes it as the container param.
 ] as const;
-
-export const CODE_EXECUTION_BETA = 'code-execution-2025-08-25';
 
 export const COMPACTION_BETA = 'compact-2026-01-12';
 
@@ -287,11 +285,8 @@ export class AgentSession {
       const requestOptions: { timeout: number; headers?: Record<string, string> } = {
         timeout: 10 * 60 * 1000,
       };
-      const betas: string[] = [];
-      if (this.opts.compactionBeta) betas.push(COMPACTION_BETA);
-      if (this.opts.webResearch) betas.push(CODE_EXECUTION_BETA);
-      if (betas.length > 0) {
-        requestOptions.headers = { 'anthropic-beta': betas.join(',') };
+      if (this.opts.compactionBeta) {
+        requestOptions.headers = { 'anthropic-beta': COMPACTION_BETA };
       }
 
       let response: ApiMessage;
