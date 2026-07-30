@@ -1,0 +1,19 @@
+# SparkFun USB LiPoly Charger (PRT-10161), MCP73831T — the fzp links the
+# Microchip datasheet. Single-cell Li-Ion/LiPo charge management:
+# 500 mA / 100 mA selectable, 4.2 V regulation. managesLipo marks it as
+# the ONE kind of part a hazardClass 'lipo' cell may reach directly
+# (RULE_LIPO_UNMANAGED); the SYS OUT side feeds the project. The corpus
+# part exposes VBAT/GND terminal pairs; offsets nominal (board module).
+partId: LiPo-USB-Charger-v21
+footprint:
+  pins:
+    VBAT: [0, 0]
+    GND: [0, 1]
+managesLipo: true
+quiescentMa: 1
+hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Connector:Conn_01x02_Pin
+  footprint: Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical

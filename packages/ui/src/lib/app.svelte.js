@@ -79,6 +79,8 @@ export const app = $state({
   libraryHits: [],
   /** @type {any} */
   libraryPart: null,
+  /** @type {{partId: string, title: string, needed: number, owned: number}[]} */
+  inventoryGap: [],
   /** @type {{path: string, size: number}[]} */
   fileList: [],
   /** @type {{path: string, content: string} | null} */
@@ -414,6 +416,22 @@ export async function searchLibrary() {
   });
   app.libraryHits = r.data.ok ? r.data.data.hits : [];
   app.libraryPart = null;
+}
+
+/** D49: the library is what EXISTS; the inventory is what the maker OWNS.
+ *  "I own this" moves a part across that line; the gap is what the build
+ *  still needs. */
+export async function ownPart(partId) {
+  await api(`projects/${app.projectId}/tool`, {
+    name: 'inventory_add', input: { partId, quantity: 1 },
+  });
+  await Promise.all([refreshProjections(), loadInventoryGap()]);
+}
+
+export async function loadInventoryGap() {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}/tool`, { name: 'inventory_gap', input: {} });
+  if (r.data.ok) app.inventoryGap = r.data.data.toAcquire;
 }
 
 export async function openPart(id) {

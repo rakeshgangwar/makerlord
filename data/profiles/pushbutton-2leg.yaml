@@ -11,3 +11,8 @@ polarity: nonpolarized
 maxCurrentMa: 50
 absMaxVoltageV: 12
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Switch:SW_Push
+  footprint: Button_Switch_THT:SW_PUSH_6mm_H4.3mm

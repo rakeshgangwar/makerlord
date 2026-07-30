@@ -7,3 +7,8 @@ polarity: polarized
 forwardVoltageV: 2.0
 maxCurrentMa: 20
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:LED
+  footprint: LED_THT:LED_D5.0mm

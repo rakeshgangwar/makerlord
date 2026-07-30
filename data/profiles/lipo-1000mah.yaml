@@ -1,0 +1,16 @@
+# SparkFun LIPO-1000mAh single-cell pouch (PRT-00339 class). Sources:
+# SparkFun product datasheets for 1000 mAh single-cell LiPo: nominal
+# 3.7 V, charge cutoff 4.2 V (absMaxVoltageV), standard discharge 1C →
+# maxContinuousMa 1000. hazardClass lipo drives RULE_LIPO_UNMANAGED:
+# this cell may reach ONLY a managesLipo part directly — a bare pouch
+# feeding a load is the classic hobby fire. Footprint offsets nominal
+# (pouch cells never sit ON the breadboard).
+partId: SparkFun-Electromechanical-LIPO-OUTLINE-1100
+footprint:
+  pins:
+    "+": [0, 0]
+    "-": [0, 1]
+polarity: polarized
+maxContinuousMa: 1000
+absMaxVoltageV: 4.2
+hazardClass: lipo

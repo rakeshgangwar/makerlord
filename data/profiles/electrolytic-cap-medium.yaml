@@ -8,3 +8,8 @@ footprint:
 polarity: polarized
 absMaxVoltageV: 16
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:C_Polarized
+  footprint: Capacitor_THT:CP_Radial_D5.0mm_P2.00mm

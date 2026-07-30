@@ -48,6 +48,18 @@ export const profileSchema = z.object({
     .enum(['none', 'lipo', 'mains', 'inductive', 'highCurrent'])
     .default('none'),
   pinLimits: z.record(pinLimit).optional(),
+  /** Hand-marked on charge/protection modules: the ONLY parts a
+   *  hazardClass 'lipo' cell may reach directly (RULE_LIPO_UNMANAGED). */
+  managesLipo: z.boolean().optional(),
+  /** D25: the KiCad mapping facet — symbol + footprint in Lib:Name form,
+   *  from the official KiCad libraries. Structurally validated here;
+   *  kicad-cli verifies pad-vs-pin counts when stage ⑨ lands. */
+  kicad: z
+    .object({
+      symbol: z.string().regex(/^[\w-]+:[\w.,+-]+$/, 'Lib:Name form'),
+      footprint: z.string().regex(/^[\w-]+:[\w.,+-]+$/, 'Lib:Name form'),
+    })
+    .optional(),
   gpio: z.record(gpioPin).optional(),
   /** arduino-cli board identity; presence marks the profile as an MCU. */
   fqbn: z.string().min(1).optional(),

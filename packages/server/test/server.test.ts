@@ -79,7 +79,7 @@ describe('the hosted surface', () => {
     const res = await fetch(`${base}/healthz`);
     const data = (await res.json()) as { ok: boolean; tools: number };
     expect(data.ok).toBe(true);
-    expect(data.tools).toBe(47);
+    expect(data.tools).toBe(48);
   });
 
   it('project → session → prompt → SSE events → project.json mutated', async () => {

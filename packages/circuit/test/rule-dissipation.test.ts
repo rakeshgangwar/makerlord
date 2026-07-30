@@ -95,8 +95,8 @@ describe('breadboardCurrentRule', () => {
 });
 
 describe('ALL_RULES', () => {
-  it('now registers eleven rules', () => {
-    expect(ALL_RULES).toHaveLength(11);
+  it('now registers twelve rules', () => {
+    expect(ALL_RULES).toHaveLength(12);
     expect(ALL_RULES.map((r) => r.id)).toContain('RULE_RESISTOR_DISSIPATION');
     expect(ALL_RULES.map((r) => r.id)).toContain('RULE_BREADBOARD_CURRENT');
   });

@@ -13,8 +13,8 @@ function freshProject() {
 }
 
 describe('registry invariants', () => {
-  it('holds all 47 tools (32 core + 4 sim + decision_record + 6 firmware + 4 debug)', () => {
-    expect(ALL_TOOLS).toHaveLength(47);
+  it('holds all 48 tools (33 core + 4 sim + decision_record + 6 firmware + 4 debug)', () => {
+    expect(ALL_TOOLS).toHaveLength(48);
   });
 
   it('none of the simulation tools gate — simulation is advisory by nature', () => {

@@ -1,5 +1,5 @@
 <script>
-  import { app, searchLibrary, openPart, loadFiles, openFile } from '$lib/app.svelte.js';
+  import { app, searchLibrary, openPart, ownPart, loadInventoryGap, loadFiles, openFile } from '$lib/app.svelte.js';
 
   let { projectFile = null, tab = null } = $props();
   const file = $derived(projectFile ?? app.projectFile);
@@ -41,7 +41,7 @@
     <button role="tab" aria-selected={activeTab === 'bench'} class:on={activeTab === 'bench'}
       onclick={() => (app.panelTab = 'bench')}>On the bench</button>
     <button role="tab" aria-selected={activeTab === 'library'} class:on={activeTab === 'library'}
-      onclick={() => { app.panelTab = 'library'; if (app.libraryHits.length === 0) searchLibrary(); }}>Library</button>
+      onclick={() => { app.panelTab = 'library'; if (app.libraryHits.length === 0) searchLibrary(); loadInventoryGap(); }}>Library</button>
     <button role="tab" aria-selected={activeTab === 'files'} class:on={activeTab === 'files'}
       onclick={() => { app.panelTab = 'files'; app.fileOpen = null; loadFiles(); }}>Files</button>
   </div>
@@ -91,6 +91,9 @@
       <button class="lib-back" onclick={() => (app.libraryPart = null)}>← back</button>
       <h3>{app.libraryPart.definition.title}</h3>
       <p class="mono panel-id">{app.libraryPart.definition.family}</p>
+      <button class="secondary own-btn" onclick={() => ownPart(app.libraryPart.definition.id)}>
+        + I own this
+      </button>
       <ul class="panel-list">
         {#each app.libraryPart.definition.pins as pin}
           <li><span class="mono">{pin.name}</span> · {pin.role}</li>
@@ -107,6 +110,20 @@
         <p class="empty">No safety profile yet — not usable in circuits.</p>
       {/if}
     {:else if libraryGroups.length > 0}
+      {#if app.inventoryGap.length > 0}
+        <div class="gap-box">
+          <h3>To acquire <span class="small">the build needs these; your inventory doesn't cover them</span></h3>
+          <ul class="panel-list">
+            {#each app.inventoryGap as g}
+              <li>
+                <button class="lib-hit" onclick={() => openPart(g.partId)}>{g.title}</button>
+                <span class="mono small">×{g.needed - g.owned}</span>
+                <button class="own-inline" title="mark as owned" onclick={() => ownPart(g.partId)}>own it</button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
       <p class="lib-count mono">{app.libraryHits.length} curated part{app.libraryHits.length === 1 ? '' : 's'} — only these can be used</p>
       {#each libraryGroups as [family, hits]}
         <details class="lib-group" open={libraryGroups.length <= 4}>
@@ -152,6 +169,16 @@
 <style>
   .artifacts { min-width: 15rem; max-width: 17rem; }
   .panel-tabs { display: flex; gap: 0.25rem; margin-bottom: 0.7rem; }
+  .own-btn { margin: 0.2rem 0 0.6rem; font-size: 0.78rem; }
+  .own-inline {
+    border: 1px solid var(--line); background: transparent; border-radius: 4px;
+    font-size: 0.66rem; padding: 0.1rem 0.4rem; cursor: pointer; color: var(--ink-soft);
+  }
+  .own-inline:hover { border-color: var(--mask); color: var(--mask); }
+  .gap-box {
+    border: 1.5px solid var(--copper); border-radius: 8px;
+    padding: 0.5rem 0.7rem; margin-bottom: 0.7rem; background: #fdf8f3;
+  }
   .panel-tabs button {
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
     text-transform: uppercase; border: none; background: transparent;

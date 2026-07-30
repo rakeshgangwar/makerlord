@@ -78,5 +78,13 @@
   {
     "file": "core/sparkfun-poweric-v_reg_ld1117vxx-.fzp",
     "partId": "SparkFun-PowerIC-V_REG_LD1117VXX-"
+  },
+  {
+    "file": "core/sparkfun-electromechanical-lipo-outline-1100.fzp",
+    "partId": "SparkFun-Electromechanical-LIPO-OUTLINE-1100"
+  },
+  {
+    "file": "core/LiPo-USB-Charger-v21.fzp",
+    "partId": "LiPo-USB-Charger-v21"
   }
 ]

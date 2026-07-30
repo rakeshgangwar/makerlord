@@ -12,3 +12,8 @@ polarity: polarized
 maxCurrentMa: 1000
 absMaxVoltageV: 50
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:D
+  footprint: Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal

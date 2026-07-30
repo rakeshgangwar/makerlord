@@ -8,3 +8,8 @@ footprint:
 polarity: nonpolarized
 absMaxVoltageV: 50
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:C
+  footprint: Capacitor_THT:C_Disc_D5.0mm_W2.5mm_P5.00mm

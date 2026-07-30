@@ -8,3 +8,8 @@ polarity: nonpolarized
 resistanceOhms: 220
 powerRatingW: 0.25
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:R
+  footprint: Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal

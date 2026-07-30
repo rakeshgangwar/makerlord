@@ -70,3 +70,25 @@ describe('the GPIO curation gate (D48)', () => {
     expect(p.gpio?.A0?.analogIn).toBe(true);
   });
 });
+
+/** D25: the KiCad mapping drip — the stage-⑨ curation gate, started
+ *  early. Structural validation here; kicad-cli verification lands with
+ *  the PCB stage. */
+describe('the KiCad mapping drip (D25)', () => {
+  it('at least seven curated parts carry a mapping, all in Lib:Name form', () => {
+    const mapped = [...loadProfiles().values()].filter((p) => p.kicad !== undefined);
+    expect(mapped.length).toBeGreaterThanOrEqual(7);
+    for (const p of mapped) {
+      expect(p.kicad!.symbol, p.partId).toMatch(/^[\w-]+:[\w.,+-]+$/);
+      expect(p.kicad!.footprint, p.partId).toMatch(/^[\w-]+:[\w.,+-]+$/);
+    }
+  });
+
+  it('the passives that every board needs are mapped', () => {
+    const profiles = loadProfiles();
+    for (const id of ['ResistorModuleID', '5mmColorLEDModuleID',
+      '100milCeramicCapacitorModuleID', '3254CBFC44diode']) {
+      expect(profiles.get(id)?.kicad, id).toBeDefined();
+    }
+  });
+});

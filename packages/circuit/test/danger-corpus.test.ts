@@ -50,14 +50,37 @@ const BAT_PROFILE: SafetyProfile = {
   hazardClass: 'none',
 };
 
+const LIPO = def('lipo', 'battery', [
+  { id: 'c0', name: '+', role: 'supply' },
+  { id: 'c1', name: '-', role: 'gnd' },
+]);
+const LIPO_PROFILE: SafetyProfile = {
+  partId: 'lipo',
+  footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+  polarity: 'polarized',
+  hazardClass: 'lipo',
+};
+const CHARGER = def('charger', 'power', [
+  { id: 'c0', name: 'B+', role: 'supply' },
+  { id: 'c1', name: 'B-', role: 'gnd' },
+]);
+const CHARGER_PROFILE: SafetyProfile = {
+  partId: 'charger',
+  footprint: { pins: { 'B+': [0, 0], 'B-': [0, 1] } },
+  managesLipo: true,
+  hazardClass: 'none',
+};
+
 const ALL_DEFS: [string, ReturnType<typeof def>][] = [
   ['uno', UNO], ['led', LED], ['res', RESISTOR],
   ['mains', MAINS], ['sensor', SENSOR], ['motor', MOTOR], ['bat', BAT],
+  ['lipo', LIPO], ['charger', CHARGER],
 ];
 const ALL_PROFILES: [string, SafetyProfile][] = [
   ['uno', UNO_PROFILE], ['led', LED_PROFILE], ['res', RESISTOR_PROFILE],
   ['mains', MAINS_PROFILE], ['sensor', SENSOR_PROFILE],
   ['motor', MOTOR_PROFILE], ['bat', BAT_PROFILE],
+  ['lipo', LIPO_PROFILE], ['charger', CHARGER_PROFILE],
 ];
 
 interface Danger {
@@ -72,6 +95,19 @@ function build(parts: { ref: string; defId: string }[], nets: ReturnType<typeof 
 }
 
 const DANGERS: Danger[] = [
+  {
+    // A bare pouch cell straight into a load: over-discharge puffs it, a
+    // short torches it. The classic teardown-video fire.
+    name: 'LiPo cell wired directly to a load, no charge/protection module',
+    expectRule: 'RULE_LIPO_UNMANAGED',
+    ctx: build(
+      [{ ref: 'BT1', defId: 'lipo' }, { ref: 'LED1', defId: 'led' }],
+      [
+        net('n1', [{ ref: 'BT1', pin: '+' }, { ref: 'LED1', pin: 'anode' }]),
+        net('n2', [{ ref: 'BT1', pin: '-' }, { ref: 'LED1', pin: 'cathode' }]),
+      ],
+    ),
+  },
   {
     name: 'supply rail shorted straight to ground',
     expectRule: 'RULE_SUPPLY_RAIL_SHORT',

@@ -11,3 +11,8 @@ polarity: nonpolarized
 resistanceOhms: 10000
 powerRatingW: 0.5
 hazardClass: none
+# D25 KiCad mapping — official library names (kicad-symbols /
+# kicad-footprints). Structural gate now; kicad-cli pad-count verify at ⑨.
+kicad:
+  symbol: Device:R_Potentiometer
+  footprint: Potentiometer_THT:Potentiometer_Alps_RK09K_Single_Vertical

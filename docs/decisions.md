@@ -1129,3 +1129,27 @@ safety limit. Slice 1 covers the two curated MCUs (Uno, D1 mini).
 compiles, not what boots — strapping pins and board-level analog dividers
 (D1 mini's A0) live only in datasheets and schematics, and those are
 exactly the fields the BLOCKER rules stand on.
+
+---
+
+## D49 — Inventory is per-project; the library/inventory split
+
+*2026-07-30.*
+
+The **library** is the curated catalog — what exists and is safe to use.
+The **inventory** is what the maker owns — and it lives on the project
+(`project.inventory`, as it always has), because D34 made the project a
+real repo and the parts pile that built a thing is part of that thing's
+record. `inventory_gap` derives what a build still needs (BOM minus
+owned); the UI's Library tab surfaces the gap with an "own it" crossing.
+
+**Rejected — a maker-level inventory store:** truer to physical reality
+(your drawer serves every project), but it introduces the first piece of
+state that lives outside any project repo — a new storage concept, sync
+questions, and a D34 exception — for a convenience that "copy inventory
+from my last project" can deliver later without any of that. Deferred,
+not denied.
+
+**Rejected — inventory as a library filter:** owning a part is a fact
+about the maker, not a property of the catalog; conflating them makes
+the curated library look smaller than it is.

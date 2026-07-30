@@ -181,3 +181,28 @@ describe.skipIf(!cli)('fw_compile — the gate against the real compiler', () =>
     expect(m.bin).toMatch(/^firmware\/build\//);
   }, 300_000);
 });
+
+describe('inventory_gap — the library/inventory split (D49)', () => {
+  it('derives toAcquire = BOM minus what the maker owns, titled', async () => {
+    await wireLamp();   // uno + resistor + LED in the circuit
+    await data('inventory_add', { partId: 'ResistorModuleID', quantity: 5 });
+    await data('inventory_add', { freeText: 'a drawer of mystery wires' });
+    const gap = await data('inventory_gap');
+    const toAcquire = gap.toAcquire as { partId: string; needed: number; owned: number }[];
+    // The resistor is covered; the uno and LED are not.
+    expect(toAcquire.map((t) => t.partId).sort()).toEqual([
+      '5mmColorLEDModuleID', 'arduino_Uno_Rev3(fix)',
+    ]);
+    for (const t of toAcquire) {
+      expect(t.needed).toBe(1);
+      expect(t.owned).toBe(0);
+      expect((t as { title?: string }).title).toBeTruthy();
+    }
+    expect((gap.owned as unknown[]).length).toBe(2);
+  });
+
+  it('an empty circuit means nothing to acquire, not an error', async () => {
+    const gap = await data('inventory_gap');
+    expect(gap.toAcquire).toEqual([]);
+  });
+});

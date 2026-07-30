@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { defsMap } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { requireSession } from '../def.js';
 import { ok } from '../result.js';
@@ -57,4 +58,46 @@ const inventoryRemove: ToolDef = {
   },
 };
 
-export const INVENTORY_TOOLS: ToolDef[] = [inventoryAdd, inventoryList, inventoryRemove];
+/**
+ * The library/inventory split (D49): the LIBRARY is the curated catalog
+ * — what exists; the INVENTORY is what this maker owns — per-project,
+ * because it travels with the repo (D34). This tool derives the gap:
+ * what the current circuit needs that the drawer does not hold.
+ */
+const inventoryGap: ToolDef = {
+  name: 'inventory_gap',
+  summary:
+    'Call this to see what the build still needs: the circuit\'s bill of ' +
+    'materials minus what the maker owns. Prefer closing the gap with ' +
+    'owned parts before proposing purchases.',
+  input: z.object({}),
+  mutates: false,
+  gated: false,
+  handler(_input, ctx) {
+    const s = requireSession(ctx);
+    const needed = new Map<string, number>();
+    for (const part of s.file.project.circuit?.parts ?? []) {
+      needed.set(part.defId, (needed.get(part.defId) ?? 0) + 1);
+    }
+    const owned = new Map<string, number>();
+    for (const item of s.file.project.inventory) {
+      if (item.partId !== undefined) {
+        owned.set(item.partId, (owned.get(item.partId) ?? 0) + (item.quantity ?? 1));
+      }
+    }
+    const toAcquire = [...needed.entries()]
+      .map(([partId, need]) => ({
+        partId,
+        title: defsMap().get(partId)?.title ?? partId,
+        needed: need,
+        owned: Math.min(owned.get(partId) ?? 0, need),
+      }))
+      .filter((t) => t.owned < t.needed)
+      .sort((a, b) => a.partId.localeCompare(b.partId));
+    return ok({ toAcquire, owned: s.file.project.inventory });
+  },
+};
+
+export const INVENTORY_TOOLS: ToolDef[] = [
+  inventoryAdd, inventoryList, inventoryRemove, inventoryGap,
+];
