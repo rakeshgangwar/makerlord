@@ -1,6 +1,6 @@
 <script>
   import { stagePhase } from '$lib/postures.js';
-  import { app, newProject, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
+  import { app, gotoStage, newProject, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
 
   let { stage = null } = $props();
   const current = $derived(stage ?? app.stage);
@@ -20,13 +20,14 @@
       class="stage"
       class:active={current === i + 1}
       data-phase={stagePhase(i + 1)}
-      onclick={() => { app.stage = i + 1; app.stagePinned = true; }}
+      onclick={() => gotoStage(i + 1)}
     >
       <span class="stage-n">{String(i + 1).padStart(2, '0')}</span>
       {name}
     </button>
   {/each}
   {#if app.projectId}
+    <a class="stage rail-link" href={`/library?p=${app.projectId}`}>⧉ library &amp; inventory</a>
     <button class="stage new-project" onclick={newProject}>⇤ projects</button>
   {/if}
   <div class="bridge-box">
@@ -94,7 +95,8 @@
   .stage.active { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgb(20 24 27 / 8%); }
   .stage-n { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-soft); }
   .stage.active .stage-n { color: var(--mask); font-weight: 600; }
-  .new-project { margin-top: 1rem; border-left-color: transparent; }
+  .new-project { border-left-color: transparent; }
+  .rail-link { margin-top: 1rem; text-decoration: none; display: flex; }
 
   .bridge-box { margin-top: auto; padding-top: 0.8rem; }
   .bridge-toggle { font-size: 0.72rem; color: var(--ink-soft); }

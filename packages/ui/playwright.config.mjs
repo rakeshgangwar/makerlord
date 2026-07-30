@@ -15,6 +15,10 @@ const projectsRoot = resolve(__dirname, 'e2e/.projects');
 
 export default defineConfig({
   testDir: './e2e',
+  // ONE worker: every spec shares one seeded server state, and some specs
+  // mutate it (recording readings, owning parts). Parallel workers race;
+  // serial is deterministic and the whole suite stays under a minute.
+  workers: 1,
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',

@@ -1,7 +1,8 @@
 <script>
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { postureFor } from '$lib/postures.js';
-  import { app, boot, refreshProjections } from '$lib/app.svelte.js';
+  import { adoptUrlParams, app, boot, refreshProjections } from '$lib/app.svelte.js';
   import StageRail from '$lib/components/StageRail.svelte';
   import ConverseStart from '$lib/components/ConverseStart.svelte';
   import Conversation from '$lib/components/Conversation.svelte';
@@ -40,7 +41,21 @@
     app.projectId && lens !== 'start' && lens !== 'conversation',
   );
 
-  onMount(boot);
+  onMount(() => {
+    // URL first: ?p= and ?stage= win over localStorage — refresh keeps
+    // your page, and links deep-link.
+    adoptUrlParams(page.url);
+    boot();
+  });
+
+  // Back/forward walk the stages: the URL is the source of truth.
+  $effect(() => {
+    const s = Number(page.url.searchParams.get('stage'));
+    if (Number.isFinite(s) && s >= 1 && s <= 17 && s !== app.stage) {
+      app.stage = s;
+      app.stagePinned = true;
+    }
+  });
 
   // A deploy restarts the API mid-boot sometimes; a failed first fetch must
   // not leave the bench empty. When a lens needs build state and none is

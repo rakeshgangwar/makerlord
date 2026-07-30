@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { goto } from '$app/navigation';
 import { inferStage } from '$lib/postures.js';
 
 /** localStorage can throw in sandboxed iframes (design previews, embeds) —
@@ -75,6 +76,7 @@ export const app = $state({
   // right panel
   panelTab: 'bench',
   libraryQuery: '',
+  libraryIncludeGeometry: false,
   /** @type {{id: string, title: string, family: string}[]} */
   libraryHits: [],
   /** @type {any} */
@@ -218,6 +220,35 @@ export async function sendPrompt(text) {
   } catch (e) {
     app.turnActive = false;
     app.lastError = `Could not reach the agent: ${e instanceof Error ? e.message : e}. Try again.`;
+  }
+}
+
+/** Stage changes are NAVIGATION: the stage lives in the URL, so refresh
+ *  keeps your page, back/forward walks stages, and links deep-link. */
+export function gotoStage(n) {
+  app.stage = n;
+  app.stagePinned = true;
+  if (!browser) return;
+  const params = new URLSearchParams(location.search);
+  params.set('stage', String(n));
+  if (app.projectId) params.set('p', app.projectId);
+  goto(`/?${params}`, { noScroll: true, keepFocus: true });
+}
+
+/** Adopt a project named in the URL (?p=) — shareable links win over
+ *  whatever this browser had open last. */
+export function adoptUrlParams(url) {
+  const p = url.searchParams.get('p');
+  if (p && p !== app.projectId) {
+    app.projectId = p;
+    app.sessionId = null;
+    store.set('makerlord.projectId', p);
+    store.del('makerlord.sessionId');
+  }
+  const stage = Number(url.searchParams.get('stage'));
+  if (Number.isFinite(stage) && stage >= 1 && stage <= 17) {
+    app.stage = stage;
+    app.stagePinned = true;
   }
 }
 
@@ -412,7 +443,8 @@ export async function searchLibrary() {
   // Empty query lists the WHOLE curated library — the collection is the
   // message; search narrows it.
   const r = await api(`projects/${app.projectId}/tool`, {
-    name: 'parts_search', input: { query: app.libraryQuery.trim() },
+    name: 'parts_search',
+    input: { query: app.libraryQuery.trim(), includeGeometry: app.libraryIncludeGeometry },
   });
   app.libraryHits = r.data.ok ? r.data.data.hits : [];
   app.libraryPart = null;
@@ -424,6 +456,13 @@ export async function searchLibrary() {
 export async function ownPart(partId) {
   await api(`projects/${app.projectId}/tool`, {
     name: 'inventory_add', input: { partId, quantity: 1 },
+  });
+  await Promise.all([refreshProjections(), loadInventoryGap()]);
+}
+
+export async function removeInventory(index) {
+  await api(`projects/${app.projectId}/tool`, {
+    name: 'inventory_remove', input: { index },
   });
   await Promise.all([refreshProjections(), loadInventoryGap()]);
 }
