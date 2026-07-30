@@ -2,6 +2,7 @@ import type { Circuit } from '@makerlord/circuit';
 import type { Block, BlockLink } from './architecture/types.js';
 import type { Feasibility } from './feasibility/types.js';
 import type { Firmware } from './firmware/types.js';
+import type { DebugSession } from './debug/types.js';
 import type { Requirement } from './requirements/types.js';
 
 export interface InventoryItem {
@@ -34,6 +35,7 @@ export interface Project {
   architecture: { blocks: Block[]; links: BlockLink[] };
   circuit?: Circuit;
   firmware?: Firmware;
+  debug?: DebugSession;
   /** Optional so pre-facet project files stay valid; treat absent as empty. */
   history?: Decision[];
 }

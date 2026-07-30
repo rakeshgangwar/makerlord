@@ -17,3 +17,6 @@ export * from './feasibility/schema.js';
 
 export * from './firmware/types.js';
 export * from './firmware/schema.js';
+
+export * from './debug/types.js';
+export * from './debug/schema.js';

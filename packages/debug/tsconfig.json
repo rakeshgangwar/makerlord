@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../parts/tsconfig.json" },
+    { "path": "../circuit/tsconfig.json" },
+    { "path": "../project/tsconfig.json" },
+    { "path": "../sim/tsconfig.json" }
+  ]
+}
