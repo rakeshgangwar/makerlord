@@ -9,6 +9,10 @@ import type { AddressInfo } from 'node:net';
 export interface CannedResponse {
   content: unknown[];
   stop_reason: string;
+  /** When set, the response carries the code-execution container id. */
+  container?: { id: string };
+  /** When set, respond with this HTTP error instead of a message. */
+  apiError?: { status: number; message: string };
 }
 
 export class FakeLlm {
@@ -38,6 +42,15 @@ export class FakeLlm {
           res.end(JSON.stringify({ error: { message: 'fake-llm: queue empty' } }));
           return;
         }
+        if (next.apiError) {
+          res.statusCode = next.apiError.status;
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify({
+            type: 'error',
+            error: { type: 'invalid_request_error', message: next.apiError.message },
+          }));
+          return;
+        }
         if (parsed.stream === true) {
           serveSse(res, fake.requests.length, next);
           return;
@@ -51,6 +64,7 @@ export class FakeLlm {
             model: 'claude-opus-5',
             content: next.content,
             stop_reason: next.stop_reason,
+            ...(next.container ? { container: next.container } : {}),
             usage: { input_tokens: 100, output_tokens: 50 },
           }),
         );
@@ -92,6 +106,7 @@ function serveSse(
       id: `msg_${n}`, type: 'message', role: 'assistant',
       model: 'claude-opus-5', content: [], stop_reason: null,
       stop_sequence: null, usage: { input_tokens: 100, output_tokens: 0 },
+      ...(canned.container ? { container: canned.container } : {}),
     },
   });
 

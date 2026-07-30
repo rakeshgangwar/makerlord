@@ -66,6 +66,11 @@ export class AgentSession {
   /** Upload refs ACTUALLY read via datasheet_read this session — the
    *  symmetric ledger for upload citations (curation spec §3.5). */
   private readUploads = new Set<string>();
+  /** Opus 5 runs code_execution server-side UNASKED alongside the web
+   *  tools. When a response mixes it with a client tool call, the next
+   *  request must echo the container id or the API 400s and the session
+   *  wedges (observed live 2026-07-30). */
+  private containerId: string | undefined;
 
   constructor(private opts: AgentSessionOptions) {}
 
@@ -169,9 +174,27 @@ export class AgentSession {
     );
   }
 
+  /** Drop code-execution server_tool_use blocks that never got their
+   *  result — the "pending tool uses" the API refuses to continue
+   *  without a live container. */
+  private stripPendingCodeExecution(): void {
+    for (const m of this.messages) {
+      if (m.role !== 'assistant' || !Array.isArray(m.content)) continue;
+      const blocks = m.content as { type?: string; id?: string; name?: string; tool_use_id?: string }[];
+      const resolved = new Set(
+        blocks.filter((b) => b.type === 'code_execution_tool_result')
+          .map((b) => b.tool_use_id),
+      );
+      m.content = blocks.filter((b) =>
+        !(b.type === 'server_tool_use' && b.name === 'code_execution'
+          && !resolved.has(b.id))) as never;
+    }
+  }
+
   async send(userText: string, onEvent: (e: SessionEvent) => void): Promise<void> {
     this.objections.resetOnUserMessage();
     this.messages.push({ role: 'user', content: userText });
+    let healedContainer = false;
 
     for (let round = 0; round < MAX_ROUNDS; round += 1) {
       const limit = this.opts.pressureLimitBytes ?? DEFAULT_PRESSURE_LIMIT;
@@ -206,6 +229,9 @@ export class AgentSession {
           ? { context_management: { edits: [{ type: 'compact_20260112' }] } }
           : {}),
       } as never;
+      if (this.containerId !== undefined) {
+        (params as { container?: string }).container = this.containerId;
+      }
       const requestOptions: { timeout: number; headers?: Record<string, string> } = {
         timeout: 10 * 60 * 1000,
       };
@@ -242,10 +268,20 @@ export class AgentSession {
           )) as ApiMessage;
         }
       } catch (e) {
-        onEvent({
-          t: 'session.error',
-          message: e instanceof Error ? e.message : String(e),
-        });
+        const message = e instanceof Error ? e.message : String(e);
+        // Self-healing for the container wedge: a history holding pending
+        // code-execution tool uses with no resumable container (expired,
+        // or a server restart lost the id) 400s FOREVER. Strip the
+        // pending blocks — the code execution is lost, the session is
+        // not — and retry the round once.
+        if (/container_id is required/.test(message) && !healedContainer) {
+          healedContainer = true;
+          this.containerId = undefined;
+          this.stripPendingCodeExecution();
+          round -= 1;
+          continue;
+        }
+        onEvent({ t: 'session.error', message });
         return;
       }
 
@@ -268,6 +304,8 @@ export class AgentSession {
         content: (response.content ?? []) as never,
       });
       this.recordFetches((response.content ?? []) as never);
+      const container = (response as { container?: { id?: string } }).container;
+      if (container?.id !== undefined) this.containerId = container.id;
 
       const toolUses = (response.content ?? []).filter((b) => b.type === 'tool_use');
       if (toolUses.length === 0) {
