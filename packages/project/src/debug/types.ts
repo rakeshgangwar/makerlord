@@ -48,5 +48,5 @@ export interface DebugSession {
   observations: Observation[];
   /** THE next measurement — never carries predictions (D15 structurally). */
   proposed?: { net: string; why: string };
-  status: 'open' | 'localized' | 'exonerated';
+  status: 'open' | 'localized' | 'exonerated' | 'closed';
 }

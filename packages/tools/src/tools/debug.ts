@@ -196,6 +196,11 @@ const debugClose: ToolDef = {
   handler(_input, ctx) {
     const s = requireSession(ctx);
     const d = sessionOf(s);
+    // A session that already reached its verdict keeps it; an open one
+    // (the honest tie, or a walk-away) freezes as 'closed' — otherwise
+    // the tie view renders forever and the button is a loop
+    // (2026-07-31 report).
+    if (d.status === 'open') d.status = 'closed';
     delete d.proposed;
     return ok({ status: d.status, observations: d.observations.length });
   },

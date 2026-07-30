@@ -110,6 +110,16 @@
     overflow: hidden;
   }
   :global(button) { font-family: var(--font-body); }
+  /* Form fields never inherit text colour from the page — the UA picks
+     black, which vanishes on the dark bench. One low-specificity rule
+     sets the baseline; component styles still override. */
+  :global(input), :global(select), :global(textarea) {
+    color: var(--ink); background-color: var(--panel);
+    border-color: var(--line); caret-color: var(--mask);
+  }
+  :global(input)::placeholder, :global(textarea)::placeholder {
+    color: var(--ink-soft); opacity: 0.75;
+  }
   :global(:focus-visible) {
     outline: 2px solid var(--mask);
     outline-offset: 2px;

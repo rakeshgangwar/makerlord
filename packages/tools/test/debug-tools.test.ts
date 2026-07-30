@@ -110,7 +110,7 @@ describe.skipIf(!solver)('the guided search, end to end through the registry', (
     if (final.status === 'localized') expect(live).toHaveLength(1);
 
     const closed = await data('debug_close');
-    expect(closed.status).toBe(final.status);
+    expect(closed.status).toBe(final.status === 'open' ? 'closed' : final.status);
   }, 300_000);
 
   it('a SELFTEST ok kills dead-rail through the tool surface', async () => {

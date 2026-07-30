@@ -33,7 +33,16 @@
 <div class="facet dbg">
   <p class="facet-eyebrow mono">⑧ Debug — one measurement at a time</p>
 
-  {#if !session}
+  {#if !session || session.status === 'closed'}
+    {#if session?.status === 'closed'}
+      <section class="panel-block closed-recap">
+        <h3>Session closed</h3>
+        <p class="small">{session.observations.length} observation{session.observations.length === 1 ? '' : 's'} recorded ·
+          {session.candidates.filter((c) => c.status === 'live').length} candidate{session.candidates.filter((c) => c.status === 'live').length === 1 ? '' : 's'} survived ·
+          {session.candidates.filter((c) => c.status === 'contradicted').length} contradicted.
+          The trail is frozen in the project — start a new search below.</p>
+      </section>
+    {/if}
     <section class="panel-block">
       <h3>What misbehaves?</h3>
       <div class="row symptom">
@@ -141,6 +150,7 @@
 
   .verdict-block[data-verdict='localized'] { border: 2px solid var(--sev-blocker); }
   .verdict-block[data-verdict='exonerated'] { border: 2px solid #19794d; }
+  .closed-recap { border-left: 3px solid var(--line); }
   .verdict-block.tie { border: 2px dashed var(--line); }
   .verdict-fault { font-size: 1.25rem; font-weight: 700; }
 </style>
