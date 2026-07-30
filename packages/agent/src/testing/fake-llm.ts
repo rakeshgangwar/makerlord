@@ -106,7 +106,6 @@ function serveSse(
       id: `msg_${n}`, type: 'message', role: 'assistant',
       model: 'claude-opus-5', content: [], stop_reason: null,
       stop_sequence: null, usage: { input_tokens: 100, output_tokens: 0 },
-      ...(canned.container ? { container: canned.container } : {}),
     },
   });
 
@@ -141,7 +140,12 @@ function serveSse(
 
   send('message_delta', {
     type: 'message_delta',
-    delta: { stop_reason: canned.stop_reason, stop_sequence: null },
+    // The live API delivers the container id HERE (and only when the
+    // code-execution tool is explicitly declared) — probed 2026-07-30.
+    delta: {
+      stop_reason: canned.stop_reason, stop_sequence: null,
+      ...(canned.container ? { container: canned.container } : {}),
+    },
     usage: { output_tokens: 50 },
   });
   send('message_stop', { type: 'message_stop' });

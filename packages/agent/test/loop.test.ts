@@ -186,6 +186,8 @@ describe('web research — the standard of proof is the loop\'s (spec §8)', () 
     const withoutTools = fake.requests[1]!.tools as { type?: string }[];
     expect(withTools.some((t) => t.type?.startsWith('web_search'))).toBe(true);
     expect(withTools.some((t) => t.type?.startsWith('web_fetch'))).toBe(true);
+    // Declared explicitly so the stream delivers the container id.
+    expect(withTools.some((t) => t.type?.startsWith('code_execution'))).toBe(true);
     expect(withoutTools.some((t) => t.type !== undefined)).toBe(false);
   });
 

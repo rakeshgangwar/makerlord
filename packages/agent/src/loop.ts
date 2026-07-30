@@ -43,7 +43,14 @@ export interface AgentSessionOptions {
 export const WEB_RESEARCH_TOOLS = [
   { type: 'web_search_20260209', name: 'web_search', max_uses: 8 },
   { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 8 },
+  // Opus 5 runs code execution ANYWAY when the web tools are on — but
+  // only an EXPLICIT declaration makes the stream deliver the container
+  // id (message_delta), without which code-called client tools wedge the
+  // session (probed live 2026-07-30). Declaring it is how we capture it.
+  { type: 'code_execution_20250825', name: 'code_execution' },
 ] as const;
+
+export const CODE_EXECUTION_BETA = 'code-execution-2025-08-25';
 
 export const COMPACTION_BETA = 'compact-2026-01-12';
 
@@ -203,15 +210,36 @@ export class AgentSession {
    *  continue past exactly the one a name-match missed. A pending server
    *  tool we cannot resume is a wedge either way. */
   private stripPendingCodeExecution(): void {
+    const orphanedClientCalls = new Set<string>();
     for (const m of this.messages) {
       if (m.role !== 'assistant' || !Array.isArray(m.content)) continue;
-      const blocks = m.content as { type?: string; id?: string; tool_use_id?: string }[];
+      const blocks = m.content as {
+        type?: string; id?: string; tool_use_id?: string; caller?: unknown;
+      }[];
       const resolved = new Set(
         blocks.filter((b) => typeof b.type === 'string' && b.type.endsWith('_tool_result'))
           .map((b) => b.tool_use_id),
       );
-      m.content = blocks.filter((b) =>
-        !(b.type === 'server_tool_use' && !resolved.has(b.id))) as never;
+      m.content = blocks.filter((b) => {
+        if (b.type === 'server_tool_use' && !resolved.has(b.id)) return false;
+        // A client tool_use CALLED FROM CODE (caller field) cannot be
+        // answered without the container — drop it; its result converts
+        // to plain text below so the information still flows.
+        if (b.type === 'tool_use' && b.caller !== undefined) {
+          if (b.id !== undefined) orphanedClientCalls.add(b.id);
+          return false;
+        }
+        return true;
+      }) as never;
+    }
+    if (orphanedClientCalls.size === 0) return;
+    for (const m of this.messages) {
+      if (m.role !== 'user' || !Array.isArray(m.content)) continue;
+      m.content = (m.content as { type?: string; tool_use_id?: string; content?: unknown }[])
+        .map((b) => b.type === 'tool_result' && b.tool_use_id !== undefined
+          && orphanedClientCalls.has(b.tool_use_id)
+          ? { type: 'text', text: `[tool result delivered out-of-band] ${JSON.stringify(b.content).slice(0, 4000)}` }
+          : b) as never;
     }
   }
 
@@ -259,8 +287,11 @@ export class AgentSession {
       const requestOptions: { timeout: number; headers?: Record<string, string> } = {
         timeout: 10 * 60 * 1000,
       };
-      if (this.opts.compactionBeta) {
-        requestOptions.headers = { 'anthropic-beta': COMPACTION_BETA };
+      const betas: string[] = [];
+      if (this.opts.compactionBeta) betas.push(COMPACTION_BETA);
+      if (this.opts.webResearch) betas.push(CODE_EXECUTION_BETA);
+      if (betas.length > 0) {
+        requestOptions.headers = { 'anthropic-beta': betas.join(',') };
       }
 
       let response: ApiMessage;
@@ -276,9 +307,12 @@ export class AgentSession {
               message?: { container?: { id?: string } };
               container?: { id?: string };
             };
-            // The container id can ride message_start or a later frame —
-            // capture wherever it appears; missing it wedges the session.
-            const cid = anyEv.message?.container?.id ?? anyEv.container?.id;
+            // The container id rides message_delta's delta (live truth),
+            // with message_start/top-level as belt — missing it wedges
+            // the session.
+            const cid = (anyEv.delta as { container?: { id?: string } } | undefined)?.container?.id
+              ?? anyEv.message?.container?.id
+              ?? anyEv.container?.id;
             if (cid !== undefined) this.containerId = cid;
             if (anyEv.type === 'content_block_delta') {
               if (anyEv.delta?.type === 'text_delta' && anyEv.delta.text) {
