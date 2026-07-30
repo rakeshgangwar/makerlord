@@ -1,9 +1,27 @@
 <script>
+  import { page } from '$app/state';
   import { stagePhase } from '$lib/postures.js';
   import { app, gotoStage, newProject, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
 
   let { stage = null } = $props();
   const current = $derived(stage ?? app.stage);
+
+  let mintedToken = $state('');
+
+  async function signOut() {
+    await fetch('/auth/logout', { method: 'POST' });
+    location.href = '/login';
+  }
+
+  async function mintBridgeToken() {
+    const res = await fetch('/auth/token', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'bridge' }),
+    });
+    const body = await res.json();
+    if (res.ok) mintedToken = body.token;
+  }
 
   const STAGE_NAMES = [
     'Idea', 'Feasibility', 'Requirements', 'Architecture', 'Simulate',
@@ -70,6 +88,23 @@
       </details>
     {/if}
   </div>
+  {#if page.data.handle}
+    <div class="user-box">
+      <span class="who mono">◉ {page.data.handle}</span>
+      <button class="user-act" onclick={mintBridgeToken}>bridge token</button>
+      <button class="user-act" onclick={signOut}>sign out</button>
+      {#if mintedToken}
+        <div class="token-once">
+          <p>Your bridge token — shown <strong>once</strong>. Paste it into
+            <code>mlb</code>'s <code>bridge.json</code> as the API token:</p>
+          <code class="mono token-value">{mintedToken}</code>
+          <button class="user-act" onclick={() => { navigator.clipboard?.writeText(mintedToken); mintedToken = ''; }}>
+            copy &amp; close
+          </button>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </nav>
 
 <style>
@@ -129,5 +164,29 @@
   .bridge-help code {
     font-family: var(--font-mono); font-size: 0.62rem; background: #eef1f0;
     padding: 0 0.25rem; border-radius: 3px;
+  }
+
+  /* ── signed-in strip (auth spec §7) ── */
+  .user-box {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+    padding: 0.5rem 0.25rem 0; border-top: 1px solid var(--line);
+    margin-top: 0.5rem;
+  }
+  .who { font-size: 0.72rem; color: var(--ink); }
+  .user-act {
+    border: none; background: transparent; cursor: pointer;
+    font-size: 0.66rem; color: var(--ink-soft); text-decoration: underline;
+    padding: 0;
+  }
+  .user-act:hover { color: var(--mask); }
+  .token-once {
+    font-size: 0.66rem; color: var(--ink-soft); max-width: 12.5rem;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 0.4rem 0.5rem; margin-top: 0.3rem;
+  }
+  .token-value {
+    display: block; word-break: break-all; font-size: 0.62rem;
+    background: #eef1f0; padding: 0.2rem 0.3rem; border-radius: 4px;
+    margin: 0.3rem 0;
   }
 </style>

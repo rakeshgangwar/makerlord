@@ -43,15 +43,15 @@ else
   TARGET="$REPO_DIR/dist/bridge.cjs"
 fi
 
-# ── token: flag > existing config > repo .env > prompt ────────────────
+# ── token: flag > existing config > prompt ────────────────────────────
+# Your token is PER-USER (mlt_…): mint it from the signed-in strip in
+# the web UI ("bridge token" — shown once), or `maker token new --user
+# <handle>` on the server.
 if [[ -z "$TOKEN" && -f "$CONF" ]]; then
   TOKEN="$(node -p "try{JSON.parse(require('fs').readFileSync('$CONF','utf8')).token??''}catch{''}")"
 fi
-if [[ -z "$TOKEN" && -f "$REPO_DIR/.env" ]]; then
-  TOKEN="$(grep -oP '^MAKERLORD_ACCESS_TOKEN=\K.*' "$REPO_DIR/.env" || true)"
-fi
 if [[ -z "$TOKEN" ]]; then
-  read -rp "hosted bearer token (MAKERLORD_ACCESS_TOKEN): " TOKEN
+  read -rp "your per-user API token (mlt_…, minted in the web UI): " TOKEN
 fi
 [[ -n "$TOKEN" ]] || { echo "a token is required"; exit 1; }
 
