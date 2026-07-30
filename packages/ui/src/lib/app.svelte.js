@@ -467,6 +467,31 @@ export async function removeInventory(index) {
   await Promise.all([refreshProjections(), loadInventoryGap()]);
 }
 
+/** Upload a datasheet PDF → content-hashed store → upload:sha256 ref. */
+export async function uploadDatasheet(file) {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < buf.length; i += 0x8000) {
+    binary += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  }
+  const r = await api('datasheets', { contentBase64: btoa(binary) });
+  if (r.status !== 201) throw new Error(r.data.error ?? 'upload failed');
+  return r.data.ref;
+}
+
+/** The geometry provision: both roads lead to profile_propose and the
+ *  sourced tier — and only a human's `maker curate promote` goes further. */
+export function researchPart(part, uploadRef) {
+  const base = `Research the part "${part.definition.title}" (partId ${part.definition.id}, ` +
+    `corpus file ${part.file ?? 'unknown'}).`;
+  const ask = uploadRef
+    ? `${base} I uploaded its datasheet as ${uploadRef} — read it with datasheet_read, ` +
+      'then draft a safety profile and file it with profile_propose citing that ref.'
+    : `${base} Find its datasheet on the web, then draft a safety profile and file ` +
+      'it with profile_propose, citing the datasheet URLs you actually fetched.';
+  sendPrompt(ask);
+}
+
 export async function loadInventoryGap() {
   if (!app.projectId) return;
   const r = await api(`projects/${app.projectId}/tool`, { name: 'inventory_gap', input: {} });

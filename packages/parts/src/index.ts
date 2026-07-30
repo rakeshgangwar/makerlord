@@ -12,3 +12,4 @@ export type { HoleGrid } from './board-grid.js';
 export { buildBundle, validateBundle } from './bundle.js';
 export type { Bundle, CuratedEntry } from './bundle.js';
 export * from './proposals.js';
+export * from './datasheets.js';

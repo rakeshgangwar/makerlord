@@ -5,12 +5,13 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@makerlord/parts": "workspace:*",
     "@makerlord/circuit": "workspace:*",
+    "@makerlord/debug": "workspace:*",
+    "@makerlord/firmware": "workspace:*",
+    "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
     "@makerlord/sim": "workspace:*",
-    "@makerlord/firmware": "workspace:*",
-    "@makerlord/debug": "workspace:*",
+    "pdf-parse": "^2.4.5",
     "yaml": "^2.4.0",
     "zod": "^3.23.0"
   }

@@ -87,6 +87,28 @@ async function route(
     return;
   }
 
+  // The upload half of the curation pipeline (spec §3.5): a datasheet
+  // PDF lands content-hashed; the ref is citable in profile_propose.
+  if (req.method === 'POST' && path === '/api/datasheets') {
+    const { contentBase64 } = await readBody(req);
+    if (typeof contentBase64 !== 'string' || contentBase64.length === 0) {
+      json(res, 400, { error: 'contentBase64 is required' });
+      return;
+    }
+    if (contentBase64.length > 20 * 1024 * 1024) {
+      json(res, 413, { error: 'datasheet too large — 15 MB max' });
+      return;
+    }
+    const bytes = Buffer.from(contentBase64, 'base64');
+    if (!bytes.subarray(0, 5).toString('latin1').startsWith('%PDF-')) {
+      json(res, 400, { error: 'not a PDF — the store takes datasheet PDFs only' });
+      return;
+    }
+    const { saveDatasheet } = await import('@makerlord/parts');
+    json(res, 201, saveDatasheet(bytes));
+    return;
+  }
+
   if (req.method === 'POST' && path === '/api/sessions') {
     const { projectId } = await readBody(req);
     if (typeof projectId !== 'string') {

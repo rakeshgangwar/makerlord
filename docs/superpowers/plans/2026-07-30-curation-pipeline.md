@@ -58,3 +58,20 @@
 ### Task 8: Docs + reconciliation
 
 - [x] Golden script grows a `profile_propose` + gate-refusal leg; D50/D51 in decisions.md; ledger curated-library row updated; docs/README rows; CLAUDE.md tool count
+
+## Slice 2 — the upload channel (spec §3.5)
+
+### Task 9: The datasheet store + citation form
+
+- [x] `data/datasheets/<sha256>.pdf` (env `MAKERLORD_DATASHEETS_PATH`); citations accept `upload:sha256:<hash>` beside URLs; propose validates upload refs exist
+- [x] Server: `POST /api/datasheets` (base64 body, 15 MB cap, hash-dedupe) → `{ref}`; nginx body-size bump
+
+### Task 10: `datasheet_read` (49 → 50)
+
+- [x] Extracted text of a stored PDF, clipped, framed `[maker-supplied — unverified]`; a scan (no text layer) is an honest error
+- [x] Loop ledger symmetry: uploads READ this session recorded; `profile_propose` upload citations adjudicated like URLs (`EVIDENCE_UNFETCHED`)
+
+### Task 11: The geometry provision in the UI
+
+- [x] `parts_get` serves geometry parts (def from corpus, profile null); the library detail for geometry gains "ask the agent to research it" (canned prompt) and "upload its datasheet" (file → store → canned prompt citing the ref)
+- [x] e2e: geometry detail shows both provisions; counts reconciled

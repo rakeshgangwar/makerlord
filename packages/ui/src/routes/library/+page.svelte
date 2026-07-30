@@ -3,7 +3,8 @@
   import { page } from '$app/state';
   import {
     adoptUrlParams, app, loadInventoryGap, openPart, ownPart,
-    refreshProjections, removeInventory, searchLibrary,
+    refreshProjections, removeInventory, researchPart, searchLibrary,
+    uploadDatasheet,
   } from '$lib/app.svelte.js';
 
   /**
@@ -38,6 +39,27 @@
   const benchHref = $derived(
     app.projectId ? `/?p=${app.projectId}&stage=${app.stage}` : '/',
   );
+
+  let uploadBusy = $state(false);
+  let uploadNote = $state('');
+
+  async function onDatasheetPicked(e) {
+    const file = e.target.files?.[0];
+    if (!file || !app.libraryPart) return;
+    uploadBusy = true;
+    uploadNote = '';
+    try {
+      const ref = await uploadDatasheet(file);
+      researchPart(app.libraryPart, ref);
+      uploadNote = 'Uploaded — the agent is reading it and drafting a proposal. ' +
+        'Watch the conversation on the bench.';
+    } catch (err) {
+      uploadNote = err instanceof Error ? err.message : String(err);
+    } finally {
+      uploadBusy = false;
+      e.target.value = '';
+    }
+  }
 </script>
 
 <div class="lib-page">
@@ -103,8 +125,20 @@
                 (<span class="mono">maker curate</span>).</p>
             {/if}
             {#if app.libraryPart.tier === 'geometry'}
-              <p class="tier-note">Geometry only — ask the agent to research its
-                datasheet and propose a profile.</p>
+              <p class="tier-note">Geometry only — two roads to usable: the agent
+                researches the web, or you upload the datasheet that came with
+                the part. Both file a proposal; a human promotes to verified.</p>
+              <div class="geo-actions">
+                <button class="secondary" onclick={() => researchPart(app.libraryPart)}>
+                  🔎 Ask the agent to research it
+                </button>
+                <label class="secondary upload-label" class:busy={uploadBusy}>
+                  {uploadBusy ? 'Uploading…' : '📄 Upload its datasheet'}
+                  <input type="file" accept="application/pdf" onchange={onDatasheetPicked}
+                    disabled={uploadBusy} />
+                </label>
+              </div>
+              {#if uploadNote}<p class="small upload-note">{uploadNote}</p>{/if}
             {:else}
               <button class="secondary" onclick={() => ownPart(app.libraryPart.definition.id)}>
                 + I own this
@@ -214,4 +248,9 @@
   .tier-geometry { background: #eef1f0; color: var(--ink-soft); border: 1px solid var(--line); }
   .tier-note { font-size: 0.82rem; color: var(--ink-soft); }
   .detail { border: 1.5px solid var(--mask); }
+  .geo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+  .upload-label { position: relative; overflow: hidden; display: inline-flex; align-items: center; }
+  .upload-label input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-label.busy { opacity: 0.5; }
+  .upload-note { margin: 0.2rem 0 0; }
 </style>

@@ -48,7 +48,7 @@ async function turn(agent: AgentSession, text: string): Promise<SessionEvent[]> 
 describe('apiTools — the fourth consumer of one schema', () => {
   it('exposes every registry tool with its canonical name and summary', () => {
     const tools = apiTools();
-    expect(tools).toHaveLength(49);
+    expect(tools).toHaveLength(50);
     const propose = tools.find((t) => t.name === 'req_propose')!;
     expect(propose.description).toMatch(/call this/i);
   });
@@ -315,5 +315,49 @@ describe('profile_propose citations face the fetched-URL ledger too', () => {
     expect(end && end.t === 'tool.end' && !end.result.ok
       && end.result.refused === 'EVIDENCE_UNFETCHED').toBe(true);
     delete process.env.MAKERLORD_PROPOSALS_PATH;
+  });
+});
+
+describe('upload citations face the READ ledger (curation spec §3.5)', () => {
+  it('unread upload → EVIDENCE_UNFETCHED; after datasheet_read it passes', async () => {
+    const { saveDatasheet } = await import('@makerlord/parts');
+    process.env.MAKERLORD_DATASHEETS_PATH = mkdtempSync(join(tmpdir(), 'makerlord-updl-'));
+    process.env.MAKERLORD_PROPOSALS_PATH = mkdtempSync(join(tmpdir(), 'makerlord-updp-'));
+    try {
+      const { ref } = saveDatasheet(readFileSync(
+        new URL('../../tools/test/fixtures/mini-datasheet.pdf', import.meta.url)) as Buffer);
+      const propose = (id: string) => toolTurn('profile_propose', {
+        file: 'core/Buzzer-v15.fzp',
+        partId: 'Buzzer-v15',
+        profile: {
+          partId: 'Buzzer-v15',
+          footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+          absMaxVoltageV: 5.0,
+          hazardClass: 'none',
+        },
+        citations: { absMaxVoltageV: ref },
+      }, id);
+
+      const agent = makeAgent();
+      // Cite WITHOUT reading: refused by the loop's ledger.
+      fake.enqueue(propose('tu_unread'), textTurn('hm'));
+      const first = await turn(agent, 'file it blind');
+      const refusal = first.find((e) => e.t === 'tool.end');
+      expect(refusal && refusal.t === 'tool.end' && !refusal.result.ok
+        && refusal.result.refused === 'EVIDENCE_UNFETCHED').toBe(true);
+
+      // Read, then cite: the ledger has it; the proposal lands.
+      fake.enqueue(
+        toolTurn('datasheet_read', { ref }, 'tu_read'),
+        propose('tu_cited'),
+        textTurn('filed'),
+      );
+      const second = await turn(agent, 'read it properly, then file');
+      const ends = second.filter((e) => e.t === 'tool.end');
+      expect(ends.every((e) => e.t === 'tool.end' && e.result.ok)).toBe(true);
+    } finally {
+      delete process.env.MAKERLORD_DATASHEETS_PATH;
+      delete process.env.MAKERLORD_PROPOSALS_PATH;
+    }
   });
 });

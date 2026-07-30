@@ -2,8 +2,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { stringify as toYaml } from 'yaml';
 import { z } from 'zod';
+import { readFileSync } from 'node:fs';
 import {
-  ELECTRICAL_FIELDS, loadPart, proposalSchema, proposalsDir,
+  datasheetPath, ELECTRICAL_FIELDS, isUploadRef, loadPart, proposalSchema,
+  proposalsDir,
 } from '@makerlord/parts';
 import { tierOf } from '../data.js';
 import type { ToolDef } from '../def.js';
@@ -92,6 +94,16 @@ const profilePropose: ToolDef = {
       profile,
     });
 
+    // An upload citation must reference bytes that actually exist.
+    for (const [field, citation] of Object.entries(proposal.citations)) {
+      if (isUploadRef(citation) && datasheetPath(citation) === null) {
+        throw new Error(
+          `profile_propose: citation for "${field}" references ${citation}, ` +
+          'which was never uploaded — upload the datasheet first',
+        );
+      }
+    }
+
     // Footprint pins must be REAL connectors on the corpus part.
     const connectorNames = new Set(def.pins.map((p) => p.name));
     for (const pin of Object.keys(proposal.profile.footprint.pins)) {
@@ -119,4 +131,47 @@ const profilePropose: ToolDef = {
   },
 };
 
-export const CURATION_TOOLS: ToolDef[] = [profilePropose];
+const DATASHEET_TEXT_LIMIT = 60_000;
+
+const datasheetRead: ToolDef = {
+  name: 'datasheet_read',
+  summary:
+    'Call this to read an uploaded datasheet PDF by its upload:sha256 ref. ' +
+    'The text is maker-supplied and UNVERIFIED — it may be the wrong ' +
+    'datasheet for the physical part. Cite the ref in profile_propose.',
+  input: z.object({ ref: z.string().regex(/^upload:sha256:[0-9a-f]{64}$/) }),
+  mutates: false,
+  gated: false,
+  async handler(input) {
+    const { ref } = input as { ref: string };
+    const path = datasheetPath(ref);
+    if (path === null) {
+      throw new Error(`datasheet_read: ${ref} was never uploaded`);
+    }
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: new Uint8Array(readFileSync(path)) });
+    let parsed;
+    try {
+      parsed = await parser.getText();
+    } finally {
+      await parser.destroy();
+    }
+    const text = parsed.text.trim();
+    if (text.length < 40) {
+      throw new Error(
+        'datasheet_read: this PDF has no usable text layer (a scan?) — ' +
+        'OCR is not supported; find the vendor URL instead',
+      );
+    }
+    const clipped = text.length > DATASHEET_TEXT_LIMIT
+      ? `${text.slice(0, DATASHEET_TEXT_LIMIT)}\n… [clipped at 60k chars]`
+      : text;
+    return ok({
+      ref,
+      pages: parsed.pages.length,
+      text: `[maker-supplied — unverified]\n${clipped}`,
+    });
+  },
+};
+
+export const CURATION_TOOLS: ToolDef[] = [profilePropose, datasheetRead];

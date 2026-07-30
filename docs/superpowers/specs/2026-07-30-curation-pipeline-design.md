@@ -70,6 +70,26 @@ the corpus part's real connectors, a citation for every electrical
 field, URL-shaped citations. A proposal for a partId that already has a
 verified profile is refused — proposals never shadow the truth.
 
+### 3.5 Uploaded datasheets — the second evidence channel
+
+Web research cannot reach the seller PDF that ships with an AliExpress
+module — and that is disproportionately the hobby bench. Uploads close
+the gap: a PDF lands content-hashed and immutable in
+`data/datasheets/<sha256>.pdf`, citable as `upload:sha256:<hash>`
+beside URLs. The agent reads it through `datasheet_read`, whose output
+is framed `[maker-supplied — unverified]` (agent-runtime spec §9) — the
+maker may have uploaded the datasheet of a lookalike, and the label
+keeps that doubt visible all the way to promotion, where the reviewing
+human opens the exact same stored file. The ledger discipline is
+symmetric: a URL citation must have been fetched this session; an
+upload citation must have been READ this session. Text-layer PDFs only;
+a scan gets an honest error, never silent garbage.
+
+**Every geometry part carries the provision in the UI**: "ask the agent
+to research it" (web) and "upload its datasheet" (file) — both roads
+lead to `profile_propose` and the sourced tier. Neither road, nor any
+other, leads to verified except a human's `maker curate promote`.
+
 ## 4. The pipeline
 
 ```
@@ -135,11 +155,12 @@ means the community's throughput, not ours.
 
 ## 8. Tools
 
-One addition to the registry (48 → 49):
+One addition to the registry (48 → 50):
 
 | Tool | Mutates | Gated | Does |
 |---|---|---|---|
 | `profile_propose` | repo state (proposals dir) | no | validated draft + citations → `data/proposals/`; refuses shadowing a verified profile |
+| `datasheet_read` | no | no | extracted text of an uploaded PDF, framed `[maker-supplied — unverified]` |
 
 And deliberately **not** in the registry: promotion (§4, D51), and any
 tier-setting tool (§2 — tier is location, location moves only by

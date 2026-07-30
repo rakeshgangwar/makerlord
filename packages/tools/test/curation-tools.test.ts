@@ -238,3 +238,60 @@ describe('tier-labelled search + geometry browse', () => {
       .rejects.toThrow();
   }, 120_000);
 });
+
+describe('the upload channel (spec §3.5)', () => {
+  it('datasheet_read extracts a stored PDF, framed unverified', async () => {
+    const dsDir = mkdtempSync(join(tmpdir(), 'makerlord-dsr-'));
+    process.env.MAKERLORD_DATASHEETS_PATH = dsDir;
+    try {
+      const { saveDatasheet } = await import('@makerlord/parts');
+      const { ref } = saveDatasheet(
+        readFileSync(new URL('./fixtures/mini-datasheet.pdf', import.meta.url)) as Buffer,
+      );
+      const r = await data('datasheet_read', { ref });
+      expect(r.text).toMatch(/^\[maker-supplied — unverified\]/);
+      expect(r.text).toMatch(/Absolute maximum voltage 5\.0 V/);
+      expect(r.pages).toBe(1);
+
+      // …and a proposal citing the upload passes validation.
+      const proposed = await data('profile_propose', {
+        file: 'core/Buzzer-v15.fzp',
+        partId: 'Buzzer-v15',
+        profile: {
+          partId: 'Buzzer-v15',
+          footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+          absMaxVoltageV: 5.0,
+          hazardClass: 'none',
+        },
+        citations: { absMaxVoltageV: ref },
+      });
+      expect(proposed.tier).toBe('sourced');
+    } finally {
+      delete process.env.MAKERLORD_DATASHEETS_PATH;
+    }
+  });
+
+  it('a never-uploaded ref is refused at read AND at propose', async () => {
+    const ghost = `upload:sha256:${'e'.repeat(64)}`;
+    await expect(call('datasheet_read', { ref: ghost })).rejects.toThrow(/never uploaded/);
+    await expect(call('profile_propose', {
+      file: 'core/Buzzer-v15.fzp',
+      partId: 'Buzzer-v15',
+      profile: {
+        partId: 'Buzzer-v15',
+        footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+        absMaxVoltageV: 5.0,
+        hazardClass: 'none',
+      },
+      citations: { absMaxVoltageV: ghost },
+    })).rejects.toThrow(/never uploaded/);
+  });
+
+  it('parts_get serves a geometry part: def real, profile null, un-addable', async () => {
+    const r = await data('parts_get', { id: 'Buzzer-v15' });
+    expect(r.tier).toBe('geometry');
+    expect(r.profile).toBeNull();
+    expect((r.definition as { pins: unknown[] }).pins.length).toBeGreaterThan(0);
+    expect(r.file).toBe('core/Buzzer-v15.fzp');
+  }, 120_000);
+});

@@ -79,7 +79,7 @@ describe('the hosted surface', () => {
     const res = await fetch(`${base}/healthz`);
     const data = (await res.json()) as { ok: boolean; tools: number };
     expect(data.ok).toBe(true);
-    expect(data.tools).toBe(49);
+    expect(data.tools).toBe(50);
   });
 
   it('project → session → prompt → SSE events → project.json mutated', async () => {
@@ -284,6 +284,25 @@ describe('the artifact files surface — the repo is visible, read-only', () => 
     const body = (await res.json()) as { content: string; encoding: string };
     expect(body.encoding).toBe('base64');
     expect(Buffer.from(body.content, 'base64')).toEqual(bytes);
+  });
+
+  it('stores an uploaded datasheet content-hashed, PDFs only', async () => {
+    const dsDir = mkdtempSync(join(tmpdir(), 'makerlord-upds-'));
+    process.env.MAKERLORD_DATASHEETS_PATH = dsDir;
+    try {
+      const pdf = Buffer.from('%PDF-1.4 minimal test bytes');
+      const a = await post('/api/datasheets', { contentBase64: pdf.toString('base64') });
+      expect(a.status).toBe(201);
+      expect((a.data.ref as string)).toMatch(/^upload:sha256:[0-9a-f]{64}$/);
+      const b = await post('/api/datasheets', { contentBase64: pdf.toString('base64') });
+      expect(b.data.ref).toBe(a.data.ref);   // dedupe by content
+      const bad = await post('/api/datasheets', {
+        contentBase64: Buffer.from('not a pdf at all').toString('base64'),
+      });
+      expect(bad.status).toBe(400);
+    } finally {
+      delete process.env.MAKERLORD_DATASHEETS_PATH;
+    }
   });
 
   it('refuses to escape the project directory', async () => {

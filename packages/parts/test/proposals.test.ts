@@ -117,3 +117,33 @@ profile:
     expect(bundle.profiles.ResistorModuleID?.resistanceOhms).not.toBe(1);
   });
 });
+
+describe('the upload citation form (spec §3.5)', () => {
+  it('accepts upload:sha256 refs beside URLs, rejects junk', () => {
+    const hash = 'a'.repeat(64);
+    const p = parseProposal(PROPOSAL.replace(
+      'https://cdn.sparkfun.com/datasheets/Sensors/LightImaging/SEN-09088.pdf',
+      `upload:sha256:${hash}`,
+    ));
+    expect(p.citations.absMaxVoltageV).toBe(`upload:sha256:${hash}`);
+    expect(() => parseProposal(PROPOSAL.replace(
+      'https://cdn.sparkfun.com/datasheets/Sensors/LightImaging/SEN-09088.pdf',
+      'upload:md5:nope',
+    ))).toThrow(/url|upload/i);
+  });
+
+  it('the store hashes, dedupes and resolves refs', async () => {
+    const { saveDatasheet, datasheetPath } = await import('../src/datasheets.js');
+    const dir = mkdtempSync(join(tmpdir(), 'makerlord-ds-'));
+    process.env.MAKERLORD_DATASHEETS_PATH = dir;
+    try {
+      const a = saveDatasheet(Buffer.from('%PDF-1.4 fake'));
+      const b = saveDatasheet(Buffer.from('%PDF-1.4 fake'));
+      expect(a.ref).toBe(b.ref);                       // content dedupe
+      expect(datasheetPath(a.ref)).toBe(a.path);
+      expect(datasheetPath('upload:sha256:' + 'f'.repeat(64))).toBeNull();
+    } finally {
+      delete process.env.MAKERLORD_DATASHEETS_PATH;
+    }
+  });
+});

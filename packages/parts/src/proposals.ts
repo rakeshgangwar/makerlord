@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
+import { isUploadRef } from './datasheets.js';
 import { profileSchema, type SafetyProfile } from './profile.js';
 
 /**
@@ -26,7 +27,15 @@ export const proposalSchema = z
      *  never invented, proposals included. */
     file: z.string().min(1),
     proposedAt: z.string().min(1),
-    citations: z.record(z.string().url('every citation must be a URL')),
+    citations: z.record(
+      z.string().refine(
+        // http(s) explicitly — zod's .url() accepts any scheme:path, which
+        // would let a malformed upload ref slip through as a "URL".
+        (c) => isUploadRef(c)
+          || (/^https?:\/\//.test(c) && z.string().url().safeParse(c).success),
+        'every citation must be an http(s) URL or an upload:sha256:<hash> ref',
+      ),
+    ),
     profile: profileSchema,
   })
   .superRefine((p, ctx) => {

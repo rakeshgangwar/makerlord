@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { loadPart } from '@makerlord/parts';
 import { bundle, geometryIndex, tierOf } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { ok } from '../result.js';
@@ -53,9 +54,16 @@ const partsGet: ToolDef = {
   gated: false,
   handler(input) {
     const { id } = input as { id: string };
-    const definition = bundle().parts[id];
+    let definition = bundle().parts[id];
     if (!definition) {
-      throw new Error(`parts_get: unknown part id "${id}" — use parts_search first`);
+      // Geometry tier: the corpus is browsable — the def loads from its
+      // fzp, the profile is honestly null, and the part stays un-addable.
+      const hit = geometryIndex().find((g) => g.id === id);
+      if (!hit) {
+        throw new Error(`parts_get: unknown part id "${id}" — use parts_search first`);
+      }
+      definition = loadPart(hit.file);
+      return ok({ definition, profile: null, tier: 'geometry', file: hit.file });
     }
     return ok({ definition, profile: bundle().profiles[id] ?? null, tier: tierOf(id) });
   },

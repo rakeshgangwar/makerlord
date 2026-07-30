@@ -63,6 +63,9 @@ export class AgentSession {
   /** URLs the server tools ACTUALLY returned this session → fetchedAt.
    *  Spec §8: the fetching is the agent's; the standard of proof is not. */
   private fetchedUrls = new Map<string, string>();
+  /** Upload refs ACTUALLY read via datasheet_read this session — the
+   *  symmetric ledger for upload citations (curation spec §3.5). */
+  private readUploads = new Set<string>();
 
   constructor(private opts: AgentSessionOptions) {}
 
@@ -124,14 +127,19 @@ export class AgentSession {
    *  cited datasheet URL must have been ACTUALLY fetched this session. */
   private adjudicateProposalCitations(input: unknown): ToolResult<never> | null {
     const citations = (input as { citations?: Record<string, string> }).citations;
-    for (const [field, url] of Object.entries(citations ?? {})) {
-      if (!this.fetchedUrls.has(url)) {
+    for (const [field, citation] of Object.entries(citations ?? {})) {
+      const isUpload = citation.startsWith('upload:');
+      const seen = isUpload
+        ? this.readUploads.has(citation)
+        : this.fetchedUrls.has(citation);
+      if (!seen) {
         return {
           ok: false,
           refused: 'EVIDENCE_UNFETCHED',
           findings: [],
           message:
-            `citation for "${field}" (${url}) was not fetched this session — ` +
+            `citation for "${field}" (${citation}) was not ` +
+            `${isUpload ? 'read (datasheet_read)' : 'fetched'} this session — ` +
             'read the datasheet first, then cite what you read',
         };
       }
@@ -292,6 +300,10 @@ export class AgentSession {
             findings: [],
             message: e instanceof Error ? e.message : String(e),
           } as ToolResult<unknown>;
+        }
+        if (call.name === 'datasheet_read' && result.ok) {
+          const ref = (call.input as { ref?: string } | undefined)?.ref;
+          if (ref !== undefined) this.readUploads.add(ref);
         }
         onEvent({ t: 'tool.end', callId: call.id ?? '', result });
         results.push({
