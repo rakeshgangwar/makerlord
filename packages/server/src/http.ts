@@ -127,8 +127,13 @@ async function route(
   const fileMatch = /^\/api\/projects\/([0-9a-f]+)\/file$/.exec(path);
   if (req.method === 'GET' && fileMatch) {
     const relPath = url.searchParams.get('path') ?? '';
+    const encoding = url.searchParams.get('encoding') === 'base64' ? 'base64' : 'utf8';
     try {
-      json(res, 200, { path: relPath, content: sessions.readFile(fileMatch[1]!, relPath) });
+      json(res, 200, {
+        path: relPath,
+        encoding,
+        content: sessions.readFile(fileMatch[1]!, relPath, encoding),
+      });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }

@@ -34,6 +34,7 @@ Start at the top. Each document assumes the ones above it.
 | 14 | [superpowers/specs/2026-07-30-firmware-design.md](superpowers/specs/2026-07-30-firmware-design.md) | **The design spec** for stage ⑦ — the role-symbol contract, cross-checks, compile gate | Before building firmware |
 | 15 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
 | 16 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
+| 16b | [superpowers/plans/2026-07-30-firmware.md](superpowers/plans/2026-07-30-firmware.md) | Implementation plan for stage ⑦, 18 TDD tasks in three slices | With the firmware spec |
 | 17 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
 | 18 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
 | 19 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |

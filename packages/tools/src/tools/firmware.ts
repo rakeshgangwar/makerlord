@@ -108,7 +108,13 @@ const fwPinPlan: ToolDef = {
     const fw = facetOf(s);
     const plan = derivePinPlan(circuitOf(s), profilesMap(), fw.behaviors, fw.roles);
     fw.roles = plan.roles;
-    return ok(plan);
+    const profile = mcuProfile(s);
+    // Target identity rides along: the UI's flash panel needs the
+    // protocol BEFORE the gate opens, to render its honest locked state.
+    return ok({
+      ...plan,
+      target: { ref: fw.target.ref, fqbn: profile.fqbn, flash: profile.flash },
+    });
   },
 };
 

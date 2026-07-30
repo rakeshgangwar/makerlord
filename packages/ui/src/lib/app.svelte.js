@@ -52,6 +52,21 @@ export const app = $state({
   /** @type {any} */
   simResult: null,
   simRunning: false,
+  // firmware (stage ⑦)
+  /** @type {{roles: any[], unbound: any[]} | null} */
+  fwPlan: null,
+  /** @type {{ok: boolean, log: string, bin?: string} | null} */
+  fwCompile: null,
+  fwCompiling: false,
+  /** @type {{bin: string, fqbn: string, flash: {protocol: string, baud?: number}} | null} */
+  fwManifest: null,
+  flashState: 'idle',   // idle | flashing | done | error
+  flashPercent: 0,
+  flashChip: '',
+  flashError: '',
+  serialOpen: false,
+  /** @type {import('./flash.js').SerialLine[]} */
+  serialLines: [],
   // right panel
   panelTab: 'bench',
   libraryQuery: '',
@@ -289,6 +304,57 @@ export async function runSimulation() {
   } finally {
     app.simRunning = false;
   }
+}
+
+// ── stage ⑦: the firmware loop. Same rule as everywhere: findings only
+// ever from engine data; refusals land on the strip, never vanish. ──
+
+async function fwTool(name, input = {}) {
+  const r = await api(`projects/${app.projectId}/tool`, { name, input });
+  if (r.data.ok === false) {
+    app.findings = r.data.findings?.length ? r.data.findings : app.findings;
+    app.lastError = r.data.message ?? `${name} refused`;
+    return null;
+  }
+  app.lastError = '';
+  return r.data.ok ? r.data.data : null;
+}
+
+export async function fwPinPlan() {
+  const d = await fwTool('fw_pin_plan');
+  if (d) app.fwPlan = d;
+  await refreshProjections();
+}
+
+export async function fwCheck() {
+  const d = await fwTool('check_firmware');
+  if (d) app.findings = d.findings;
+}
+
+export async function fwGenerate() {
+  const d = await fwTool('fw_generate');
+  if (d) await refreshProjections();
+  return d !== null;
+}
+
+export async function fwCompileRun() {
+  if (app.fwCompiling) return;
+  app.fwCompiling = true;
+  try {
+    const d = await fwTool('fw_compile');
+    if (d) app.fwCompile = d;
+    await refreshProjections();
+  } finally {
+    app.fwCompiling = false;
+  }
+}
+
+/** The engine decides whether flashing is allowed (D47) — a refusal here
+ *  is the gate speaking, and the panel renders it as the locked state. */
+export async function fwManifestGet() {
+  const d = await fwTool('fw_manifest');
+  app.fwManifest = d;
+  return d;
 }
 
 export async function openGate() {

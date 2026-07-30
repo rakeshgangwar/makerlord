@@ -64,7 +64,7 @@ export default async function seed() {
   mkdirSync(ROOT, { recursive: true });
 
   // ── golden: the tool-surface §7 script, clean ─────────────────────────
-  await seedProject(GOLDEN, 'a desk lamp indicator', async (step) => {
+  await seedProject(GOLDEN, 'a desk lamp indicator', async (step, ctx) => {
     await step('req_propose', {
       id: 'runtime', category: 'power', statement: 'runs from USB continuously',
       metric: 'supply_capacity', comparator: '>=', value: 500, unit: 'mAh',
@@ -93,6 +93,22 @@ export default async function seed() {
     await step('check_architecture');
     await step('expand');
     await step('check_circuit');
+
+    // The firmware leg (stage ⑦): wire the indicator to a gpio pin, add a
+    // behavior, derive the plan, generate the projections. No compile —
+    // the e2e runner carries no toolchain; the panel's no-bin state is
+    // exactly what the specs assert.
+    const parts = ctx.session.file.project.circuit.parts;
+    const mcuRef = parts.find((p) => p.blockId === 'mcu').ref;
+    const ledRef = parts.find(
+      (p) => p.blockId === 'indicator' && p.defId === '5mmColorLEDModuleID',
+    ).ref;
+    await step('connect', { from: `${mcuRef}.D5 PWM`, to: `${ledRef}.anode` });
+    await step('fw_behavior_set', {
+      set: { id: 'blink-on', kind: 'drive', role: 'INDICATOR', to: 'HIGH' },
+    });
+    await step('fw_pin_plan');
+    await step('fw_generate');
   });
 
   // ── danger: LED with no series resistor — a LIVE engine BLOCKER ──────

@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
@@ -267,6 +267,23 @@ describe('the artifact files surface — the repo is visible, read-only', () => 
     expect(file.status).toBe(200);
     const body = (await file.json()) as { path: string; content: string };
     expect(body.content).toContain('a lamp');
+  });
+
+  it('serves binary files as base64 on request — firmware.bin flashes from the browser', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'a lamp' });
+    const pid = p.projectId as string;
+    // Plant bytes that would mangle through utf8.
+    const dir = sessions.projectPath(pid).replace(/project\.json$/, '');
+    mkdirSync(join(dir, 'firmware', 'build'), { recursive: true });
+    const bytes = Buffer.from([0xe9, 0x00, 0xff, 0x10, 0x80]);
+    writeFileSync(join(dir, 'firmware', 'build', 'firmware.bin'), bytes);
+    const res = await fetch(
+      `${base}/api/projects/${pid}/file?path=firmware/build/firmware.bin&encoding=base64`,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { content: string; encoding: string };
+    expect(body.encoding).toBe('base64');
+    expect(Buffer.from(body.content, 'base64')).toEqual(bytes);
   });
 
   it('refuses to escape the project directory', async () => {

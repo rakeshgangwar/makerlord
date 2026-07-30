@@ -44,6 +44,7 @@ test('no control anywhere dismisses, hides or downranks a finding', async ({ pag
     const stages: [number, string][] = [
       [1, 'Idea'], [2, 'Feasibility'], [3, 'Requirements'],
       [4, 'Architecture'], [5, 'Simulate'], [6, 'Prototype ★'],
+      [7, 'Firmware'],
     ];
     for (const [n, name] of stages) {
       await pickStage(page, n, name);

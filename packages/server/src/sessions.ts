@@ -299,7 +299,7 @@ export class HostedSessions {
   }
 
   /** Read one artifact file. Refuses any path that escapes the project. */
-  readFile(projectId: string, relPath: string): string {
+  readFile(projectId: string, relPath: string, encoding: 'utf8' | 'base64' = 'utf8'): string {
     const dir = this.projectDir(projectId);
     const full = resolve(dir, relPath);
     const rel = relative(dir, full);
@@ -309,7 +309,9 @@ export class HostedSessions {
     if (!existsSync(full) || !statSync(full).isFile()) {
       throw new Error(`no file "${relPath}"`);
     }
-    return readFileSync(full, 'utf8');
+    // base64 is how firmware.bin reaches the browser flasher — bytes
+    // would mangle through utf8.
+    return readFileSync(full).toString(encoding);
   }
 
   gitLog(projectId: string): { subject: string; date: string }[] {

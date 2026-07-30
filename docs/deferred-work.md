@@ -37,6 +37,16 @@ would produce untested claims — the thing this project exists to avoid.
 | **Curated library → ~150 parts** | **The schedule risk, named since HANDOFF day one.** ~12 fields per part verified against datasheets. **At 20 parts as of 2026-07-29** (caps, 1N4001 + SPICE model, pushbutton, pot, motor, relay, RGB LED, LDR, DHT22, batteries, TO-220 NPN, servo, WeMos D1 mini, soil-moisture sensor, LD1117V33 regulator) — footprints extracted from corpus SVG geometry, datasheet values cited in each profile, `curated-manifest.test.ts` is the permanent gate. | Keep the drip: ESP32-class board (needs a corpus part or a contributed one), more sensors, MOSFETs, LiPo cell + charger (unlocks the LiPo rule). SPICE models + KiCad symbols follow in Phase 2/3 (D25). | Steady drip |
 | **Four deferred rules** (flyback, source capacity, LiPo, decoupling) | ✅ **Three of four shipped 2026-07-29**: `RULE_FLYBACK_MISSING` (BLOCKER — bare inductive winding with no rectifier bridging it; wired modules like servos exempt), `RULE_SOURCE_OVER_CAPACITY` (WARNING — declared loads vs the source's new `maxContinuousMa`, hand-authored with datasheet citations on the PP3/AA profiles), `RULE_DECOUPLING_MISSING` (WARNING — a quiescent-drawing module with a bare supply net). 11 rules total; danger corpus grew a BLOCKER entry + a named-degradations section for the WARNINGs. Only LiPo remains, blocked on its part. | LiPo rule waits for a curated cell + charger. | blocked on curation |
 
+## B². Stage ⑦ residues (2026-07-30 — engine + lens shipped; these are the named remainders)
+
+| Item | Why deferred | Scope | Size |
+|---|---|---|---|
+| **Live flash on real hardware** | The maker's board arrives on the bench in the evening; Playwright cannot grant WebSerial permissions headlessly. Everything up to the wire is tested — the panel states, the broker, the manifest gate. | Plan task 17's checklist: flash over WebSerial, monitor streams, SELFTEST renders. Identify the board first (chip marking + pin count) → curate its GPIO facet. | An evening, with the board |
+| **ESP32 curation** | No generic DevKit `.fzp` in the corpus; the exact part depends on which board the maker actually has. | Corpus part (Heltec exists in core; DevKit needs a contributed `.fzp`) → footprint → GPIO facet (straps GPIO0/2/12/15, input-only 34–39) → `fqbn` + flash addresses (ESP32 bins are split or merged — decide at curation). | ~½ day once identified |
+| **Uno browser flashing (stk500v1)** | No maintained browser-side STK500 library; the maker's board is ESP-family, so esptool-js covers the real need. The panel renders an honest `protocol-pending` state naming the workaround (arduino-cli upload from a clone). | A minimal STK500v1 over WebSerial (sync, enter progmode, page writes) or adopting avrgirl's webserial path. | 1–2 days |
+| **MicroPython bring-up REPL (D11)** | Kept, sequenced after slice 1 — loop speed for interactive bring-up, not capability. | A REPL surface over the same serial broker; MicroPython flashing per board. | With stage ⑧ or after |
+| **The full D13 library-resolution chain** | Slice 1 compiles against a pinned curated list; the chain's last link (the compiler) is already the gate. | Registry search → header read → compile-verify → promote to curated. | ~1 day |
+
 ## C. Tooling that earns its keep at a later stage
 
 | Item | Why deferred | Scope | Size |

@@ -9,10 +9,11 @@
    *  "the requirements doc", not a path. */
   const DESIGN_DOCS = ['feasibility.md', 'requirements.md', 'DECISIONS.md', 'architecture.md', 'architecture.svg'];
   const fileGroups = $derived.by(() => {
-    const g = { 'Design documents': [], 'Circuit': [], 'Simulation': [], 'Journal': [], 'Model': [] };
+    const g = { 'Design documents': [], 'Circuit': [], 'Firmware': [], 'Simulation': [], 'Journal': [], 'Model': [] };
     for (const f of app.fileList) {
       if (DESIGN_DOCS.includes(f.path)) g['Design documents'].push(f);
       else if (f.path.startsWith('circuit/')) g['Circuit'].push(f);
+      else if (f.path.startsWith('firmware/')) g['Firmware'].push(f);
       else if (f.path.startsWith('sim/')) g['Simulation'].push(f);
       else if (f.path === 'transcript.jsonl') g['Journal'].push(f);
       else g['Model'].push(f);
