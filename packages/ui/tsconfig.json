@@ -29,6 +29,9 @@
     },
     {
       "path": "../artifacts/tsconfig.json"
+    },
+    {
+      "path": "../auth/tsconfig.json"
     }
   ]
 }

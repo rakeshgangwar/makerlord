@@ -22,11 +22,12 @@ interface ProjectResponse {
   };
 }
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params, url, locals }) => {
   const headers: Record<string, string> = {};
   if (env.MAKERLORD_ACCESS_TOKEN) {
     headers.authorization = `Bearer ${env.MAKERLORD_ACCESS_TOKEN}`;
   }
+  if (locals.userId) headers['x-makerlord-user'] = locals.userId;
   const upstream = await fetch(`${API()}/api/projects/${params.projectId}`, { headers });
   if (!upstream.ok) throw error(upstream.status, 'project not found');
   const { file } = (await upstream.json()) as ProjectResponse;
