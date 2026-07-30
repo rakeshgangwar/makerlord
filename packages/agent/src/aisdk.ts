@@ -89,7 +89,11 @@ export class AiSdkSession {
         // the same runTool the CLI/MCP/tests use, findings unsoftened.
         tool({
           description: t.summary,
-          inputSchema: jsonSchema(zodToJsonSchema(t.input) as Record<string, unknown>),
+          // $refStrategy none: inline schemas — Moonshot et al refuse
+          // '#/definitions/' refs (observed live 2026-07-31).
+          inputSchema: jsonSchema(
+            zodToJsonSchema(t.input, { $refStrategy: 'none' }) as Record<string, unknown>,
+          ),
         }),
       ]),
     );
@@ -118,6 +122,11 @@ export class AiSdkSession {
           messages: this.messages,
           tools,
         });
+
+        // Pre-attach a rejection handler: throwing out of the stream
+        // otherwise leaves result.response rejected and unhandled — a
+        // process crash that eats the session.error (observed live).
+        void result.response.then(() => undefined, () => undefined);
 
         const calls: { toolCallId: string; toolName: string; input: unknown }[] = [];
         for await (const part of result.fullStream) {

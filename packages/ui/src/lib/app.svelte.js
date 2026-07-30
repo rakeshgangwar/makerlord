@@ -244,6 +244,10 @@ export async function sendPrompt(text) {
     }
     if (r.status === 409) {
       await api(`sessions/${app.sessionId}/steer`, { text });
+    } else if (r.status >= 400) {
+      app.turnActive = false;
+      app.lastError = r.data.error ?? `the agent request failed (${r.status})`;
+      toast.error('The agent request failed', { description: app.lastError });
     }
   } catch (e) {
     app.turnActive = false;
