@@ -7,7 +7,7 @@ import {
   datasheetPath, ELECTRICAL_FIELDS, isUploadRef, loadPart, profileSchema,
   proposalSchema, proposalsDir,
 } from '@makerlord/parts';
-import { tierOf } from '../data.js';
+import { resetDataCache, tierOf } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { ok, refuse } from '../result.js';
 
@@ -147,6 +147,9 @@ const profilePropose: ToolDef = {
     mkdirSync(dir, { recursive: true });
     const path = join(dir, `${partId.replace(/[^A-Za-z0-9._-]+/g, '_')}.yaml`);
     writeFileSync(path, toYaml(proposal));
+    // The bundle caches per process — without this, the part stays
+    // geometry-tier in search until a restart.
+    resetDataCache();
 
     return ok({
       queued: partId,
