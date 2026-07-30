@@ -1,7 +1,7 @@
 <script>
   import { onMount, untrack } from 'svelte';
   import { page } from '$app/state';
-  import { postureFor } from '$lib/postures.js';
+  import { postureFor, STAGE_PURPOSE } from '$lib/postures.js';
   import { adoptUrlParams, app, boot, refreshProjections } from '$lib/app.svelte.js';
   import StageRail from '$lib/components/StageRail.svelte';
   import ConverseStart from '$lib/components/ConverseStart.svelte';
@@ -100,7 +100,9 @@
       {:else if lens === 'bench'}
         <BenchView />
       {:else}
-        <div class="decide"><p class="empty">A report, a number, one action — arrives with its stage.</p></div>
+        <div class="decide">
+          <p class="empty">{STAGE_PURPOSE[app.stage] ?? 'A report, a number, one action — arrives with its stage.'}</p>
+        </div>
       {/if}
     </div>
 
@@ -119,7 +121,12 @@
   .shell { display: flex; flex: 1; gap: 1.5rem; padding: 1.25rem 1.5rem; min-height: 0; }
   .shell :global(.rail) { overflow-y: auto; }
   .shell :global(.artifacts) { overflow-y: auto; }
-  .workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+  /* Capped and centered: at 1920 the content column must not hug the
+     rail with half the mat empty (2026-07-30 audit). */
+  .workspace {
+    flex: 1 1 auto; min-width: 0; max-width: 96rem; margin-inline: auto;
+    width: 100%; display: flex; flex-direction: column; min-height: 0;
+  }
   /* The lens scrolls; the dock keeps one fixed home below it. */
   .lens { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 0.5rem; }
   .workspace :global(.dock) { position: static; margin-top: 0.6rem; }
@@ -127,8 +134,7 @@
   /* ── responsive: the strip never collapses ── */
   @media (max-width: 1100px) { .shell :global(.artifacts) { display: none; } }
   @media (max-width: 700px) {
-    .shell { flex-direction: column; }
-    .shell :global(.rail) { flex-direction: row; flex-wrap: wrap; min-width: 0; }
-    .shell :global(.stage) { border-left-width: 3px; }
+    .shell { flex-direction: column; padding: 0.6rem 0.8rem; gap: 0.8rem; }
+    .shell :global(.rail) { min-width: 0; overflow-y: visible; }
   }
 </style>

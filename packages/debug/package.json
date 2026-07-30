@@ -10,5 +10,15 @@
     "@makerlord/project": "workspace:*",
     "@makerlord/sim": "workspace:*",
     "zod": "^3.23.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./faults": {
+      "types": "./dist/faults.d.ts",
+      "default": "./dist/faults.js"
+    }
   }
 }

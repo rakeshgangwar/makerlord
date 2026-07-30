@@ -1,6 +1,6 @@
 <script>
   import { humanNetName } from '@makerlord/circuit';
-  import { describeFault } from '@makerlord/debug';
+  import { describeFault } from '@makerlord/debug/faults';
   import {
     app, debugClose, debugObserveSelftest, debugObserveVoltage, debugStart,
   } from '$lib/app.svelte.js';

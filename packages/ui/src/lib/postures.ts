@@ -92,3 +92,25 @@ export function stagePhase(stage: number): 1 | 2 | 3 | 4 {
   if (stage >= 9 && stage <= 12) return 3;
   return 4;
 }
+
+/** One line per stage: what talking/working here produces. Rendered as
+ *  the empty-state so no stage ever opens onto a bare composer. */
+export const STAGE_PURPOSE: Record<number, string> = {
+  1: 'Say what you want to make — the project takes shape from your words.',
+  2: 'Ask whether it can work — the verdict comes back with reasons and numbers.',
+  3: 'Pin down what "done" means — requirements with units, not vibes.',
+  4: 'Sketch the blocks and how they connect — parts come later.',
+  5: 'Run the circuit on the virtual bench before touching hardware.',
+  6: 'Build it for real — one safety-ordered step at a time.',
+  7: 'Firmware from the circuit, never past it — pins derive from wiring.',
+  8: 'One measurement at a time until the fault has nowhere left to hide.',
+  9: 'From breadboard to board — the PCB stage arrives in a later release.',
+  10: 'Enclosures and mounting — the mechanical stage arrives in a later release.',
+  11: 'Choosing how it gets made — arrives in a later release.',
+  12: 'Getting it fabricated — arrives in a later release.',
+  13: 'Checking the first one built — arrives in a later release.',
+  14: 'Proving it works every time — arrives in a later release.',
+  15: 'Meeting the rules it must meet — arrives in a later release.',
+  16: 'Writing it down so others can build it — arrives in a later release.',
+  17: 'Making more than one — arrives in a later release.',
+};

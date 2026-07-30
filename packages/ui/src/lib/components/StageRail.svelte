@@ -5,6 +5,8 @@
 
   let { stage = null } = $props();
   const current = $derived(stage ?? app.stage);
+  // Phones get one row — the 17-chip cloud buried the hero (audit §6).
+  let railOpen = $state(false);
 
   let mintedToken = $state('');
 
@@ -31,19 +33,27 @@
   ];
 </script>
 
-<nav class="rail" aria-label="Stages">
-  <div class="wordmark">Maker<span>Lord</span></div>
+<nav class="rail" class:open={railOpen} aria-label="Stages">
+  <div class="rail-top">
+    <div class="wordmark">Maker<span>Lord</span></div>
+    <button class="rail-toggle mono" aria-expanded={railOpen}
+      onclick={() => (railOpen = !railOpen)}>
+      {String(current).padStart(2, '0')} {STAGE_NAMES[current - 1]} ▾
+    </button>
+  </div>
+  <div class="stage-list">
   {#each STAGE_NAMES as name, i}
     <button
       class="stage"
       class:active={current === i + 1}
       data-phase={stagePhase(i + 1)}
-      onclick={() => gotoStage(i + 1)}
+      onclick={() => { gotoStage(i + 1); railOpen = false; }}
     >
       <span class="stage-n">{String(i + 1).padStart(2, '0')}</span>
       {name}
     </button>
   {/each}
+  </div>
   {#if app.projectId}
     <a class="stage rail-link" href={`/library?p=${app.projectId}`}>⧉ library &amp; inventory</a>
     <button class="stage new-project" onclick={newProject}>⇤ projects</button>
@@ -65,7 +75,7 @@
           inputmode="numeric" maxlength="6" />
       </form>
     {/if}
-    {#if app.bridgeStatus !== 'ready'}
+    {#if app.bridgeStatus === 'pair' || app.bridgeStatus === 'error'}
       <label class="bridge-port mono">port
         <input inputmode="numeric" bind:value={app.bridgePort} name="bridgeport" />
       </label>
@@ -110,9 +120,28 @@
 <style>
   /* ── the rail: phases carry their resistor colour band ── */
   .rail { display: flex; flex-direction: column; gap: 1px; min-width: 12.5rem; }
+  .rail-top { display: flex; align-items: baseline; justify-content: space-between; }
+  .rail-toggle { display: none; }
+  .stage-list { display: flex; flex-direction: column; gap: 1px; }
   .wordmark {
     font-weight: 800; font-size: 1.05rem; letter-spacing: -0.02em;
     margin: 0 0 0.9rem 0.25rem;
+  }
+
+  @media (max-width: 700px) {
+    .rail-toggle {
+      display: inline-block; border: 1px solid var(--line); background: var(--panel);
+      border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 0.72rem;
+      cursor: pointer; color: var(--ink);
+    }
+    .wordmark { margin-bottom: 0; }
+    .stage-list { display: none; }
+    .rail.open .stage-list {
+      display: flex; flex-flow: row wrap; gap: 0.15rem; align-items: flex-start;
+      margin-top: 0.5rem;
+    }
+    .rail.open .stage-list .stage { align-self: flex-start; }
+    .bridge-box { margin-top: 0.4rem; padding-top: 0.3rem; }
   }
   .wordmark span { color: var(--mask); }
   .stage {

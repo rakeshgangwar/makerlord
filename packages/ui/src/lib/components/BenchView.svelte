@@ -167,8 +167,8 @@
 <style>
   /* ── bench: steps left, both views at your side — like the real bench ── */
   .bench-row { display: flex; gap: 1.4rem; align-items: flex-start; flex-wrap: wrap; }
-  .bench { flex: 1; max-width: 44rem; min-width: 22rem; }
-  .views { width: 26rem; max-width: 100%; position: sticky; top: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+  .bench { flex: 1 1 26rem; max-width: 44rem; min-width: 22rem; }
+  .views { flex: 1 1 24rem; min-width: 24rem; max-width: 46rem; position: sticky; top: 0; display: flex; flex-direction: column; gap: 0.8rem; }
   .board {
     margin: 0; background: var(--panel); border-radius: 10px; padding: 0.7rem;
     box-shadow: 0 1px 3px rgb(20 24 27 / 8%);
@@ -177,8 +177,8 @@
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
   }
-  .board :global(.viewer) { height: 280px; }
-  .schematic-mini :global(.viewer) { height: 170px; }
+  .board :global(.viewer) { height: clamp(280px, 36vh, 420px); }
+  .schematic-mini :global(.viewer) { height: clamp(200px, 28vh, 340px); }
   .fig-hint { text-transform: none; letter-spacing: 0; opacity: 0.6; float: right; }
 
   .step { display: flex; gap: 0.9rem; padding: 0.7rem 1rem; margin: 0.45rem 0; background: var(--panel); border-radius: 8px; }

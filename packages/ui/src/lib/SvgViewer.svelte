@@ -23,6 +23,30 @@
   /** @type {HTMLElement | null} */
   let stageEl = $state(null);
 
+  // Fit the drawing to the panel: renderers emit a fixed canvas, and a
+  // small circuit in a big viewBox reads as a stamp (2026-07-30 audit).
+  // Tighten the viewBox to the content bbox when it is much smaller.
+  $effect(() => {
+    void svgText;
+    if (!stageEl) return;
+    const svg = stageEl.querySelector('svg');
+    if (!svg) return;
+    try {
+      const vb = svg.viewBox?.baseVal;
+      const bbox = svg.getBBox();
+      if (!vb || bbox.width === 0 || bbox.height === 0) return;
+      const content = bbox.width * bbox.height;
+      const canvas = vb.width * vb.height;
+      if (canvas > 0 && content / canvas < 0.55) {
+        const pad = Math.max(bbox.width, bbox.height) * 0.06;
+        svg.setAttribute(
+          'viewBox',
+          `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + 2 * pad} ${bbox.height + 2 * pad}`,
+        );
+      }
+    } catch { /* detached svg — the next paint retries */ }
+  });
+
   // Paint the current step's holes/parts in copper — both views speak.
   $effect(() => {
     void svgText;
