@@ -47,6 +47,29 @@ export const WEB_RESEARCH_TOOLS = [
 
 export const COMPACTION_BETA = 'compact-2026-01-12';
 
+/** Any single string over this many bytes inside a content block gets
+ *  truncated with a marker before entering history. */
+const BLOCK_CLIP_BYTES = 200_000;
+
+function clipStringsDeep(value: unknown): unknown {
+  if (typeof value === 'string') {
+    return value.length > BLOCK_CLIP_BYTES
+      ? `${value.slice(0, BLOCK_CLIP_BYTES)}… [clipped ${value.length - BLOCK_CLIP_BYTES} bytes]`
+      : value;
+  }
+  if (Array.isArray(value)) return value.map(clipStringsDeep);
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, clipStringsDeep(v)]),
+    );
+  }
+  return value;
+}
+
+export function clipOversized(content: unknown[]): unknown[] {
+  return content.map(clipStringsDeep);
+}
+
 /** Tools come from the registry, unchanged — the fourth consumer (spec §2). */
 export function apiTools(): { name: string; description: string; input_schema: unknown }[] {
   return ALL_TOOLS.map((t) => ({
@@ -174,20 +197,21 @@ export class AgentSession {
     );
   }
 
-  /** Drop code-execution server_tool_use blocks that never got their
-   *  result — the "pending tool uses" the API refuses to continue
-   *  without a live container. */
+  /** Drop ANY server_tool_use block that never got its result — matched
+   *  by tool_use_id, never by name: the code-execution family emits
+   *  sub-tool names (bash_code_execution, …) and the live API refused to
+   *  continue past exactly the one a name-match missed. A pending server
+   *  tool we cannot resume is a wedge either way. */
   private stripPendingCodeExecution(): void {
     for (const m of this.messages) {
       if (m.role !== 'assistant' || !Array.isArray(m.content)) continue;
-      const blocks = m.content as { type?: string; id?: string; name?: string; tool_use_id?: string }[];
+      const blocks = m.content as { type?: string; id?: string; tool_use_id?: string }[];
       const resolved = new Set(
-        blocks.filter((b) => b.type === 'code_execution_tool_result')
+        blocks.filter((b) => typeof b.type === 'string' && b.type.endsWith('_tool_result'))
           .map((b) => b.tool_use_id),
       );
       m.content = blocks.filter((b) =>
-        !(b.type === 'server_tool_use' && b.name === 'code_execution'
-          && !resolved.has(b.id))) as never;
+        !(b.type === 'server_tool_use' && !resolved.has(b.id))) as never;
     }
   }
 
@@ -304,10 +328,14 @@ export class AgentSession {
       }
 
       // Append response.content back into messages WHOLE — compaction blocks
-      // and tool_use blocks must survive the round trip (spec §5).
+      // and tool_use blocks must survive the round trip (spec §5) — but
+      // clip any single giant block first: a multi-MB fetched datasheet
+      // defeats message-level compaction and 413s every later request
+      // (observed live). The model already read the full text this round;
+      // only future history loses the tail.
       this.messages.push({
         role: 'assistant',
-        content: (response.content ?? []) as never,
+        content: clipOversized((response.content ?? []) as never) as never,
       });
       this.recordFetches((response.content ?? []) as never);
       const container = (response as { container?: { id?: string } }).container;

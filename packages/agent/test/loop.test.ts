@@ -448,3 +448,58 @@ describe('pending code-exec without a captured container never reaches the wire'
     expect(JSON.stringify(second.messages)).toContain('ce_ok');   // pair intact
   });
 });
+
+describe('the live lessons: sub-tool names and giant blocks', () => {
+  it('ANY pending server_tool_use strips, whatever its name', async () => {
+    fake.enqueue(
+      {
+        content: [
+          { type: 'server_tool_use', id: 'ce_b', name: 'bash_code_execution', input: {} },
+          { type: 'tool_use', id: 'tu_inv', name: 'inventory_add', input: { freeText: 'LEDs' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    const events = await turn(makeAgent(), 'note my LEDs');
+    expect(events.some((e) => e.t === 'session.error')).toBe(false);
+    expect(JSON.stringify(fake.requests[1]!.messages)).not.toContain('bash_code_execution');
+  });
+
+  it('a resolved server pair stays, matched by tool_use_id not name', async () => {
+    fake.enqueue(
+      {
+        content: [
+          { type: 'server_tool_use', id: 'ce_c', name: 'bash_code_execution', input: {} },
+          { type: 'bash_code_execution_tool_result', tool_use_id: 'ce_c', content: { stdout: 'hi' } },
+          { type: 'tool_use', id: 'tu_inv', name: 'inventory_add', input: { freeText: 'LEDs' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    await turn(makeAgent(), 'note my LEDs');
+    expect(JSON.stringify(fake.requests[1]!.messages)).toContain('ce_c');
+  });
+
+  it('a giant fetched block is clipped at push — the 413 never forms', async () => {
+    const giant = 'z'.repeat(1_500_000);
+    fake.enqueue(
+      {
+        content: [
+          { type: 'server_tool_use', id: 'wf_1', name: 'web_fetch', input: {} },
+          { type: 'web_fetch_tool_result', tool_use_id: 'wf_1',
+            content: { url: 'https://x.example/big.pdf', content: { text: giant } } },
+          { type: 'tool_use', id: 'tu_inv', name: 'inventory_add', input: { freeText: 'LEDs' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    const events = await turn(makeAgent(), 'note my LEDs');
+    expect(events.some((e) => e.t === 'session.error')).toBe(false);
+    const wire = JSON.stringify(fake.requests[1]!.messages);
+    expect(wire.length).toBeLessThan(600_000);
+    expect(wire).toContain('clipped');
+  });
+});
