@@ -36,9 +36,13 @@ export interface AgentSessionOptions {
   webResearch?: boolean;
 }
 
-/** Server tools the agent may request; executed on Anthropic infra (§8). */
+/** Server tools the agent may request; executed on Anthropic infra (§8).
+ *  Type strings VERIFIED LIVE 2026-07-30 (scripts/verify-live-api.mjs):
+ *  the 20260209 versions are GA — no beta header — and the search result
+ *  shape is [{type:'web_search_result', url, title}]. */
 export const WEB_RESEARCH_TOOLS = [
-  { type: 'web_search_20250305', name: 'web_search', max_uses: 8 },
+  { type: 'web_search_20260209', name: 'web_search', max_uses: 8 },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 8 },
 ] as const;
 
 export const COMPACTION_BETA = 'compact-2026-01-12';
@@ -56,8 +60,65 @@ export class AgentSession {
   private messages: CountableMessage[] = [];
   private steeringQueue: string[] = [];
   private objections = new ObjectionCounter();
+  /** URLs the server tools ACTUALLY returned this session → fetchedAt.
+   *  Spec §8: the fetching is the agent's; the standard of proof is not. */
+  private fetchedUrls = new Map<string, string>();
 
   constructor(private opts: AgentSessionOptions) {}
+
+  /** Harvest every URL a web_search/web_fetch result block carried. */
+  private recordFetches(content: { type?: string; content?: unknown }[]): void {
+    const stamp = new Date().toISOString();
+    for (const block of content) {
+      if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
+        for (const item of block.content as { url?: string }[]) {
+          if (typeof item.url === 'string' && !this.fetchedUrls.has(item.url)) {
+            this.fetchedUrls.set(item.url, stamp);
+          }
+        }
+      } else if (block.type === 'web_fetch_tool_result') {
+        const url = (block.content as { url?: string } | undefined)?.url;
+        if (typeof url === 'string' && !this.fetchedUrls.has(url)) {
+          this.fetchedUrls.set(url, stamp);
+        }
+      }
+    }
+  }
+
+  /**
+   * Session-level adjudication of sourced claims (spec §8): a URL the
+   * server tools never returned is refused before the engine ever sees it;
+   * a fetched URL missing its timestamp gets the ledger's — the loop knows
+   * when, the model guesses. Returns the refusal, or null to proceed with
+   * (possibly repaired) input.
+   */
+  private adjudicateSourcedClaim(
+    input: unknown,
+  ): ToolResult<never> | null {
+    const claim = input as {
+      grade?: string;
+      evidence?: { url?: string; fetchedAt?: string };
+    };
+    if (claim.grade !== 'sourced' || typeof claim.evidence?.url !== 'string') {
+      return null;   // the engine's structural check owns every other case
+    }
+    const fetchedAt = this.fetchedUrls.get(claim.evidence.url);
+    if (fetchedAt === undefined) {
+      return {
+        ok: false,
+        refused: 'EVIDENCE_UNFETCHED',
+        findings: [],
+        message:
+          `sourced claim rejected: ${claim.evidence.url} was not fetched ` +
+          'this session — search or fetch it first, then cite it',
+      };
+    }
+    // Always the ledger's stamp: the model supplies publication dates and
+    // guesses here (observed live) — the loop is the only party that knows
+    // when the fetch actually happened.
+    claim.evidence.fetchedAt = fetchedAt;
+    return null;
+  }
 
   /** Mid-turn steering (spec §10): folded in at the next round boundary. */
   steer(text: string): void {
@@ -111,6 +172,12 @@ export class AgentSession {
         tools,
         thinking: { type: 'adaptive' },
         output_config: { effort: effortFor(this.opts.stage, this.opts.pack) },
+        // Header alone does nothing: the edit is what turns compaction on.
+        // Default trigger (150k input tokens); compaction blocks round-trip
+        // because response.content is appended whole (spec §5).
+        ...(this.opts.compactionBeta
+          ? { context_management: { edits: [{ type: 'compact_20260112' }] } }
+          : {}),
       } as never;
       const requestOptions: { timeout: number; headers?: Record<string, string> } = {
         timeout: 10 * 60 * 1000,
@@ -173,6 +240,7 @@ export class AgentSession {
         role: 'assistant',
         content: (response.content ?? []) as never,
       });
+      this.recordFetches((response.content ?? []) as never);
 
       const toolUses = (response.content ?? []).filter((b) => b.type === 'tool_use');
       if (toolUses.length === 0) {
@@ -191,8 +259,11 @@ export class AgentSession {
         });
         let result: ToolResult<unknown>;
         try {
+          const refusal = call.name === 'feasibility_claim'
+            ? this.adjudicateSourcedClaim(call.input)
+            : null;
           const ctx: ToolCtx = { session: this.opts.toolSession, cwd: this.opts.cwd };
-          result = await runTool(call.name ?? '', call.input, ctx);
+          result = refusal ?? await runTool(call.name ?? '', call.input, ctx);
         } catch (e) {
           result = {
             ok: false,

@@ -8,7 +8,7 @@ import { bundle, initProjectFile, loadSession } from '@makerlord/tools';
 import { loadPack } from '../src/persona.js';
 import { AgentSession, apiTools } from '../src/loop.js';
 import {
-  classifierRefusal, FakeLlm, textTurn, toolTurn,
+  classifierRefusal, FakeLlm, researchTurn, textTurn, toolTurn,
 } from '../src/testing/fake-llm.js';
 
 let fake: FakeLlm;
@@ -23,7 +23,7 @@ afterEach(() => {
   fake.close();
 });
 
-function makeAgent(): AgentSession {
+function makeAgent(extra: { webResearch?: boolean; stage?: number } = {}): AgentSession {
   const toolSession = initProjectFile(join(dir, 'project.json'), 'a desk lamp');
   return new AgentSession({
     // The explicit client-level timeout satisfies the SDK's long-request
@@ -33,8 +33,9 @@ function makeAgent(): AgentSession {
     toolSession,
     cwd: dir,
     pack: loadPack(dir),
-    stage: 6,
+    stage: extra.stage ?? 6,
     bundle: bundle(),
+    ...(extra.webResearch !== undefined ? { webResearch: extra.webResearch } : {}),
   });
 }
 
@@ -172,5 +173,90 @@ describe('the loop against a fake LLM over real HTTP', () => {
     expect(events.at(-1)).toEqual({ t: 'turn.end', reason: 'end_turn' });
     // The fourth expand was never sent to the model.
     expect(fake.requests.length).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('web research — the standard of proof is the loop\'s (spec §8)', () => {
+  it('webResearch adds the server tools to the wire request; default omits them', async () => {
+    fake.enqueue(textTurn('ok'), textTurn('ok'));
+    await turn(makeAgent({ webResearch: true }), 'research this');
+    dir = mkdtempSync(join(tmpdir(), 'makerlord-loop-'));   // second project
+    await turn(makeAgent(), 'research this');
+    const withTools = fake.requests[0]!.tools as { type?: string }[];
+    const withoutTools = fake.requests[1]!.tools as { type?: string }[];
+    expect(withTools.some((t) => t.type?.startsWith('web_search'))).toBe(true);
+    expect(withTools.some((t) => t.type?.startsWith('web_fetch'))).toBe(true);
+    expect(withoutTools.some((t) => t.type !== undefined)).toBe(false);
+  });
+
+  it('a sourced claim whose URL was never fetched this session is REFUSED', async () => {
+    const agent = makeAgent({ webResearch: true, stage: 2 });
+    // Turn 1: the model searches; a result URL enters the session ledger.
+    fake.enqueue(researchTurn(['https://real.example/build-log']));
+    await turn(agent, 'is this buildable?');
+    // Turn 2: it claims from a DIFFERENT url — invented, not fetched.
+    fake.enqueue(
+      toolTurn('feasibility_claim', {
+        claim: 'three people built this',
+        grade: 'sourced',
+        evidence: { url: 'https://invented.example/post', fetchedAt: '2026-07-30T00:00:00Z' },
+      }),
+      textTurn('noted'),
+    );
+    const events = await turn(agent, 'record it');
+    const end = events.find((e) => e.t === 'tool.end');
+    expect(end && end.t === 'tool.end' && !end.result.ok
+      && end.result.refused === 'EVIDENCE_UNFETCHED').toBe(true);
+    // The artefact: no claim landed.
+    const onDisk = loadSession(join(dir, 'project.json'));
+    expect(onDisk.file.project.feasibility?.claims ?? []).toEqual([]);
+  });
+
+  it('a fetched URL passes, and the LEDGER\'s fetchedAt overrides the model\'s', async () => {
+    const agent = makeAgent({ webResearch: true, stage: 2 });
+    fake.enqueue(researchTurn(['https://real.example/build-log']));
+    await turn(agent, 'is this buildable?');
+    fake.enqueue(
+      toolTurn('feasibility_claim', {
+        claim: 'a build log exists',
+        grade: 'sourced',
+        // The model "helpfully" supplies the page's PUBLICATION date —
+        // observed live 2026-07-30. The fetch time is the loop's to know.
+        evidence: { url: 'https://real.example/build-log', fetchedAt: '2020-06-01' },
+      }),
+      textTurn('noted'),
+    );
+    const events = await turn(agent, 'record it');
+    const end = events.find((e) => e.t === 'tool.end');
+    expect(end && end.t === 'tool.end' && end.result.ok).toBe(true);
+    const onDisk = loadSession(join(dir, 'project.json'));
+    const claim = onDisk.file.project.feasibility!.claims[0]!;
+    expect(claim.evidence).toMatchObject({ url: 'https://real.example/build-log' });
+    const fetchedAt = (claim.evidence as { fetchedAt: string }).fetchedAt;
+    expect(fetchedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);   // a real timestamp…
+    expect(fetchedAt).not.toBe('2020-06-01');            // …not the model's guess
+  });
+});
+
+describe('server-side compaction pass-through (beta compact-2026-01-12)', () => {
+  it('compactionBeta sends the header AND the context_management edit', async () => {
+    fake.enqueue(textTurn('ok'));
+    const toolSession = initProjectFile(join(dir, 'project.json'), 'a lamp');
+    const agent = new AgentSession({
+      client: new Anthropic({ apiKey: 'fake', baseURL: fake.baseUrl, timeout: 600_000 }),
+      toolSession, cwd: dir, pack: loadPack(dir), stage: 6, bundle: bundle(),
+      compactionBeta: true,
+    });
+    await agent.send('hi', () => {});
+    const req = fake.requests[0]!;
+    expect(req.context_management).toEqual({
+      edits: [{ type: 'compact_20260112' }],
+    });
+  });
+
+  it('without the option, neither header nor param is sent', async () => {
+    fake.enqueue(textTurn('ok'));
+    await turn(makeAgent(), 'hi');
+    expect(fake.requests[0]!.context_management).toBeUndefined();
   });
 });

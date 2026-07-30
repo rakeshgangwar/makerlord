@@ -19,6 +19,8 @@ if (process.env.MAKERLORD_MODEL) options.model = process.env.MAKERLORD_MODEL;
 if (process.env.MAKERLORD_ACP_COMMAND) options.acpCommand = process.env.MAKERLORD_ACP_COMMAND;
 if (process.env.MAKERLORD_ACP_ARGS) options.acpArgs = process.env.MAKERLORD_ACP_ARGS.split(' ');
 if (process.env.MAKERLORD_MCP_PATH) options.mcpPath = process.env.MAKERLORD_MCP_PATH;
+if (process.env.MAKERLORD_WEB_RESEARCH === '1') options.webResearch = true;
+if (process.env.MAKERLORD_COMPACTION === '0') options.compactionBeta = false;
 
 const sessions = new HostedSessions(options);
 const server = buildHttpServer(sessions, process.env.MAKERLORD_ACCESS_TOKEN);

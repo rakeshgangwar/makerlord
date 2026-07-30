@@ -114,6 +114,12 @@ function serveSse(
         type: 'content_block_delta', index,
         delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input ?? {}) },
       });
+    } else {
+      // Server-tool blocks (server_tool_use, web_search_tool_result, …)
+      // arrive whole — the API streams them as a complete start block.
+      send('content_block_start', {
+        type: 'content_block_start', index, content_block: block,
+      });
     }
     send('content_block_stop', { type: 'content_block_stop', index });
   });
@@ -144,4 +150,21 @@ export function toolTurn(
 
 export function classifierRefusal(): CannedResponse {
   return { content: [], stop_reason: 'refusal' };
+}
+
+/** A web-search round as the live API shapes it: the server tool ran on
+ *  Anthropic infra and its results are content blocks in the SAME message. */
+export function researchTurn(urls: string[]): CannedResponse {
+  return {
+    content: [
+      { type: 'server_tool_use', id: 'st_1', name: 'web_search',
+        input: { query: 'prior art' } },
+      { type: 'web_search_tool_result', tool_use_id: 'st_1',
+        content: urls.map((url) => ({
+          type: 'web_search_result', url, title: url, page_age: null,
+        })) },
+      { type: 'text', text: 'Found some prior art.' },
+    ],
+    stop_reason: 'end_turn',
+  };
 }

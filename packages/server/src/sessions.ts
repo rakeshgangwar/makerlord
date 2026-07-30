@@ -46,6 +46,12 @@ export interface HostOptions {
   acpArgs?: string[];
   /** Path to maker-mcp's entry; the ACP agent gets it as an MCP server. */
   mcpPath?: string;
+  /** Adds the web_search/web_fetch server tools to the SDK agent (§8). */
+  webResearch?: boolean;
+  /** Server-side compaction (beta compact-2026-01-12). Defaults ON for the
+   *  hosted agent: the protected-tail eval passed live 2026-07-30
+   *  (scripts/eval-compaction.mjs — 154k→579 tokens, all facts survived). */
+  compactionBeta?: boolean;
 }
 
 /**
@@ -180,6 +186,8 @@ export class HostedSessions {
       bundle: bundle(),
     };
     if (this.opts.model) agentOpts.model = this.opts.model;
+    if (this.opts.webResearch) agentOpts.webResearch = true;
+    agentOpts.compactionBeta = this.opts.compactionBeta ?? true;
     return new AgentSession(agentOpts);
   }
 

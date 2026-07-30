@@ -23,10 +23,10 @@ would produce untested claims — the thing this project exists to avoid.
 |---|---|---|---|
 | **Streaming transport** (agent) ✅ | Resolved 2026-07-29 with the go-live cluster: the agent streams by default, and the fake LLM speaks real Anthropic SSE so every loop test covers the streaming wire. | — | done |
 | **SSE / WS live wiring** ✅ | Both paths resolved 2026-07-29. Hosted: SSE with `Last-Event-ID` replay. Bridge: `maker-bridge` daemon — origin-pinned, paired localhost WS spawning the maker's own agent, whose tools execute on the hosted engine via maker-mcp remote mode. Verified live: a browser turn answered by local Claude Code calling hosted `project_status`/`check_circuit`. | — | done |
-| **Server-side compaction beta** (agent) ⚠️ | Pass-through landed (a `compactionBeta` option adds the beta header); local gating + protected tail remain the active path. Remaining: the live eval asserting the protected tail survives a real server-side compaction, then flip the default. | Live eval + default flip. | ½ day |
-| **Web-research live execution** (agent) ⚠️ | Config landed (a `webResearch` option adds the server-tool defs), off by default. Remaining: enable on the hosted agent, verify the tool type against the live API, map citations → `evidence.url`/`fetchedAt`. | ½ day, live |
+| **Server-side compaction beta** (agent) ✅ | Resolved 2026-07-30. The pass-through was incomplete — the header alone does nothing; the `context_management.edits[{type:'compact_20260112'}]` param is what engages it (now sent). The protected-tail eval (`scripts/eval-compaction.mjs`) ran live on claude-opus-5: a 154k-token history compacted to a 579-token round-2 request and all three planted facts (build step, open BLOCKER rule id, measurement) survived from the summary alone. Default flipped ON for the hosted agent (`MAKERLORD_COMPACTION=0` disables); local gating + protected tail stay as the deterministic backstop. Eval caveat worth keeping: mass-prefilled assistant turns and synthetic numeric filler both drew classifier refusals — which return an EMPTY compaction block. | — | done |
+| **Web-research live execution** (agent) ✅ | Resolved 2026-07-30, live on makerlord.dev (`MAKERLORD_WEB_RESEARCH=1`). Tool types verified live: `web_search_20260209` + `web_fetch_20260209`, GA, no beta header (the spec §8 strings were right). The loop now enforces spec §8's standard of proof: a session ledger of actually-fetched URLs; a `sourced` claim citing an unfetched URL is refused (`EVIDENCE_UNFETCHED`); the ledger's fetchedAt always overrides the model's (observed live: the model supplies the page's *publication* date). End-to-end verified: a hosted agent turn searched, cited a real result URL, claim landed. | — | done |
 
-**Status of A:** the go-live plan shipped 2026-07-29 — makerlord.dev is live (TLS, basic auth over the shell, bearer token over the API). The three ⚠️ residues above are live-API verifications, not builds.
+**Status of A:** fully resolved as of 2026-07-30 — makerlord.dev is live (TLS, basic auth over the shell, bearer token over the API), with web research and server-side compaction both verified against the live API and enabled on the hosted agent.
 
 ## B. Blocked on content and curation — human-verified, not code
 
@@ -60,4 +60,4 @@ projects were backfilled.
 
 ## Suggested order
 
-1. ~~CI~~ ✅ → 2. ~~The three unblocked rules~~ ✅ → 3. ~~Playwright~~ ✅ → 4. **The live-API residues** (compaction eval, web research) → 5. **Curation drip** running underneath it all (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them.
+1. ~~CI~~ ✅ → 2. ~~The three unblocked rules~~ ✅ → 3. ~~Playwright~~ ✅ → 4. ~~The live-API residues~~ ✅ → 5. **Curation drip** (LiPo part unlocks the fourth rule) → 6. Stage specs ⑦/⑧/⑨ bring the viewer and packaging with them. Cross-cutting, when wanted: sampled prose evals (own spec), library/inventory split, PNG-from-CSV.

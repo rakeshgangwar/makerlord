@@ -12,7 +12,8 @@ export type RefusalCode =
   | 'BLOCK_UNDECIDED'
   | 'MAINS_ON_BREADBOARD'
   | 'TIER_NOT_OPEN'
-  | 'STALE_PROJECT';
+  | 'STALE_PROJECT'
+  | 'EVIDENCE_UNFETCHED';
 
 export type ToolResult<T> =
   | { ok: true; data: T }
