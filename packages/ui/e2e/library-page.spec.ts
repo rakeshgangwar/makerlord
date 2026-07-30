@@ -27,6 +27,9 @@ test('the rail links to the library page', async ({ page }) => {
 test('owning a part from the gap moves it into inventory', async ({ page }) => {
   await page.goto(`/library?p=${GOLDEN}`);
   const gapRows = page.locator('.gap li');
+  // count() does not auto-wait — anchor on visibility first, or a cold
+  // server loses the race and reads an empty gap.
+  await expect(gapRows.first()).toBeVisible();
   const before = await gapRows.count();
   expect(before).toBeGreaterThan(0);
   await page.locator('.gap .own-inline').first().click();
