@@ -6,6 +6,7 @@ import {
   burnInvite, createInvite, createSession, createUser, findUserByHandle,
   getSession, listInvites, mintToken, resolveToken, storeCredential,
   credentialsForUser, allCredentials, touchSession, deleteSession, listUsers,
+  setProviderConfig, getProviderConfig, describeProviderConfig, clearProviderConfig,
 } from '../src/stores.js';
 
 /**
@@ -81,5 +82,23 @@ describe('tokens — shown once, stored hashed', () => {
     const raw = readFileSync(
       join(process.env.MAKERLORD_USERS_PATH!, 'tokens.json'), 'utf8');
     expect(raw).not.toContain(clear.slice(4));
+  });
+});
+
+describe('BYOK provider configs — keys encrypted at rest, masked outward', () => {
+  it('round-trips, never stores the clear key, masks the description', () => {
+    const u = createUser('keyed');
+    setProviderConfig(u.id, {
+      provider: 'openrouter', model: 'meta-llama/llama-4', apiKey: 'sk-or-secret-tail9',
+    });
+    expect(getProviderConfig(u.id)?.apiKey).toBe('sk-or-secret-tail9');
+    const raw = readFileSync(
+      join(process.env.MAKERLORD_USERS_PATH!, 'providers.json'), 'utf8');
+    expect(raw).not.toContain('sk-or-secret');
+    expect(describeProviderConfig(u.id)).toEqual({
+      provider: 'openrouter', model: 'meta-llama/llama-4', keyTail: 'ail9',
+    });
+    clearProviderConfig(u.id);
+    expect(getProviderConfig(u.id)).toBeNull();
   });
 });

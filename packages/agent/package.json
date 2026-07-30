@@ -5,11 +5,17 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@ai-sdk/google": "^4.0.28",
+    "@ai-sdk/groq": "^4.0.16",
+    "@ai-sdk/mistral": "^4.0.17",
+    "@ai-sdk/openai": "^4.0.24",
+    "@ai-sdk/openai-compatible": "^3.0.17",
     "@anthropic-ai/sdk": "^0.57.0",
     "@makerlord/circuit": "workspace:*",
     "@makerlord/parts": "workspace:*",
     "@makerlord/protocol": "workspace:*",
     "@makerlord/tools": "workspace:*",
+    "ai": "^7.0.42",
     "zod": "^3.23.0",
     "zod-to-json-schema": "^3.23.0"
   }

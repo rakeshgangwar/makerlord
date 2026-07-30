@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { dirname } from 'node:path';
-import { resolveToken } from '@makerlord/auth';
+import { clearProviderConfig, describeProviderConfig, resolveToken, setProviderConfig } from '@makerlord/auth';
 import { buildSequence } from '@makerlord/circuit';
 import {
   ALL_TOOLS, circuitRuleContext, loadSession, runTool,
@@ -191,6 +191,39 @@ async function route(
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
     return;
+  }
+
+  // BYOK provider config (2026-07-31): set/inspect/clear the maker's own
+  // model provider. The key goes in once and only its tail comes back.
+  if (path === '/api/provider') {
+    if (req.method === 'GET') {
+      json(res, 200, { config: describeProviderConfig(user) });
+      return;
+    }
+    if (req.method === 'POST') {
+      const { provider, model, apiKey, baseURL } = await readBody(req);
+      const PROVIDERS = ['anthropic', 'openai', 'google', 'mistral', 'groq',
+        'openrouter', 'deepseek', 'xai', 'ollama', 'custom'];
+      if (typeof provider !== 'string' || !PROVIDERS.includes(provider) || typeof model !== 'string' || !model
+          || typeof apiKey !== 'string' || !apiKey) {
+        json(res, 400, { error: 'provider, model and apiKey are required' });
+        return;
+      }
+      if (provider === 'custom' && typeof baseURL !== 'string') {
+        json(res, 400, { error: 'a custom provider needs a baseURL' });
+        return;
+      }
+      const cfg = { provider, model, apiKey: apiKey as string };
+      if (typeof baseURL === 'string' && baseURL) Object.assign(cfg, { baseURL });
+      setProviderConfig(user, cfg);
+      json(res, 200, { config: describeProviderConfig(user) });
+      return;
+    }
+    if (req.method === 'DELETE') {
+      clearProviderConfig(user);
+      json(res, 200, { config: null });
+      return;
+    }
   }
 
   // The conversation, persisted with the project.

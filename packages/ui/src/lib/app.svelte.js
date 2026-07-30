@@ -5,7 +5,7 @@ import { inferStage } from '$lib/postures.js';
 
 /** localStorage can throw in sandboxed iframes (design previews, embeds) —
  *  degrade to memory-less rather than crash the bundle. */
-const store = {
+export const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* sandboxed */ } },
   del(k) { try { localStorage.removeItem(k); } catch { /* sandboxed */ } },

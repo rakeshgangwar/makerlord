@@ -4,7 +4,8 @@ import {
 } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
-import { AgentSession } from '@makerlord/agent';
+import { AgentSession, AiSdkSession, resolveModel, type ProviderConfig } from '@makerlord/agent';
+import { getProviderConfig } from '@makerlord/auth';
 import { loadPack } from '@makerlord/agent';
 import {
   commitAll, initProjectRepo, logDetailed, writeAllArtifacts,
@@ -118,7 +119,7 @@ export class HostedSessions {
     const projectDir = this.projectDir(userId, projectId);
     const agent = this.opts.backend === 'acp'
       ? await this.acpAgent(projectDir)
-      : this.sdkAgent(projectDir);
+      : this.sdkAgent(projectDir, userId);
     const sessionId = randomBytes(12).toString('hex');
     this.sessions.set(sessionId, {
       projectDir,
@@ -176,10 +177,24 @@ export class HostedSessions {
     };
   }
 
-  private sdkAgent(projectDir: string): AgentLike {
+  private sdkAgent(projectDir: string, userId?: string): AgentLike {
     const toolSession = loadSession(join(projectDir, 'project.json'));
+    // BYOK (2026-07-31): a maker with their own provider config drives
+    // the same engine on their own key. 'anthropic' uses the native
+    // loop (web research, thinking); everything else the AI SDK loop.
+    const byok = userId ? getProviderConfig(userId) : null;
+    if (byok && byok.provider !== 'anthropic') {
+      return new AiSdkSession({
+        model: resolveModel(byok as ProviderConfig),
+        toolSession,
+        cwd: projectDir,
+        pack: loadPack(projectDir),
+        stage: this.opts.stage ?? 1,
+        bundle: bundle(),
+      });
+    }
     const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-      apiKey: this.opts.apiKey,
+      apiKey: byok?.apiKey ?? this.opts.apiKey,
       timeout: 600_000,
     };
     if (this.opts.baseURL) clientConfig.baseURL = this.opts.baseURL;
@@ -191,7 +206,8 @@ export class HostedSessions {
       stage: this.opts.stage ?? 1,
       bundle: bundle(),
     };
-    if (this.opts.model) agentOpts.model = this.opts.model;
+    if (byok?.model) agentOpts.model = byok.model;
+    else if (this.opts.model) agentOpts.model = this.opts.model;
     if (this.opts.webResearch) agentOpts.webResearch = true;
     agentOpts.compactionBeta = this.opts.compactionBeta ?? true;
     return new AgentSession(agentOpts);

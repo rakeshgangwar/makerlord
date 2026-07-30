@@ -204,3 +204,84 @@ export function resolveToken(clear: string): string | null {
   const tokens = readStore<Record<string, TokenRecord>>('tokens.json', {});
   return tokens[createHash('sha256').update(clear).digest('hex')]?.userId ?? null;
 }
+
+// ── BYOK provider configs (2026-07-31) ────────────────────────────────
+// The maker's own model keys, AES-256-GCM at rest. The clear key exists
+// server-side only at session-construction time; the browser gets the
+// last four characters and nothing more.
+
+import { createCipheriv, createDecipheriv, createHash as sha } from 'node:crypto';
+
+export interface ProviderConfigStored {
+  provider: string;
+  model: string;
+  baseURL?: string;
+  key: { iv: string; tag: string; data: string };
+}
+
+function keyMaterial(): Buffer {
+  const secret =
+    process.env.MAKERLORD_KEY_SECRET ?? process.env.MAKERLORD_ACCESS_TOKEN ?? 'dev-insecure';
+  return sha('sha256').update(secret).digest();
+}
+
+function encrypt(clear: string): ProviderConfigStored['key'] {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', keyMaterial(), iv);
+  const data = Buffer.concat([cipher.update(clear, 'utf8'), cipher.final()]);
+  return {
+    iv: iv.toString('base64'),
+    tag: cipher.getAuthTag().toString('base64'),
+    data: data.toString('base64'),
+  };
+}
+
+function decrypt(key: ProviderConfigStored['key']): string {
+  const decipher = createDecipheriv(
+    'aes-256-gcm', keyMaterial(), Buffer.from(key.iv, 'base64'));
+  decipher.setAuthTag(Buffer.from(key.tag, 'base64'));
+  return Buffer.concat([
+    decipher.update(Buffer.from(key.data, 'base64')), decipher.final(),
+  ]).toString('utf8');
+}
+
+export function setProviderConfig(
+  userId: string,
+  cfg: { provider: string; model: string; apiKey: string; baseURL?: string },
+): void {
+  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
+  const stored: ProviderConfigStored = {
+    provider: cfg.provider, model: cfg.model, key: encrypt(cfg.apiKey),
+  };
+  if (cfg.baseURL) stored.baseURL = cfg.baseURL;
+  all[userId] = stored;
+  writeStore('providers.json', all);
+}
+
+export function getProviderConfig(
+  userId: string,
+): { provider: string; model: string; apiKey: string; baseURL?: string } | null {
+  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
+  const stored = all[userId];
+  if (!stored) return null;
+  const out: { provider: string; model: string; apiKey: string; baseURL?: string } = {
+    provider: stored.provider, model: stored.model, apiKey: decrypt(stored.key),
+  };
+  if (stored.baseURL) out.baseURL = stored.baseURL;
+  return out;
+}
+
+/** What the browser may see: no key material beyond the tail. */
+export function describeProviderConfig(
+  userId: string,
+): { provider: string; model: string; keyTail: string } | null {
+  const cfg = getProviderConfig(userId);
+  if (!cfg) return null;
+  return { provider: cfg.provider, model: cfg.model, keyTail: cfg.apiKey.slice(-4) };
+}
+
+export function clearProviderConfig(userId: string): void {
+  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
+  delete all[userId];
+  writeStore('providers.json', all);
+}
