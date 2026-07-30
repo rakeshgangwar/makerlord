@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **MakerLord** is a complete assistant for the maker's journey — idea → simulate →
 prototype → product → production, across 17 stages. **All seven design specs
 are implemented and deployed at makerlord.dev** (deploy: `./deploy/deploy.sh
-sync`; infra details in `docs/infra.md`). Fifteen packages: `parts`,
+sync`; infra details in `docs/infra.md`). Sixteen packages: `auth`
+(invites, passkey credentials, sessions, per-user `mlt_` tokens — D52-D54), `parts`,
 `circuit`, `project`, `tools` (the 50-tool registry), `cli` (`maker`), `mcp`
 (`maker-mcp`), `protocol`, `bridge` (`maker-bridge`), `agent`, `sim`,
 `firmware` (stage ⑦: pin plans, cross-checks, codegen, compile gate),
@@ -16,7 +17,7 @@ sync`; infra details in `docs/infra.md`). Fifteen packages: `parts`,
 API), and `ui` (SvelteKit; `pnpm --filter @makerlord/ui build`). Development follows the
 plans in `docs/superpowers/plans/` **task-by-task, strict TDD**; each plan's
 checkboxes record what is done. The specs and plans in `docs/` remain the
-source of truth for all design intent; `docs/decisions.md` (D1–D48) is the
+source of truth for all design intent; `docs/decisions.md` (D1–D54) is the
 decision log. Phase 2/3 scoping and the stage-⑦ firmware spec
 (2026-07-30) are approved and next to implement.
 

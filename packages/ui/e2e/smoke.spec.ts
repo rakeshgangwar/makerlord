@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { signIn } from './helpers.js';
 
 /**
  * The harness proof: both webServers up, both seeded projects visible
  * through the real front door, and opening one renders the shell.
  */
 test('front door lists the seeded projects', async ({ page }) => {
+  await signIn(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /what do you/i })).toBeVisible();
   await expect(page.getByText('a desk lamp indicator')).toBeVisible();
@@ -12,6 +14,7 @@ test('front door lists the seeded projects', async ({ page }) => {
 });
 
 test('opening the golden project renders the stage rail', async ({ page }) => {
+  await signIn(page);
   await page.goto('/');
   await page.getByText('a desk lamp indicator').click();
   await expect(page.getByRole('navigation', { name: 'Stages' })).toBeVisible();

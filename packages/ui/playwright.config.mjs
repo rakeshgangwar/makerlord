@@ -12,6 +12,10 @@ const __dirname = resolve(fileURLToPath(import.meta.url), '..');
  */
 const repo = resolve(__dirname, '../..');
 const projectsRoot = resolve(__dirname, 'e2e/.projects');
+// One users store shared by the seeder, the workers, and both servers —
+// assigning here runs in every Playwright process that loads the config.
+const usersRoot = resolve(__dirname, 'e2e/.users');
+process.env.MAKERLORD_USERS_PATH = usersRoot;
 
 export default defineConfig({
   testDir: './e2e',
@@ -41,6 +45,7 @@ export default defineConfig({
         MAKERLORD_PROFILES_PATH: resolve(repo, 'data/profiles'),
         MAKERLORD_CURATED_PATH: resolve(repo, 'data/curated.json'),
         MAKERLORD_BOARD_GRID_PATH: resolve(repo, 'data/boards/half-breadboard.json'),
+        MAKERLORD_USERS_PATH: usersRoot,
       },
     },
     {
@@ -55,6 +60,7 @@ export default defineConfig({
         MAKERLORD_PROFILES_PATH: resolve(repo, 'data/profiles'),
         MAKERLORD_CURATED_PATH: resolve(repo, 'data/curated.json'),
         MAKERLORD_BOARD_GRID_PATH: resolve(repo, 'data/boards/half-breadboard.json'),
+        MAKERLORD_USERS_PATH: usersRoot,
       },
     },
   ],

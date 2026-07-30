@@ -34,11 +34,13 @@ Start at the top. Each document assumes the ones above it.
 | 14 | [superpowers/specs/2026-07-30-firmware-design.md](superpowers/specs/2026-07-30-firmware-design.md) | **The design spec** for stage ⑦ — the role-symbol contract, cross-checks, compile gate | Before building firmware |
 | 14b | [superpowers/specs/2026-07-30-debug-design.md](superpowers/specs/2026-07-30-debug-design.md) | **The design spec** for stage ⑧ — faults as mutations, the guided search | After the firmware spec |
 | 14c | [superpowers/specs/2026-07-30-curation-pipeline-design.md](superpowers/specs/2026-07-30-curation-pipeline-design.md) | **The design spec** for the curation pipeline — tiers, proposals, human-only promotion | When growing the library |
+| 14d | [superpowers/specs/2026-07-30-auth-design.md](superpowers/specs/2026-07-30-auth-design.md) | **The design spec** for auth — invites, passkeys, per-user projects (D52–D54) | When touching identity or ownership |
 | 15 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
 | 16 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
 | 16b | [superpowers/plans/2026-07-30-firmware.md](superpowers/plans/2026-07-30-firmware.md) | Implementation plan for stage ⑦, 18 TDD tasks in three slices | With the firmware spec |
 | 16c | [superpowers/plans/2026-07-30-debug.md](superpowers/plans/2026-07-30-debug.md) | Implementation plan for stage ⑧, 10 TDD tasks | With the debug spec |
 | 16d | [superpowers/plans/2026-07-30-curation-pipeline.md](superpowers/plans/2026-07-30-curation-pipeline.md) | Implementation plan for the curation pipeline, 8 tasks | With the curation spec |
+| 16e | [superpowers/plans/2026-07-30-auth.md](superpowers/plans/2026-07-30-auth.md) | Implementation plan for auth, 7 tasks | With the auth spec |
 | 17 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
 | 18 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
 | 19 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |

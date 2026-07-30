@@ -26,7 +26,9 @@ echo "== sync tree"
 rsync -az --delete \
   --exclude .git --exclude node_modules --exclude vendor --exclude .env \
   --exclude .svelte-kit --exclude 'packages/ui/build' --exclude dist \
-  --exclude projects --exclude data/proposals --exclude data/datasheets --exclude '*.tsbuildinfo' \
+  --exclude projects --exclude users --exclude data/proposals --exclude data/datasheets \
+  --exclude 'packages/ui/e2e/.projects' --exclude 'packages/ui/e2e/.users' --exclude 'packages/ui/e2e/.auth.json' \
+  --exclude 'packages/ui/test-results' --exclude '*.tsbuildinfo' \
   ./ "$HOST:$DIR/"
 
 echo "== secrets (.env stays out of the sync; token appended once)"

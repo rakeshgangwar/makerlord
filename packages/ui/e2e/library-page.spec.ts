@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { GOLDEN } from './helpers.js';
+import { signIn, GOLDEN } from './helpers.js';
 
 /** The full library & inventory page — the sidebar stays the picker;
  *  this is the browse, with every part honest about its tier. */
 
 test('the library page renders gap, inventory and the tiered catalog', async ({ page }) => {
+  await signIn(page);
   await page.goto(`/library?p=${GOLDEN}`);
   await expect(page.getByRole('heading', { name: 'Library & Inventory' })).toBeVisible();
   // The golden build needs parts nobody owns yet — the gap shows them.
@@ -18,6 +19,7 @@ test('the library page renders gap, inventory and the tiered catalog', async ({ 
 });
 
 test('the rail links to the library page', async ({ page }) => {
+  await signIn(page);
   await page.goto(`/?p=${GOLDEN}&stage=4`);
   await page.getByRole('link', { name: /library & inventory/ }).click();
   await expect(page).toHaveURL(/\/library/);
@@ -25,6 +27,7 @@ test('the rail links to the library page', async ({ page }) => {
 });
 
 test('owning a part from the gap moves it into inventory', async ({ page }) => {
+  await signIn(page);
   await page.goto(`/library?p=${GOLDEN}`);
   const gapRows = page.locator('.gap li');
   // count() does not auto-wait — anchor on visibility first, or a cold
@@ -42,6 +45,7 @@ test('a geometry part offers both roads: agent research and datasheet upload', a
   // First corpus browse builds the ~1,800-part index server-side — give
   // a cold CI runner real headroom.
   test.setTimeout(120_000);
+  await signIn(page);
   await page.goto(`/library?p=${GOLDEN}`);
   await page.getByLabel('search parts').fill('buzzer');
   // The corpus toggle surfaces geometry parts (first call builds the index).

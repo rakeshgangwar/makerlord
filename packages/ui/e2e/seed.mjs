@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync, rmSync } from 'node:fs';
+import { appendFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,11 +24,17 @@ process.env.MAKERLORD_BOARD_GRID_PATH ??= join(repo, 'data/boards/half-breadboar
 process.env.MAKERLORD_PROFILES_PATH ??= join(repo, 'data/profiles');
 process.env.MAKERLORD_FRITZING_PATH ??= join(repo, 'vendor/fritzing-parts');
 
+process.env.MAKERLORD_USERS_PATH ??= join(here, '.users');
+
 const tools = await import('../../tools/dist/index.js');
 const artifacts = await import('../../artifacts/dist/index.js');
+const auth = await import('../../auth/dist/index.js');
+
+// D54: projects live under their owner. The seeder IS the first user.
+let USER_ROOT = ROOT;
 
 async function seedProject(id, intent, script) {
-  const dir = join(ROOT, id);
+  const dir = join(USER_ROOT, id);
   mkdirSync(dir, { recursive: true });
   const session = tools.initProjectFile(join(dir, 'project.json'), intent);
   const ctx = { session, cwd: dir };
@@ -62,6 +68,17 @@ function ledOrigin() {
 export default async function seed() {
   rmSync(ROOT, { recursive: true, force: true });
   mkdirSync(ROOT, { recursive: true });
+
+  // ── the test maker: user + live session the specs sign in with ──────
+  rmSync(process.env.MAKERLORD_USERS_PATH, { recursive: true, force: true });
+  const user = auth.createUser('e2e-maker');
+  const sid = auth.createSession(user.id);
+  writeFileSync(
+    join(here, '.auth.json'),
+    JSON.stringify({ sid, userId: user.id, handle: user.handle }),
+  );
+  USER_ROOT = join(ROOT, user.id);
+  mkdirSync(USER_ROOT, { recursive: true });
 
   // ── golden: the tool-surface §7 script, clean ─────────────────────────
   await seedProject(GOLDEN, 'a desk lamp indicator', async (step, ctx) => {
@@ -160,7 +177,7 @@ export default async function seed() {
       { kind: 'event', event: { t: 'turn.end' } },
     ];
     for (const record of transcript) {
-      appendFileSync(join(ROOT, DANGER, 'transcript.jsonl'), `${JSON.stringify(record)}\n`);
+      appendFileSync(join(USER_ROOT, DANGER, 'transcript.jsonl'), `${JSON.stringify(record)}\n`);
     }
   });
 

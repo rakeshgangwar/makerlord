@@ -1190,3 +1190,49 @@ defined where agents live.
 **Rejected — an agent-callable promote behind a confirmation:** a
 confirmation is one fluent prompt away from wrong; the precedent
 applies unchanged.
+
+---
+
+## D52 — Admission is human-minted, identity is a passkey
+
+*2026-07-30. Auth spec §2.*
+
+`maker invite new` (maintainer CLI only — the D51 pattern) mints a
+single-use, 7-day code; registration is `/join` + code + handle +
+WebAuthn `create()`, login is usernameless `get()`. No password field
+exists in any schema, so no password can leak, be reset, or be phished.
+
+**Rejected — GitHub OAuth:** a third party in the trust chain and an
+app registration to manage. **Rejected — email+password:** password
+storage plus reset infrastructure for a capability passkeys give free.
+
+---
+
+## D53 — The UI server is the sole authenticator
+
+*2026-07-30. Auth spec §2.*
+
+The SvelteKit server owns the WebAuthn ceremonies and the httpOnly
+session cookie (30-day sliding, server-side store). The API never sees
+a cookie: it accepts the internal service token **plus** an
+`x-makerlord-user` header the UI server stamps, or a per-user `mlt_`
+token (the bridge's path). Every API request maps to a user id or dies
+401 — the service token alone authorizes nothing.
+
+**Rejected — sessions in the API:** two session systems. **Rejected —
+trusting the user header alone:** spoofable without the service token.
+
+---
+
+## D54 — Projects are per-user; the library is a commons
+
+*2026-07-30. Auth spec §2.*
+
+Storage becomes `projects/<userId>/<projectId>`; the layout IS the
+ownership model, and cross-user access 404s — existence is private
+too. The curated library, proposals queue and datasheet store stay
+global: a part verified once is verified for everyone (curation spec
+§7).
+
+**Rejected — per-user libraries:** they starve the communal demand
+signal and fork the ground truth D50 tiers depend on.

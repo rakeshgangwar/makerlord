@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { GOLDEN, openProject, pickStage } from './helpers.js';
+import { signIn, GOLDEN, openProject, pickStage } from './helpers.js';
 
 /**
  * Stages are PAGES: the URL carries ?stage= and ?p=, so refresh keeps
@@ -26,6 +26,7 @@ test('refresh keeps the stage you were on — not the inferred one', async ({ pa
 });
 
 test('a stage URL deep-links directly', async ({ page }) => {
+  await signIn(page);
   await page.goto(`/?p=${GOLDEN}&stage=3`);
   await expect(page.locator('.req-table')).toBeVisible();
 });

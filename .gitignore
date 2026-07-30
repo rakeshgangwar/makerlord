@@ -13,3 +13,6 @@ ds-bundle/
 /dist/
 packages/ui/test-results/
 packages/ui/playwright-report/
+packages/ui/e2e/.projects/
+packages/ui/e2e/.users/
+packages/ui/e2e/.auth.json
