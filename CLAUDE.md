@@ -14,8 +14,9 @@ sync`; infra details in `docs/infra.md`). Thirteen packages: `parts`,
 API), and `ui` (SvelteKit; `pnpm --filter @makerlord/ui build`). Development follows the
 plans in `docs/superpowers/plans/` **task-by-task, strict TDD**; each plan's
 checkboxes record what is done. The specs and plans in `docs/` remain the
-source of truth for all design intent; `docs/decisions.md` (D1–D44) is the
-decision log.
+source of truth for all design intent; `docs/decisions.md` (D1–D48) is the
+decision log. Phase 2/3 scoping and the stage-⑦ firmware spec
+(2026-07-30) are approved and next to implement.
 
 The Tier-1 danger corpus (`packages/circuit/test/danger-corpus.test.ts`) is
 release-blocking: a failure there is not a flaky test, it is a maker's

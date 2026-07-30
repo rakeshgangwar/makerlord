@@ -1076,3 +1076,56 @@ is deterministic for a given graph, so golden-equality tests still hold.
 Record the decision, the date, **the alternatives you rejected**, and the
 consequence. The rejected options are the most valuable part — without them the
 next person re-derives the same dead ends.
+
+---
+
+## D46 — The role-symbol contract: code never names a pin
+
+*2026-07-30. Firmware spec §1, §4.*
+
+Application code references engine-bound roles (`MOISTURE_SENSE`), never
+pins (`A0`, `GPIO14`). `pins.h` is a pure projection of the netlist; a raw
+pin literal in the agent-authored region is a BLOCKER-severity finding
+(`RULE_FW_RAW_PIN_LITERAL`), enforced by a lint table over pin vocabularies
+and pin-position call sites. This is the hole-ID move applied to firmware:
+drift becomes structurally impossible because the drifting name is never in
+the code.
+
+**Rejected — trusting generation/review:** drift is silent and cumulative;
+the failure mode (pin OUTPUT into ground) destroys hardware.
+
+**Rejected — full C++ parsing:** a compiler frontend's weight for a
+guarantee the lint table already makes mechanical over one bounded region.
+
+---
+
+## D47 — Flashing is powering
+
+*2026-07-30. Firmware spec §6.*
+
+Plugging USB into the MCU energises the breadboard through its regulator —
+a flash *is* a power-up. So `fw_manifest` (which releases `firmware.bin` and
+flash parameters to the browser) sits behind the same engine-enforced gate
+as the bench power-up: measurements recorded, `gate_open`, no live BLOCKER.
+
+**Rejected — a separate USB gate:** two gates for one physical act teaches
+the maker the gates are bureaucracy.
+
+**Rejected — ungated flashing:** contradicts the wedge's core promise the
+first time firmware drives a miswired pin.
+
+---
+
+## D48 — GPIO capability is a hand-authored curated facet
+
+*2026-07-30. Firmware spec §3.*
+
+Per-pin capabilities (digital/analog/PWM/interrupt), strapping-pin boot
+requirements, analog voltage domains, `fqbn` and flash protocol are
+datasheet-cited curation on MCU profiles — the same treatment as every
+safety limit. Slice 1 covers the two curated MCUs (Uno, D1 mini).
+
+**Rejected — deriving from Arduino core headers:** the headers say what
+compiles, not what boots — strapping pins and board-level analog dividers
+(D1 mini's A0) live only in datasheets and schematics, and those are
+exactly the fields the BLOCKER rules stand on.

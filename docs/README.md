@@ -30,13 +30,15 @@ Start at the top. Each document assumes the ones above it.
 | 10 | [superpowers/specs/2026-07-29-agent-runtime-design.md](superpowers/specs/2026-07-29-agent-runtime-design.md) | **The design spec** for our own agent — loop, context, personas | After the ACP host |
 | 11 | [superpowers/specs/2026-07-29-ui-design.md](superpowers/specs/2026-07-29-ui-design.md) | **The design spec** for the web app, all 17 stages | Before building the front end |
 | 12 | [superpowers/specs/2026-07-29-simulation-design.md](superpowers/specs/2026-07-29-simulation-design.md) | **The design spec** for stage ⑤, ngspice | With Phase 2 |
-| 13 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
-| 14 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
-| 15 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
-| 16 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
-| 17 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
-| 18 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
-| 19 | [deferred-work.md](deferred-work.md) | Every deferral — why, scope, trigger | When picking up the next piece of work |
+| 13 | [superpowers/specs/2026-07-30-phase-2-3-scoping.md](superpowers/specs/2026-07-30-phase-2-3-scoping.md) | **Scoping** for stages ⑦⑧⑨ — what each spec inherits and must decide | Before the ⑦⑧⑨ specs |
+| 14 | [superpowers/specs/2026-07-30-firmware-design.md](superpowers/specs/2026-07-30-firmware-design.md) | **The design spec** for stage ⑦ — the role-symbol contract, cross-checks, compile gate | Before building firmware |
+| 15 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
+| 16 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
+| 17 | [decisions.md](decisions.md) | Decision log — what was chosen, what was rejected, why | When tempted to change something |
+| 18 | [corpus-findings.md](corpus-findings.md) | Measured facts about the Fritzing corpus | When touching the ETL or board model |
+| 19 | [references.md](references.md) | External sources, licences, API limits | When integrating anything external |
+| 20 | [HANDOFF.md](HANDOFF.md) | Machine migration context | When moving to the PopOS box |
+| 21 | [deferred-work.md](deferred-work.md) | Every deferral — why, scope, trigger | When picking up the next piece of work |
 
 Rows 6–12 are the seven design specs. Rows 6–8 and 9–11 are the two clusters
 you'll read together: **the stages** (prototype, front door) and **the layers**
