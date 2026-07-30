@@ -50,14 +50,14 @@
     animation: lamp-pulse 1.2s ease-in-out infinite;
   }
   @keyframes lamp-pulse { 50% { box-shadow: 0 0 14px var(--sev-blocker); } }
-  .readout-text { font-size: 0.78rem; letter-spacing: 0.06em; }
+  .readout-text { font-size: var(--t-sm); letter-spacing: 0.06em; }
   .cards { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.55rem; max-height: 28vh; overflow-y: auto; }
   .finding {
     background: #2c3236; border-left: 4px solid var(--sev);
-    border-radius: 6px; padding: 0.5rem 0.85rem;
+    border-radius: var(--r-md); padding: 0.5rem 0.85rem;
   }
-  .finding .sev { font-weight: 700; color: var(--sev); font-size: 0.85rem; filter: brightness(1.5); }
-  .finding .rule { margin-left: 0.6rem; font-size: 0.75rem; color: #9aa4ab; }
-  .finding .claim { margin: 0.25rem 0 0; font-size: 0.92rem; }
-  .finding .fix { margin: 0.2rem 0 0; font-size: 0.85rem; color: #b9c3c0; }
+  .finding .sev { font-weight: 700; color: var(--sev); font-size: var(--t-sm); filter: brightness(1.5); }
+  .finding .rule { margin-left: 0.6rem; font-size: var(--t-sm); color: #9aa4ab; }
+  .finding .claim { margin: 0.25rem 0 0; font-size: var(--t-md); }
+  .finding .fix { margin: 0.2rem 0 0; font-size: var(--t-sm); color: #b9c3c0; }
 </style>

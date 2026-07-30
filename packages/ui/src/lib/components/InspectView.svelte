@@ -74,11 +74,11 @@
 <style>
   .canvas-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
   .canvas-row figure {
-    margin: 0; background: var(--panel); border-radius: 8px; padding: 0.6rem;
+    margin: 0; background: var(--panel); border-radius: var(--r-md); padding: 0.6rem;
     box-shadow: 0 1px 3px rgb(20 24 27 / 8%); width: 380px;
   }
   .canvas-row figcaption {
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
   }
   .canvas-row figure :global(.viewer) { height: 240px; }
@@ -87,10 +87,10 @@
 
   .inspect-actions { display: flex; gap: 0.6rem; align-items: center; }
   .sim-btn { margin-top: 0; }
-  .sim-result { background: var(--panel); border-radius: 8px; padding: 0.8rem 1rem; margin-top: 0.9rem; max-width: 40rem; }
-  .sim-head { font-size: 0.78rem; letter-spacing: 0.05em; color: var(--ink-soft); }
+  .sim-result { background: var(--panel); border-radius: var(--r-md); padding: 0.8rem 1rem; margin-top: 0.9rem; max-width: 40rem; }
+  .sim-head { font-size: var(--t-sm); letter-spacing: 0.05em; color: var(--ink-soft); }
   .sim-table { border-collapse: collapse; margin: 0.5rem 1.5rem 0.5rem 0; display: inline-table; }
-  .sim-table th, .sim-table td { border: 1px solid var(--line); padding: 0.2rem 0.6rem; font-size: 0.8rem; text-align: left; }
+  .sim-table th, .sim-table td { border: 1px solid var(--line); padding: 0.2rem 0.6rem; font-size: var(--t-sm); text-align: left; }
   .sim-table th { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
-  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.75rem; overflow-x: auto; }
+  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-sm); overflow-x: auto; }
 </style>

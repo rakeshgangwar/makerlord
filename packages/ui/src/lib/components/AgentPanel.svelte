@@ -1,4 +1,5 @@
 <script>
+  import { STAGE_PURPOSE } from '$lib/postures.js';
   import { app, sendPrompt, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
   import MessageList from './MessageList.svelte';
   import ToolTrail from './ToolTrail.svelte';
@@ -74,6 +75,9 @@
   {/if}
 
   <div class="thread" bind:this={log}>
+    {#if app.messages.length === 0 && !app.streamingText}
+      <p class="thread-empty">{STAGE_PURPOSE[app.stage]}</p>
+    {/if}
     <MessageList list={app.messages} streaming={app.streamingText} cursor />
     <ToolTrail />
     {#if app.lastError}<div class="error">{app.lastError}</div>{/if}
@@ -144,6 +148,7 @@
     flex-direction: column; gap: var(--s2); padding: var(--s2) var(--s1);
     font-size: var(--t-sm);
   }
+  .thread-empty { color: var(--ink-soft); font-size: var(--t-sm); margin: var(--s2) var(--s1); }
 
   .agent-foot { border-top: 1px solid var(--line); padding-top: var(--s2); }
   .verbs { display: flex; gap: var(--s3); margin-bottom: var(--s1); }

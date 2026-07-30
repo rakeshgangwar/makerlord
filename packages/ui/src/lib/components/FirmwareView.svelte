@@ -159,28 +159,28 @@
 
 <style>
   .fw { display: flex; flex-direction: column; gap: 0.9rem; }
-  .facet-eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
+  .facet-eyebrow { font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
   .fw-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 0.9rem; }
   @media (max-width: 900px) { .fw-grid { grid-template-columns: 1fr; } }
-  .panel-block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.8rem 1rem; }
-  h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
-  h3 .small { font-weight: 400; font-size: 0.72rem; color: var(--ink-soft); margin-left: 0.4rem; }
-  .empty { color: var(--ink-soft); font-size: 0.85rem; }
+  .panel-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 0.8rem 1rem; }
+  h3 { margin: 0 0 0.6rem; font-size: var(--t-md); }
+  h3 .small { font-weight: 400; font-size: var(--t-xs); color: var(--ink-soft); margin-left: 0.4rem; }
+  .empty { color: var(--ink-soft); font-size: var(--t-sm); }
   .beh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-  .beh-id { font-weight: 600; font-size: 0.8rem; }
-  .beh-kind { background: #eef1f0; border-radius: 4px; padding: 0 0.35rem; font-size: 0.72rem; margin: 0 0.4rem; }
-  .plan-table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
-  .plan-table th { text-align: left; font-size: 0.68rem; color: var(--ink-soft); font-weight: 500; padding: 0.15rem 0.6rem 0.15rem 0; }
+  .beh-id { font-weight: 600; font-size: var(--t-sm); }
+  .beh-kind { background: #eef1f0; border-radius: var(--r-sm); padding: 0 0.35rem; font-size: var(--t-xs); margin: 0 0.4rem; }
+  .plan-table { border-collapse: collapse; width: 100%; font-size: var(--t-sm); }
+  .plan-table th { text-align: left; font-size: var(--t-xs); color: var(--ink-soft); font-weight: 500; padding: 0.15rem 0.6rem 0.15rem 0; }
   .plan-table td { padding: 0.2rem 0.6rem 0.2rem 0; }
   .role { font-weight: 600; }
-  .pin-locked { background: #eef1f0; border-radius: 4px; padding: 0.05rem 0.35rem; font-size: 0.78rem; cursor: not-allowed; }
-  .unbound { color: #b3423a; font-size: 0.8rem; }
+  .pin-locked { background: #eef1f0; border-radius: var(--r-sm); padding: 0.05rem 0.35rem; font-size: var(--t-sm); cursor: not-allowed; }
+  .unbound { color: #b3423a; font-size: var(--t-sm); }
   .row { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
   .verdict.ok { color: #19794d; }
   .verdict.bad { color: #b3423a; }
-  .compile-log { background: var(--meter-face); color: #dfe5e2; font-size: 0.72rem; padding: 0.6rem 0.8rem; border-radius: 8px; max-height: 32vh; overflow: auto; white-space: pre-wrap; }
-  .flash-locked { color: var(--ink-soft); font-size: 0.8rem; }
-  .flash-bar { height: 8px; background: #e4e8e6; border-radius: 4px; margin-top: 0.5rem; overflow: hidden; }
+  .compile-log { background: var(--meter-face); color: #dfe5e2; font-size: var(--t-xs); padding: 0.6rem 0.8rem; border-radius: var(--r-md); max-height: 32vh; overflow: auto; white-space: pre-wrap; }
+  .flash-locked { color: var(--ink-soft); font-size: var(--t-sm); }
+  .flash-bar { height: 8px; background: #e4e8e6; border-radius: var(--r-sm); margin-top: 0.5rem; overflow: hidden; }
   .flash-fill { height: 100%; background: var(--mask); transition: width 0.2s; }
-  .flash-err { color: #b3423a; font-size: 0.82rem; }
+  .flash-err { color: #b3423a; font-size: var(--t-sm); }
 </style>

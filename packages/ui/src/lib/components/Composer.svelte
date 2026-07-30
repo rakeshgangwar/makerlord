@@ -14,9 +14,9 @@
 <style>
   .composer { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
   .composer input {
-    width: 100%; font-size: 1.05rem; padding: 0.85rem; box-sizing: border-box;
+    width: 100%; font-size: var(--t-lg); padding: 0.85rem; box-sizing: border-box;
     font-family: var(--font-body); border: 1.5px solid var(--line);
-    border-radius: 8px; background: var(--panel);
+    border-radius: var(--r-md); background: var(--panel);
   }
   .composer input:focus { border-color: var(--mask); outline: none; }
   .composer .primary { margin-top: 0; }

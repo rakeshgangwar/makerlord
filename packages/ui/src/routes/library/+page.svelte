@@ -204,39 +204,39 @@
 <style>
   .lib-page { flex: 1; overflow-y: auto; padding: 1.25rem 1.75rem; }
   .lib-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 1rem; }
-  .eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
+  .eyebrow { font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
   h1 { margin: 0.1rem 0 0; font-size: 1.7rem; letter-spacing: -0.02em; }
   .back { text-decoration: none; }
   .lib-grid { display: grid; grid-template-columns: minmax(18rem, 24rem) 1fr; gap: 1rem; align-items: start; }
   @media (max-width: 900px) { .lib-grid { grid-template-columns: 1fr; } }
   .col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.9rem 1.1rem; }
-  h2 { margin: 0 0 0.6rem; font-size: 1.05rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 0.9rem 1.1rem; }
+  h2 { margin: 0 0 0.6rem; font-size: var(--t-lg); }
   h2 .small { font-weight: 400; margin-left: 0.4rem; }
-  h3 { margin: 0.8rem 0 0.3rem; font-size: 0.85rem; }
+  h3 { margin: 0.8rem 0 0.3rem; font-size: var(--t-sm); }
   .gap { border: 1.5px solid var(--copper); background: #fdf8f3; }
   .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
   .rows li { display: flex; align-items: baseline; gap: 0.5rem; }
-  .row-hit { border: none; background: none; cursor: pointer; color: var(--ink); text-align: left; padding: 0; font-size: 0.9rem; }
+  .row-hit { border: none; background: none; cursor: pointer; color: var(--ink); text-align: left; padding: 0; font-size: var(--t-md); }
   .row-hit:hover { color: var(--mask); }
   .own-inline {
-    border: 1px solid var(--line); background: transparent; border-radius: 4px;
+    border: 1px solid var(--line); background: transparent; border-radius: var(--r-sm);
     font-size: 0.66rem; padding: 0.1rem 0.4rem; cursor: pointer; color: var(--ink-soft);
     margin-left: auto;
   }
   .own-inline:hover { border-color: var(--mask); color: var(--mask); }
   .search-row { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
   .search-row input[name='library'] {
-    flex: 1; min-width: 12rem; font-size: 0.95rem; padding: 0.5rem 0.7rem;
-    border: 1.5px solid var(--line); border-radius: 7px;
+    flex: 1; min-width: 12rem; font-size: var(--t-md); padding: 0.5rem 0.7rem;
+    border: 1.5px solid var(--line); border-radius: var(--r-md);
   }
   .geo-toggle { display: flex; gap: 0.3rem; align-items: center; cursor: pointer; }
-  .lib-count { font-size: 0.7rem; color: var(--ink-soft); margin: 0.5rem 0; }
-  .fam summary { cursor: pointer; padding: 0.3rem 0; font-size: 0.8rem; }
+  .lib-count { font-size: var(--t-xs); color: var(--ink-soft); margin: 0.5rem 0; }
+  .fam summary { cursor: pointer; padding: 0.3rem 0; font-size: var(--t-sm); }
   .cards { list-style: none; margin: 0.3rem 0 0.6rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.4rem; }
   .card {
     width: 100%; text-align: left; background: var(--mat); border: 1px solid var(--line);
-    border-radius: 8px; padding: 0.45rem 0.6rem; cursor: pointer; display: flex;
+    border-radius: var(--r-md); padding: 0.45rem 0.6rem; cursor: pointer; display: flex;
     align-items: center; gap: 0.4rem;
   }
   /* Tier is colour + word together — the severity discipline (D50). */
@@ -245,15 +245,15 @@
   .card[data-tier='geometry'] { border-left: 3px solid #9aa5a0; }
   .card:hover { border-color: var(--mask); }
   .card.active { border-color: var(--mask); background: #f2faf6; }
-  .card-title { font-size: 0.82rem; flex: 1; }
+  .card-title { font-size: var(--t-sm); flex: 1; }
   .tier {
-    font-size: 0.6rem; border-radius: 4px; padding: 0.05rem 0.3rem;
+    font-size: 0.6rem; border-radius: var(--r-sm); padding: 0.05rem 0.3rem;
     text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
   }
   .tier-verified { background: #e7f5ee; color: var(--mask); border: 1px solid #bfe3d2; }
   .tier-sourced { background: #fdf3e3; color: #9a6b1f; border: 1px solid #e8cfa0; }
   .tier-geometry { background: #eef1f0; color: var(--ink-soft); border: 1px solid var(--line); }
-  .tier-note { font-size: 0.82rem; color: var(--ink-soft); }
+  .tier-note { font-size: var(--t-sm); color: var(--ink-soft); }
   .detail { border: 1.5px solid var(--mask); }
   .geo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
   .upload-label { position: relative; overflow: hidden; display: inline-flex; align-items: center; }

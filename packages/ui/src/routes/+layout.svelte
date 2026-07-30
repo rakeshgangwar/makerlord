@@ -82,26 +82,26 @@
   .skip-link {
     position: absolute; left: -200vw; top: 0.5rem; z-index: 30;
     background: var(--mask); color: white; padding: 0.4rem 0.9rem;
-    border-radius: 0 0 8px 8px; text-decoration: none; font-size: 0.85rem;
+    border-radius: 0 0 8px 8px; text-decoration: none; font-size: var(--t-sm);
   }
   .skip-link:focus-visible { left: 0.5rem; }
-  :global(.small) { font-size: 0.72rem; color: var(--ink-soft); }
+  :global(.small) { font-size: var(--t-xs); color: var(--ink-soft); }
   :global(.empty) { color: var(--ink-soft); }
-  :global(.error) { color: var(--sev-blocker); font-size: 0.9rem; }
+  :global(.error) { color: var(--sev-blocker); font-size: var(--t-md); }
   :global(.primary) {
     background: var(--mask); color: white; border: none;
-    padding: 0.55rem 1.4rem; border-radius: 7px; cursor: pointer;
-    font-weight: 600; font-size: 0.95rem; margin-top: 0.6rem;
+    padding: 0.55rem 1.4rem; border-radius: var(--r-md); cursor: pointer;
+    font-weight: 600; font-size: var(--t-md); margin-top: 0.6rem;
   }
   :global(.primary:hover) { background: var(--mask-deep); }
   :global(.primary:disabled) { opacity: 0.4; cursor: default; }
   :global(.secondary) {
     background: var(--panel); color: var(--mask); border: 1.5px solid var(--mask);
-    padding: 0.45rem 1.1rem; border-radius: 7px; cursor: pointer; font-weight: 600;
+    padding: 0.45rem 1.1rem; border-radius: var(--r-md); cursor: pointer; font-weight: 600;
   }
   :global(.badge-assumed) {
     font-family: var(--font-mono); font-size: 0.62rem; margin-left: 0.3rem;
-    background: #f3e8cf; color: #7c5000; padding: 0 0.3rem; border-radius: 6px;
+    background: #f3e8cf; color: #7c5000; padding: 0 0.3rem; border-radius: var(--r-md);
   }
 
   /* markdown inside agent messages */
@@ -109,8 +109,8 @@
   :global(.md table) { border-collapse: collapse; margin: 0.4em 0; font-size: 0.9em; }
   :global(.md th), :global(.md td) { border: 1px solid var(--line); padding: 0.25em 0.55em; text-align: left; }
   :global(.md th) { font-family: var(--font-mono); font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.06em; }
-  :global(.md code) { font-family: var(--font-mono); font-size: 0.88em; background: #eef1f0; padding: 0 0.25em; border-radius: 4px; }
-  :global(.md pre) { background: #eef1f0; padding: 0.6em 0.8em; border-radius: 8px; overflow-x: auto; }
+  :global(.md code) { font-family: var(--font-mono); font-size: 0.88em; background: #eef1f0; padding: 0 0.25em; border-radius: var(--r-sm); }
+  :global(.md pre) { background: #eef1f0; padding: 0.6em 0.8em; border-radius: var(--r-md); overflow-x: auto; }
   :global(.md ul), :global(.md ol) { margin: 0.3em 0; padding-left: 1.3em; }
   :global(.md h1), :global(.md h2), :global(.md h3) { font-size: 1.05em; margin: 0.5em 0 0.2em; }
   @media (prefers-reduced-motion: reduce) {

@@ -170,19 +170,19 @@
   .bench { flex: 1 1 26rem; max-width: 44rem; min-width: 22rem; }
   .views { flex: 1 1 24rem; min-width: 24rem; max-width: 46rem; position: sticky; top: 0; display: flex; flex-direction: column; gap: 0.8rem; }
   .board {
-    margin: 0; background: var(--panel); border-radius: 10px; padding: 0.7rem;
+    margin: 0; background: var(--panel); border-radius: var(--r-lg); padding: 0.7rem;
     box-shadow: 0 1px 3px rgb(20 24 27 / 8%);
   }
   .board figcaption {
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
   }
   .board :global(.viewer) { height: clamp(280px, 36vh, 420px); }
   .schematic-mini :global(.viewer) { height: clamp(200px, 28vh, 340px); }
   .fig-hint { text-transform: none; letter-spacing: 0; opacity: 0.6; float: right; }
 
-  .step { display: flex; gap: 0.9rem; padding: 0.7rem 1rem; margin: 0.45rem 0; background: var(--panel); border-radius: 8px; }
-  .step.current { font-size: 1.35rem; box-shadow: 0 2px 8px rgb(20 24 27 / 10%); border-left: 4px solid var(--mask); }
+  .step { display: flex; gap: 0.9rem; padding: 0.7rem 1rem; margin: 0.45rem 0; background: var(--panel); border-radius: var(--r-md); }
+  .step.current { font-size: var(--t-xl); box-shadow: 0 2px 8px rgb(20 24 27 / 10%); border-left: 4px solid var(--mask); }
   .step.dimmed { opacity: 0.45; }
   .step-n { font-family: var(--font-mono); font-size: 0.8em; color: var(--ink-soft); padding-top: 0.2em; }
   .step-kind {
@@ -194,10 +194,10 @@
   .step-done { font-size: 0.72em; }
   .step-back {
     border: none; background: transparent; color: var(--ink-soft);
-    cursor: pointer; font-size: 0.8rem; padding: 0.4rem 0.2rem;
+    cursor: pointer; font-size: var(--t-sm); padding: 0.4rem 0.2rem;
   }
 
-  .gate { border: 2px solid var(--mask); border-radius: 10px; padding: 1rem; margin-top: 0.7rem; background: #f2faf6; font-size: 0.75em; }
+  .gate { border: 2px solid var(--mask); border-radius: var(--r-lg); padding: 1rem; margin-top: 0.7rem; background: #f2faf6; font-size: 0.75em; }
   .gate-title { font-weight: 600; margin: 0 0 0.6rem; font-size: 1.1em; }
   .check { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.3rem 0; }
   .check.done { color: var(--mask); }
@@ -206,7 +206,7 @@
   .gate-entry { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.35rem; }
   .gate-entry input {
     font-family: var(--font-mono); font-size: 1.5rem; width: 8rem;
-    padding: 0.4rem 0.6rem; border: 1.5px solid var(--line); border-radius: 8px;
+    padding: 0.4rem 0.6rem; border: 1.5px solid var(--line); border-radius: var(--r-md);
   }
   .gate-entry .unit { font-family: var(--font-mono); color: var(--ink-soft); }
   .gate .primary { margin-top: 0.6rem; }

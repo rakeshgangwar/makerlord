@@ -36,7 +36,7 @@
 <style>
   .converse-start { max-width: 40rem; margin: 9vh auto 0; }
   .eyebrow {
-    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
+    font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--copper-ink); margin: 0 0 0.4rem;
   }
   h1 {
@@ -45,23 +45,23 @@
   }
   .hint { color: var(--ink-soft); margin: 0 0 1.2rem; }
   textarea {
-    width: 100%; font-size: 1.05rem; padding: 0.85rem; box-sizing: border-box;
+    width: 100%; font-size: var(--t-lg); padding: 0.85rem; box-sizing: border-box;
     font-family: var(--font-body); border: 1.5px solid var(--line);
-    border-radius: 8px; background: var(--panel);
+    border-radius: var(--r-md); background: var(--panel);
   }
   textarea:focus { border-color: var(--mask); outline: none; }
   .project-list { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
   .list-head {
-    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: var(--t-xs); letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--ink-soft); margin: 0 0 0.3rem;
   }
   .project-row {
     display: flex; justify-content: space-between; align-items: baseline;
     gap: 1rem; text-align: left; border: 1.5px solid var(--line);
-    background: var(--panel); border-radius: 8px; padding: 0.6rem 0.9rem;
-    cursor: pointer; font-size: 0.95rem;
+    background: var(--panel); border-radius: var(--r-md); padding: 0.6rem 0.9rem;
+    cursor: pointer; font-size: var(--t-md);
   }
   .project-row:hover { border-color: var(--mask); }
   .project-intent { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .project-meta { font-size: 0.7rem; color: var(--ink-soft); flex-shrink: 0; }
+  .project-meta { font-size: var(--t-xs); color: var(--ink-soft); flex-shrink: 0; }
 </style>

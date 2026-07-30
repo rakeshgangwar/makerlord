@@ -250,16 +250,16 @@
 
 <style>
   .facet-eyebrow {
-    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .sim-grid { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
   .sim-canvas {
     flex: 1; min-width: 24rem; margin: 0; background: var(--panel);
-    border-radius: 10px; padding: 0.7rem; box-shadow: 0 1px 3px rgb(20 24 27 / 8%);
+    border-radius: var(--r-lg); padding: 0.7rem; box-shadow: 0 1px 3px rgb(20 24 27 / 8%);
   }
   .sim-canvas figcaption {
-    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    font-family: var(--font-mono); font-size: var(--t-xs); letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--ink-soft); margin-bottom: 0.4rem;
   }
   .fig-hint { text-transform: none; letter-spacing: 0; opacity: 0.6; float: right; }
@@ -270,29 +270,29 @@
   .run-btn { margin-top: 0; font-size: 1.02rem; }
   .rungs { display: flex; gap: 0.4rem; }
   .rung {
-    font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 6px;
+    font-size: var(--t-xs); padding: 0.15rem 0.5rem; border-radius: var(--r-md);
     background: #eef1f0; color: var(--ink-soft); opacity: 0.5;
     transition: all 0.3s;
   }
   .rung.lit { background: #dcefe6; color: var(--mask); opacity: 1; }
 
-  .knob label { font-size: 0.72rem; color: var(--ink-soft); display: block; margin-bottom: 0.2rem; }
+  .knob label { font-size: var(--t-xs); color: var(--ink-soft); display: block; margin-bottom: 0.2rem; }
   .knob input { width: 100%; accent-color: var(--mask); }
 
   .meter-face {
-    background: var(--meter-face); border-radius: 10px; padding: 0.8rem 1rem;
+    background: var(--meter-face); border-radius: var(--r-lg); padding: 0.8rem 1rem;
     color: var(--meter-glow); min-height: 4.4rem;
     border-top: 3px solid #171b1e;
   }
-  .meter-title { font-size: 0.68rem; color: #9aa4ab; margin: 0 0 0.2rem; word-break: break-all; }
+  .meter-title { font-size: var(--t-xs); color: #9aa4ab; margin: 0 0 0.2rem; word-break: break-all; }
   .meter-reading { font-size: 1.5rem; margin: 0; letter-spacing: 0.02em; }
-  .meter-idle { font-size: 0.75rem; color: #9aa4ab; margin: 0.6rem 0; }
-  .bar { background: #171b1e; border-radius: 4px; height: 8px; margin-top: 0.5rem; overflow: hidden; }
+  .meter-idle { font-size: var(--t-sm); color: #9aa4ab; margin: 0.6rem 0; }
+  .bar { background: #171b1e; border-radius: var(--r-sm); height: 8px; margin-top: 0.5rem; overflow: hidden; }
   .bar-fill { height: 100%; background: var(--meter-glow); transition: width 0.3s; }
   .bar-fill.hot { background: var(--sev-warning); }
   .bar-label { font-size: 0.62rem; color: #9aa4ab; margin: 0.15rem 0 0; }
 
-  .verdict-line { font-size: 0.72rem; color: var(--ink-soft); }
-  .cir-details summary { font-size: 0.7rem; cursor: pointer; color: var(--ink-soft); }
-  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.7rem; overflow-x: auto; max-height: 30vh; }
+  .verdict-line { font-size: var(--t-xs); color: var(--ink-soft); }
+  .cir-details summary { font-size: var(--t-xs); cursor: pointer; color: var(--ink-soft); }
+  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-xs); overflow-x: auto; max-height: 30vh; }
 </style>

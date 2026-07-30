@@ -21,11 +21,11 @@
 
 <style>
   .msg {
-    padding: 0.7rem 0.95rem; border-radius: 10px; white-space: pre-wrap;
+    padding: 0.7rem 0.95rem; border-radius: var(--r-lg); white-space: pre-wrap;
     background: var(--panel); box-shadow: 0 1px 2px rgb(20 24 27 / 6%);
   }
-  .msg.maker { background: #dcefe6; align-self: flex-end; border-radius: 10px 10px 2px 10px; }
-  .msg.agent { border-radius: 10px 10px 10px 2px; }
+  .msg.maker { background: #dcefe6; align-self: flex-end; border-radius: var(--r-lg) 10px 2px 10px; }
+  .msg.agent { border-radius: var(--r-lg) 10px 10px 2px; }
   .msg .who {
     display: block; font-family: var(--font-mono); font-size: 0.62rem;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);

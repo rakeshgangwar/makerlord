@@ -68,7 +68,7 @@
   .meter {
     position: absolute; left: 0; right: 0; bottom: 0;
     background: var(--meter-face, #23282c); color: #9aa5a0;
-    font-size: 0.78rem; padding: 0.55rem 1.1rem; letter-spacing: 0.04em;
+    font-size: var(--t-sm); padding: 0.55rem 1.1rem; letter-spacing: 0.04em;
     display: flex; align-items: center; gap: 0.5rem;
   }
   .lamp {
@@ -78,21 +78,21 @@
   }
   .card {
     background: var(--panel, white); border: 1px solid var(--line, #d8dde1);
-    border-radius: 10px; padding: 2.2rem 2.6rem; width: 22rem; text-align: center;
+    border-radius: var(--r-lg); padding: 2.2rem 2.6rem; width: 22rem; text-align: center;
     box-shadow: 0 2px 14px rgb(20 24 27 / 6%);
   }
   h1 { margin: 0 0 0.2rem; font-size: 1.4rem; }
-  .tag { color: var(--ink-soft, #4c555c); font-size: 0.8rem; margin: 0 0 1.3rem; }
+  .tag { color: var(--ink-soft, #4c555c); font-size: var(--t-sm); margin: 0 0 1.3rem; }
   label {
-    display: block; text-align: left; font-size: 0.78rem;
+    display: block; text-align: left; font-size: var(--t-sm);
     color: var(--ink-soft, #4c555c); margin-bottom: 0.9rem;
   }
   input {
     display: block; width: 100%; box-sizing: border-box; margin-top: 0.25rem;
     padding: 0.45rem 0.6rem; border: 1px solid var(--line, #d8dde1);
-    border-radius: 6px; font-size: 0.95rem;
+    border-radius: var(--r-md); font-size: var(--t-md);
   }
-  button { width: 100%; padding: 0.6rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
+  button { width: 100%; padding: 0.6rem; border-radius: var(--r-md); font-size: var(--t-md); cursor: pointer; }
   button:disabled { opacity: 0.6; cursor: wait; }
   .small { margin-top: 1.1rem; }
   .small a { color: var(--mask); font-weight: 600; }

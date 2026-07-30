@@ -36,27 +36,27 @@
   .file-box {
     display: flex; flex-direction: column;
     width: min(1100px, 94vw); height: 88vh;
-    background: var(--panel, #fff); border-radius: 10px;
+    background: var(--panel, #fff); border-radius: var(--r-lg);
     box-shadow: 0 12px 40px rgb(10 14 12 / 35%); overflow: hidden;
   }
   .file-head {
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.6rem 1rem; border-bottom: 1px solid var(--line);
-    font-size: 0.8rem;
+    font-size: var(--t-sm);
   }
   .file-close {
     border: 1px solid var(--line); background: transparent; cursor: pointer;
-    font-family: var(--font-mono); font-size: 0.7rem; padding: 0.25rem 0.6rem;
-    border-radius: 4px;
+    font-family: var(--font-mono); font-size: var(--t-xs); padding: 0.25rem 0.6rem;
+    border-radius: var(--r-sm);
   }
   .file-close:hover { color: var(--mask); border-color: var(--mask); }
   .file-body { flex: 1; overflow: auto; padding: 1rem 1.25rem; }
   .file-body.is-svg { padding: 0; overflow: hidden; }
   .file-raw {
-    font-family: var(--font-mono); font-size: 0.68rem; line-height: 1.5;
+    font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1.5;
     background: #f4f5f6; border: 1px solid var(--line);
-    border-radius: 4px; padding: 0.6rem; overflow: auto;
+    border-radius: var(--r-sm); padding: 0.6rem; overflow: auto;
     white-space: pre-wrap; word-break: break-all;
   }
-  .file-doc { font-size: 0.85rem; max-width: 46rem; }
+  .file-doc { font-size: var(--t-sm); max-width: 46rem; }
 </style>

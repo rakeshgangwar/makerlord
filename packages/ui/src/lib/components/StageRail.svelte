@@ -184,7 +184,7 @@
   .rail-toggle { display: none; }
   .stage-list { display: flex; flex-direction: column; gap: 1px; }
   .wordmark {
-    font-weight: 800; font-size: 1.05rem; letter-spacing: -0.02em;
+    font-weight: 800; font-size: var(--t-lg); letter-spacing: -0.02em;
     margin: 0 0 var(--s3) var(--s1);
   }
   .wordmark span { color: var(--mask); }
@@ -231,7 +231,7 @@
     .rail { max-width: none; }
     .rail-toggle {
       display: inline-block; border: 1px solid var(--line); background: var(--panel);
-      border-radius: 6px; padding: 0.35rem 0.6rem; font-size: var(--t-xs);
+      border-radius: var(--r-md); padding: 0.35rem 0.6rem; font-size: var(--t-xs);
       cursor: pointer; color: var(--ink);
     }
     .wordmark { margin-bottom: 0; }

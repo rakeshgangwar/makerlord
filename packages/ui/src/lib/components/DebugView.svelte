@@ -116,12 +116,12 @@
 
 <style>
   .dbg { display: flex; flex-direction: column; gap: 0.9rem; }
-  .facet-eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
-  .panel-block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.8rem 1rem; }
-  h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
-  h3 .small { font-weight: 400; font-size: 0.72rem; color: var(--ink-soft); margin-left: 0.4rem; }
+  .facet-eyebrow { font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
+  .panel-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 0.8rem 1rem; }
+  h3 { margin: 0 0 0.6rem; font-size: var(--t-md); }
+  h3 .small { font-weight: 400; font-size: var(--t-xs); color: var(--ink-soft); margin-left: 0.4rem; }
   .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  .symptom select, .symptom input { font-size: 0.9rem; padding: 0.5rem 0.6rem; border: 1.5px solid var(--line); border-radius: 6px; background: var(--panel); }
+  .symptom select, .symptom input { font-size: var(--t-md); padding: 0.5rem 0.6rem; border: 1.5px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
   .hint { color: var(--ink-soft); margin: 0.6rem 0 0; }
 
   /* The proposal is the bench's headline: huge type, hands busy. */
@@ -129,14 +129,14 @@
   .prop-eyebrow { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mask); margin: 0; }
   .prop-net { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0.3rem 0; letter-spacing: -0.02em; }
   .prop-why { color: var(--ink-soft); margin: 0 0 0.7rem; }
-  .reading { width: 8rem; font-size: 1.6rem; padding: 0.4rem 0.7rem; border: 2px solid var(--mask); border-radius: 8px; text-align: right; }
+  .reading { width: 8rem; font-size: 1.6rem; padding: 0.4rem 0.7rem; border: 2px solid var(--mask); border-radius: var(--r-md); text-align: right; }
   .unit { font-size: 1.2rem; color: var(--ink-soft); }
 
   .tree { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-  .cand { font-size: 0.95rem; }
+  .cand { font-size: var(--t-md); }
   .cand.live .lamp { color: #19794d; margin-right: 0.35rem; }
   .cand.dead { color: var(--ink-soft); }
-  .killer { font-size: 0.72rem; margin-left: 0.4rem; }
+  .killer { font-size: var(--t-xs); margin-left: 0.4rem; }
   .obs-count { color: var(--ink-soft); margin: 0.6rem 0 0.2rem; }
 
   .verdict-block[data-verdict='localized'] { border: 2px solid var(--sev-blocker); }

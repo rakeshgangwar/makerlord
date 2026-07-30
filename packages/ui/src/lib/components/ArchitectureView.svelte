@@ -54,15 +54,15 @@
 <style>
   .facet { max-width: 60rem; }
   .facet-eyebrow {
-    font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .blocks-canvas {
-    margin: 0 0 1rem; background: var(--panel); border-radius: 10px; padding: 0.7rem;
+    margin: 0 0 1rem; background: var(--panel); border-radius: var(--r-lg); padding: 0.7rem;
     box-shadow: 0 1px 3px rgb(20 24 27 / 8%);
   }
   .blocks-canvas figcaption {
-    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--ink-soft); margin-bottom: 0.4rem;
   }
   .blocks-canvas :global(.viewer) { height: 220px; }
@@ -70,23 +70,23 @@
   .cols { display: flex; gap: 1.5rem; flex-wrap: wrap; }
   .cols section { flex: 1; min-width: 18rem; }
   h3 {
-    font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase;
+    font-size: var(--t-sm); letter-spacing: 0.05em; text-transform: uppercase;
     color: var(--ink-soft); margin: 0 0 0.4rem;
   }
   .block-list, .dec-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; }
   .block-list li {
-    background: var(--panel); border-radius: 8px; padding: 0.55rem 0.8rem;
+    background: var(--panel); border-radius: var(--r-md); padding: 0.55rem 0.8rem;
     display: flex; justify-content: space-between; align-items: baseline; gap: 0.7rem;
   }
   .src {
-    font-family: var(--font-mono); font-size: 0.68rem; padding: 0.05rem 0.45rem;
-    border-radius: 6px; background: #eef1f0; color: var(--ink-soft);
+    font-family: var(--font-mono); font-size: var(--t-xs); padding: 0.05rem 0.45rem;
+    border-radius: var(--r-md); background: #eef1f0; color: var(--ink-soft);
   }
   .src-buy { background: #dcefe6; color: var(--mask); }
   .src-build { background: #f0e4d7; color: var(--copper-ink); }
   .src-undecided { background: #f3e8cf; color: var(--sev-warning); }
-  .dec-list li { background: var(--panel); border-radius: 8px; padding: 0.6rem 0.85rem; }
-  .dec-id { font-size: 0.68rem; color: var(--copper-ink); }
-  .dec-body { margin: 0.25rem 0 0; font-size: 0.88rem; }
-  .dec-rej { margin: 0.25rem 0 0; font-size: 0.78rem; color: var(--ink-soft); }
+  .dec-list li { background: var(--panel); border-radius: var(--r-md); padding: 0.6rem 0.85rem; }
+  .dec-id { font-size: var(--t-xs); color: var(--copper-ink); }
+  .dec-body { margin: 0.25rem 0 0; font-size: var(--t-md); }
+  .dec-rej { margin: 0.25rem 0 0; font-size: var(--t-sm); color: var(--ink-soft); }
 </style>
