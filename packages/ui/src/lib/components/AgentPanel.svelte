@@ -12,6 +12,30 @@
    */
   let log = $state(null);
 
+  // The column is the maker's to size — drag the left edge, kept per
+  // browser. Clamped so neither the thread nor the workbench collapses.
+  let width = $state(384);
+  if (typeof localStorage !== 'undefined') {
+    const stored = Number(localStorage.getItem('makerlord.agentWidth'));
+    if (Number.isFinite(stored) && stored >= 280 && stored <= 720) width = stored;
+  }
+
+  function startResize(e) {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startW = width;
+    const move = (ev) => {
+      width = Math.min(720, Math.max(280, startW + (startX - ev.clientX)));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      try { localStorage.setItem('makerlord.agentWidth', String(width)); } catch {}
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
   $effect(() => {
     void app.streamingText;
     void app.messages.length;
@@ -31,7 +55,9 @@
   }
 </script>
 
-<aside class="agent" aria-label="Agent">
+<aside class="agent" aria-label="Agent" style={`width:${width}px`}>
+  <div class="resizer" role="separator" aria-orientation="vertical"
+    aria-label="Resize agent panel" onpointerdown={startResize}></div>
   <header class="agent-head">
     <span class="mono agent-title">agent</span>
     <button class="brain" onclick={() => bridgeConnect()}>
@@ -98,10 +124,16 @@
 
 <style>
   .agent {
-    width: 24rem; min-width: 19rem; display: flex; flex-direction: column;
+    width: 24rem; min-width: 17.5rem; display: flex; flex-direction: column;
     min-height: 0; background: var(--panel); border-radius: var(--r-lg);
     box-shadow: var(--shadow-1); padding: var(--s3);
+    position: relative; flex-shrink: 0;
   }
+  .resizer {
+    position: absolute; left: -5px; top: 0; bottom: 0; width: 10px;
+    cursor: col-resize; touch-action: none; z-index: 5;
+  }
+  .resizer:hover, .resizer:active { background: color-mix(in srgb, var(--mask) 25%, transparent); border-radius: 3px; }
   .agent-head {
     display: flex; justify-content: space-between; align-items: center;
     border-bottom: 1px solid var(--line); padding-bottom: var(--s2);
@@ -170,6 +202,7 @@
   .send:hover { background: var(--mask-deep); }
 
   @media (max-width: 1100px) {
-    .agent { width: 100%; min-width: 0; max-height: 45vh; }
+    .agent { width: 100% !important; min-width: 0; max-height: 45vh; }
+    .resizer { display: none; }
   }
 </style>
