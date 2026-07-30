@@ -35,7 +35,9 @@ interface Hosted {
 
 export interface HostOptions {
   projectsRoot: string;
-  apiKey: string;
+  /** The instance's Anthropic key — OPTIONAL since BYOK: without it,
+   *  makers must bring a provider config or a local brain. */
+  apiKey?: string;
   baseURL?: string;
   model?: string;
   stage?: number;
@@ -183,6 +185,12 @@ export class HostedSessions {
     // the same engine on their own key. 'anthropic' uses the native
     // loop (web research, thinking); everything else the AI SDK loop.
     const byok = userId ? getProviderConfig(userId) : null;
+    if (!byok && !this.opts.apiKey) {
+      throw new Error(
+        'no brain configured — pick a model provider (◇ in the agent panel) ' +
+        'or connect your local brain (⚡)',
+      );
+    }
     if (byok && byok.provider !== 'anthropic') {
       return new AiSdkSession({
         model: resolveModel(byok as ProviderConfig),
@@ -194,7 +202,7 @@ export class HostedSessions {
       });
     }
     const clientConfig: ConstructorParameters<typeof Anthropic>[0] = {
-      apiKey: byok?.apiKey ?? this.opts.apiKey,
+      apiKey: byok?.apiKey ?? this.opts.apiKey ?? '',
       timeout: 600_000,
     };
     if (this.opts.baseURL) clientConfig.baseURL = this.opts.baseURL;

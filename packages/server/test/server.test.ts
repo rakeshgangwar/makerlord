@@ -504,3 +504,27 @@ describe('the ownership property (auth spec §8) — 404, not 403', () => {
     expect(bogus.status).toBe(401);
   });
 });
+
+describe('BYOK-first: an instance without a key refuses kindly', () => {
+  it('session creation names the fix instead of crashing', async () => {
+    const keyless = new HostedSessions({ projectsRoot, baseURL: fake.baseUrl });
+    const srv = buildHttpServer(keyless);
+    await new Promise<void>((r) => srv.listen(0, '127.0.0.1', r));
+    const kbase = `http://127.0.0.1:${(srv.address() as AddressInfo).port}`;
+    const created = await fetch(`${kbase}/api/projects`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ intent: 'a lamp' }),
+    });
+    const pid = ((await created.json()) as { projectId: string }).projectId;
+    const res = await fetch(`${kbase}/api/sessions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projectId: pid }),
+    });
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toContain('no brain configured');
+    srv.close();
+  });
+});

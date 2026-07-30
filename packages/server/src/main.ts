@@ -3,17 +3,19 @@ import { buildHttpServer } from './http.js';
 import { HostedSessions } from './sessions.js';
 
 const backend = process.env.MAKERLORD_AGENT_BACKEND === 'acp' ? 'acp' as const : 'sdk' as const;
+// BYOK-first (2026-07-31): an instance key is optional. Without one,
+// every maker brings a provider key (◇) or a local brain (⚡) — the
+// instance fronts compute for no one.
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (backend === 'sdk' && !apiKey) {
-  process.stderr.write('makerlord-server: ANTHROPIC_API_KEY is required (or set MAKERLORD_AGENT_BACKEND=acp)\n');
-  process.exit(1);
+  process.stderr.write('makerlord-server: no ANTHROPIC_API_KEY — makers must configure their own provider (BYOK) or a local brain\n');
 }
 
 const options: ConstructorParameters<typeof HostedSessions>[0] = {
   projectsRoot: process.env.MAKERLORD_PROJECTS_ROOT ?? './projects',
-  apiKey: apiKey ?? '',
   backend,
 };
+if (apiKey) options.apiKey = apiKey;
 if (process.env.ANTHROPIC_BASE_URL) options.baseURL = process.env.ANTHROPIC_BASE_URL;
 if (process.env.MAKERLORD_MODEL) options.model = process.env.MAKERLORD_MODEL;
 if (process.env.MAKERLORD_ACP_COMMAND) options.acpCommand = process.env.MAKERLORD_ACP_COMMAND;

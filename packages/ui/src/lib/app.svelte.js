@@ -201,6 +201,10 @@ async function ensureSession(intent) {
   }
   if (!app.sessionId) {
     const s = await api('sessions', { projectId: app.projectId });
+    if (s.status !== 201 || !s.data.sessionId) {
+      // BYOK-first instances have no default brain — say so, kindly.
+      throw new Error(s.data.error ?? 'could not start a session');
+    }
     app.sessionId = s.data.sessionId;
     store.set('makerlord.sessionId', app.sessionId);
   }
@@ -251,7 +255,10 @@ export async function sendPrompt(text) {
     }
   } catch (e) {
     app.turnActive = false;
-    app.lastError = `Could not reach the agent: ${e instanceof Error ? e.message : e}. Try again.`;
+    const msg = e instanceof Error ? e.message : String(e);
+    app.lastError = msg.includes('no brain configured')
+      ? msg
+      : `Could not reach the agent: ${msg}. Try again.`;
   }
 }
 

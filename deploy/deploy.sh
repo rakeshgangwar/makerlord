@@ -42,6 +42,9 @@ else
   TOKEN_LINE="MAKERLORD_ACCESS_TOKEN=$(head -c 24 /dev/urandom | base64 | tr -d '/+=')"
 fi
 cp .env.base .env && rm .env.base
+# BYOK-first (2026-07-31): the instance fronts compute for no one — the
+# Anthropic key never lands on the server; makers bring their own.
+sed -i '/^ANTHROPIC_API_KEY=/d' .env
 echo "$TOKEN_LINE" >> .env
 EOF
 
