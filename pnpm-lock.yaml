@@ -243,6 +243,9 @@ importers:
       '@makerlord/circuit':
         specifier: workspace:*
         version: link:../circuit
+      '@makerlord/debug':
+        specifier: workspace:*
+        version: link:../debug
       '@makerlord/firmware':
         specifier: workspace:*
         version: link:../firmware

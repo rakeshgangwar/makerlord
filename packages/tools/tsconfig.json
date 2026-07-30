@@ -7,6 +7,7 @@
     { "path": "../circuit/tsconfig.json" },
     { "path": "../project/tsconfig.json" },
     { "path": "../sim/tsconfig.json" },
-    { "path": "../firmware/tsconfig.json" }
+    { "path": "../firmware/tsconfig.json" },
+    { "path": "../debug/tsconfig.json" }
   ]
 }

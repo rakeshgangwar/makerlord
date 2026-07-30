@@ -21,6 +21,9 @@ export interface FaultOverrides {
 export interface AppliedFault {
   circuit: Circuit;
   overrides: FaultOverrides;
+  /** Original net name → the mutated circuit's name for it (a bridge
+   *  folds netB into netA; a meter at netB still reads netA's node). */
+  netAliases: Record<string, string>;
 }
 
 const clone = (c: Circuit): Circuit => JSON.parse(JSON.stringify(c)) as Circuit;
@@ -28,7 +31,7 @@ const clone = (c: Circuit): Circuit => JSON.parse(JSON.stringify(c)) as Circuit;
 export function applyFault(circuit: Circuit, fault: Fault): AppliedFault {
   switch (fault.kind) {
     case 'no_fault':
-      return { circuit: clone(circuit), overrides: {} };
+      return { circuit: clone(circuit), overrides: {}, netAliases: {} };
 
     case 'open_joint': {
       const c = clone(circuit);
@@ -41,7 +44,7 @@ export function applyFault(circuit: Circuit, fault: Fault): AppliedFault {
           net.members = net.members.slice(0, -1);
         }
       }
-      return { circuit: c, overrides: {} };
+      return { circuit: c, overrides: {}, netAliases: {} };
     }
 
     case 'bridge': {
@@ -52,7 +55,7 @@ export function applyFault(circuit: Circuit, fault: Fault): AppliedFault {
         a.members = [...a.members, ...b.members];
         c.intent = c.intent.filter((n) => n !== b);
       }
-      return { circuit: c, overrides: {} };
+      return { circuit: c, overrides: {}, netAliases: { [fault.netB]: fault.netA } };
     }
 
     case 'reversed_part': {
@@ -67,17 +70,18 @@ export function applyFault(circuit: Circuit, fault: Fault): AppliedFault {
           }
         }
       }
-      return { circuit: c, overrides: {} };
+      return { circuit: c, overrides: {}, netAliases: {} };
     }
 
     case 'wrong_value':
       return {
         circuit: clone(circuit),
         overrides: { resistanceFactor: { [fault.ref]: fault.factor } },
+        netAliases: {},
       };
 
     case 'dead_rail':
-      return { circuit: clone(circuit), overrides: { supplyVolts: 0 } };
+      return { circuit: clone(circuit), overrides: { supplyVolts: 0 }, netAliases: {} };
   }
 }
 

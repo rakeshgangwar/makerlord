@@ -13,7 +13,8 @@ export type RefusalCode =
   | 'MAINS_ON_BREADBOARD'
   | 'TIER_NOT_OPEN'
   | 'STALE_PROJECT'
-  | 'EVIDENCE_UNFETCHED';
+  | 'EVIDENCE_UNFETCHED'
+  | 'STIMULUS_REQUIRED';
 
 export type ToolResult<T> =
   | { ok: true; data: T }

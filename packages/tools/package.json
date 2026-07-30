@@ -10,6 +10,7 @@
     "@makerlord/project": "workspace:*",
     "@makerlord/sim": "workspace:*",
     "@makerlord/firmware": "workspace:*",
+    "@makerlord/debug": "workspace:*",
     "zod": "^3.23.0"
   }
 }
