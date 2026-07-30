@@ -74,10 +74,19 @@
   });
 </script>
 
+<svelte:head>
+  <title>{app.projectFile?.project?.intent
+    ? `${app.projectFile.project.intent} · stage ${app.stage} — MakerLord`
+    : 'MakerLord'}</title>
+</svelte:head>
+
 <div class="shell" data-posture={posture}>
   <StageRail />
 
-  <section class="workspace" aria-label="Workspace">
+  <section id="workspace" class="workspace" aria-label="Workspace">
+    <h1 class="sr-only">
+      {app.projectFile?.project?.intent ?? 'MakerLord'} — stage {app.stage}
+    </h1>
     <div class="lens">
       {#if lens === 'start'}
         <ConverseStart />

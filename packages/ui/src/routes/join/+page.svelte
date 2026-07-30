@@ -40,7 +40,7 @@
 
 <main class="gate">
   <form class="card" onsubmit={join}>
-    <h1>Join MakerLord</h1>
+    <h1 class="wordmark">Join Maker<span>Lord</span></h1>
     <p class="tag">an invite code and a passkey — no password, ever</p>
     <label>
       Invite code
@@ -57,10 +57,25 @@
     {#if error}<p class="error">{error}</p>{/if}
     <p class="small">Already a maker? <a href="/login">Sign in</a></p>
   </form>
+  <footer class="meter mono" aria-hidden="true">
+    <span class="lamp"></span> READY · the bench is waiting
+  </footer>
 </main>
 
 <style>
-  .gate { min-height: 100vh; display: grid; place-items: center; }
+  .gate { min-height: 100vh; display: grid; place-items: center; position: relative; }
+  .wordmark span { color: var(--mask); }
+  .meter {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--meter-face, #23282c); color: #9aa5a0;
+    font-size: 0.78rem; padding: 0.55rem 1.1rem; letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .lamp {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--meter-glow, #9ae6c3); box-shadow: 0 0 6px var(--meter-glow, #9ae6c3);
+    display: inline-block;
+  }
   .card {
     background: var(--panel, white); border: 1px solid var(--line, #d8dde1);
     border-radius: 10px; padding: 2.2rem 2.6rem; width: 22rem; text-align: center;
@@ -80,4 +95,5 @@
   button { width: 100%; padding: 0.6rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
   button:disabled { opacity: 0.6; cursor: wait; }
   .small { margin-top: 1.1rem; }
+  .small a { color: var(--mask); font-weight: 600; }
 </style>

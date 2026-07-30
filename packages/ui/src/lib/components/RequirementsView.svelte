@@ -43,7 +43,7 @@
   .facet { max-width: 56rem; }
   .facet-eyebrow {
     font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--copper); margin: 0 0 0.7rem;
+    color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .req-table {
     width: 100%; border-collapse: collapse; background: var(--panel);

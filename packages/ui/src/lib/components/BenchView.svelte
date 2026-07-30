@@ -187,7 +187,7 @@
   .step-n { font-family: var(--font-mono); font-size: 0.8em; color: var(--ink-soft); padding-top: 0.2em; }
   .step-kind {
     font-family: var(--font-mono); font-size: 0.62em; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--copper);
+    text-transform: uppercase; color: var(--copper-ink);
   }
   .step-body { flex: 1; }
   .step-body p { margin: 0.15em 0 0; }

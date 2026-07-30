@@ -182,9 +182,11 @@
               <ul class="cards">
                 {#each hits as hit}
                   <li>
-                    <button class="card" class:active={app.libraryPart?.definition.id === hit.id}
+                    <button class="card" data-tier={hit.tier}
+                      class:active={app.libraryPart?.definition.id === hit.id}
                       onclick={() => openPart(hit.id)}>
                       <span class="card-title">{hit.title}</span>
+                      {#if hit.tier === 'verified'}<span class="tier tier-verified">verified</span>{/if}
                       {#if hit.tier === 'sourced'}<span class="tier tier-sourced">sourced</span>{/if}
                       {#if hit.tier === 'geometry'}<span class="tier tier-geometry">geometry</span>{/if}
                     </button>
@@ -202,7 +204,7 @@
 <style>
   .lib-page { flex: 1; overflow-y: auto; padding: 1.25rem 1.75rem; }
   .lib-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 1rem; }
-  .eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper); margin: 0; }
+  .eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
   h1 { margin: 0.1rem 0 0; font-size: 1.7rem; letter-spacing: -0.02em; }
   .back { text-decoration: none; }
   .lib-grid { display: grid; grid-template-columns: minmax(18rem, 24rem) 1fr; gap: 1rem; align-items: start; }
@@ -237,6 +239,10 @@
     border-radius: 8px; padding: 0.45rem 0.6rem; cursor: pointer; display: flex;
     align-items: center; gap: 0.4rem;
   }
+  /* Tier is colour + word together — the severity discipline (D50). */
+  .card[data-tier='verified'] { border-left: 3px solid var(--mask); }
+  .card[data-tier='sourced'] { border-left: 3px solid #b87400; }
+  .card[data-tier='geometry'] { border-left: 3px solid #9aa5a0; }
   .card:hover { border-color: var(--mask); }
   .card.active { border-color: var(--mask); background: #f2faf6; }
   .card-title { font-size: 0.82rem; flex: 1; }

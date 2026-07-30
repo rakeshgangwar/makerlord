@@ -2,6 +2,7 @@
   let { children } = $props();
 </script>
 
+<a class="skip-link" href="#workspace">Skip to workspace</a>
 <main class="frame">
   {@render children()}
 </main>
@@ -16,7 +17,8 @@
     --line: #d3d9dd;
     --mask: #0e6b4a;         /* solder-mask green — primary */
     --mask-deep: #0a5238;
-    --copper: #b26a38;       /* trace copper — secondary */
+    --copper: #b26a38;       /* trace copper — glows and diagram accents */
+    --copper-ink: #8a4e26;   /* copper for TEXT — 4.5:1 on the mat (audit §7) */
     --meter-face: #23282c;   /* the instrument strip */
     --meter-glow: #9ae6c3;
     /* severity — always icon + label + colour together */
@@ -69,6 +71,16 @@
 
   /* ── shared utility classes, used across components ── */
   :global(.mono) { font-family: var(--font-mono); }
+  :global(.sr-only) {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+  .skip-link {
+    position: absolute; left: -200vw; top: 0.5rem; z-index: 30;
+    background: var(--mask); color: white; padding: 0.4rem 0.9rem;
+    border-radius: 0 0 8px 8px; text-decoration: none; font-size: 0.85rem;
+  }
+  .skip-link:focus-visible { left: 0.5rem; }
   :global(.small) { font-size: 0.72rem; color: var(--ink-soft); }
   :global(.empty) { color: var(--ink-soft); }
   :global(.error) { color: var(--sev-blocker); font-size: 0.9rem; }
@@ -85,7 +97,7 @@
   }
   :global(.badge-assumed) {
     font-family: var(--font-mono); font-size: 0.62rem; margin-left: 0.3rem;
-    background: #f3e8cf; color: var(--sev-warning); padding: 0 0.3rem; border-radius: 6px;
+    background: #f3e8cf; color: #7c5000; padding: 0 0.3rem; border-radius: 6px;
   }
 
   /* markdown inside agent messages */

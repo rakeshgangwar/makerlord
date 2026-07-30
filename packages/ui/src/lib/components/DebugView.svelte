@@ -116,7 +116,7 @@
 
 <style>
   .dbg { display: flex; flex-direction: column; gap: 0.9rem; }
-  .facet-eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper); margin: 0; }
+  .facet-eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--copper-ink); margin: 0; }
   .panel-block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 0.8rem 1rem; }
   h3 { margin: 0 0 0.6rem; font-size: 0.95rem; }
   h3 .small { font-weight: 400; font-size: 0.72rem; color: var(--ink-soft); margin-left: 0.4rem; }

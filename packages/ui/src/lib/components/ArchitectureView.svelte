@@ -55,7 +55,7 @@
   .facet { max-width: 60rem; }
   .facet-eyebrow {
     font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--copper); margin: 0 0 0.7rem;
+    color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .blocks-canvas {
     margin: 0 0 1rem; background: var(--panel); border-radius: 10px; padding: 0.7rem;
@@ -83,10 +83,10 @@
     border-radius: 6px; background: #eef1f0; color: var(--ink-soft);
   }
   .src-buy { background: #dcefe6; color: var(--mask); }
-  .src-build { background: #f0e4d7; color: var(--copper); }
+  .src-build { background: #f0e4d7; color: var(--copper-ink); }
   .src-undecided { background: #f3e8cf; color: var(--sev-warning); }
   .dec-list li { background: var(--panel); border-radius: 8px; padding: 0.6rem 0.85rem; }
-  .dec-id { font-size: 0.68rem; color: var(--copper); }
+  .dec-id { font-size: 0.68rem; color: var(--copper-ink); }
   .dec-body { margin: 0.25rem 0 0; font-size: 0.88rem; }
   .dec-rej { margin: 0.25rem 0 0; font-size: 0.78rem; color: var(--ink-soft); }
 </style>

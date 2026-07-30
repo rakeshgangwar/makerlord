@@ -18,6 +18,6 @@
 <style>
   .tools { display: flex; flex-wrap: wrap; gap: 0.3rem 0.7rem; padding: 0.2rem 0.3rem; }
   .tool { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-soft); }
-  .tool.running { color: var(--copper); }
+  .tool.running { color: var(--copper-ink); }
   .tool.refused { color: var(--sev-blocker); font-weight: 600; }
 </style>

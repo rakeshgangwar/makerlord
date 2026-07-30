@@ -621,6 +621,8 @@ export async function boot() {
   if (store.get('makerlord.bridgeToken')) bridgeConnect(true);
   if (app.sessionId) openEvents();
   await replayTranscript();
-  if (app.projectId) refreshProjections();
-  else loadProjectList();
+  if (app.projectId) {
+    refreshProjections();
+    loadInventoryGap();   // also the part-title source for the panel
+  } else loadProjectList();
 }

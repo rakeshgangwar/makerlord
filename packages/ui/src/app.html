@@ -7,12 +7,27 @@
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" crossorigin="use-credentials" />
     <meta name="theme-color" content="#0e6b4a" />
     <link rel="apple-touch-icon" href="%sveltekit.assets%/icon-192.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <!-- Self-hosted (2026-07-30 audit): no third-party request, no FOUT
+         on slow links. Archivo is one variable file; Plex Mono two. -->
+    <style>
+      @font-face {
+        font-family: 'Archivo'; font-style: normal; font-weight: 100 900;
+        font-display: swap;
+        src: url('%sveltekit.assets%/fonts/archivo-var.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400;
+        font-display: swap;
+        src: url('%sveltekit.assets%/fonts/ibm-plex-mono-400.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600;
+        font-display: swap;
+        src: url('%sveltekit.assets%/fonts/ibm-plex-mono-600.woff2') format('woff2');
+      }
+    </style>
+    <link rel="preload" href="%sveltekit.assets%/fonts/archivo-var.woff2"
+      as="font" type="font/woff2" crossorigin />
     <title>MakerLord</title>
     %sveltekit.head%
   </head>

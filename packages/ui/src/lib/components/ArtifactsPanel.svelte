@@ -36,6 +36,7 @@
   });
 </script>
 
+{#if app.projectId}
 <aside class="artifacts" aria-label="Artifacts">
   <div class="panel-tabs" role="tablist">
     <button role="tab" aria-selected={activeTab === 'bench'} class:on={activeTab === 'bench'}
@@ -171,6 +172,7 @@
     {/if}
   {/if}
 </aside>
+{/if}
 
 <style>
   .artifacts { min-width: 15rem; max-width: 17rem; }

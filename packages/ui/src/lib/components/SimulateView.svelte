@@ -251,7 +251,7 @@
 <style>
   .facet-eyebrow {
     font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--copper); margin: 0 0 0.7rem;
+    color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .sim-grid { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
   .sim-canvas {

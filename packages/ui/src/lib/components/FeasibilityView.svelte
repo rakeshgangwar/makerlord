@@ -62,7 +62,7 @@
   .facet { max-width: 46rem; }
   .facet-eyebrow {
     font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--copper); margin: 0 0 0.7rem;
+    color: var(--copper-ink); margin: 0 0 0.7rem;
   }
   .verdict {
     display: flex; align-items: baseline; justify-content: space-between;

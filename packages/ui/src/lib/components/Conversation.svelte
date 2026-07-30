@@ -27,7 +27,7 @@
   .stage-empty { padding: 0.4rem 0.2rem; }
   .facet-eyebrow {
     font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--copper); margin: 0;
+    color: var(--copper-ink); margin: 0;
   }
   .stage-empty .facet-eyebrow { margin-bottom: 0.2rem; }
 </style>

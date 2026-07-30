@@ -37,7 +37,7 @@
   .converse-start { max-width: 40rem; margin: 9vh auto 0; }
   .eyebrow {
     font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--copper); margin: 0 0 0.4rem;
+    text-transform: uppercase; color: var(--copper-ink); margin: 0 0 0.4rem;
   }
   h1 {
     font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800;
