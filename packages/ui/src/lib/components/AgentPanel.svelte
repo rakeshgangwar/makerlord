@@ -99,6 +99,8 @@
       <form class="bridge-pair" onsubmit={(e) => { e.preventDefault(); bridgePair(); }}>
         <input bind:value={app.bridgeCodeDraft} name="paircode" placeholder="pairing code"
           inputmode="numeric" maxlength="6" />
+        <button class="pair-btn" type="submit"
+          disabled={app.bridgeCodeDraft.trim().length < 6}>Pair</button>
         <label class="bridge-port mono">port
           <input inputmode="numeric" bind:value={app.bridgePort} name="bridgeport" />
         </label>
@@ -196,6 +198,13 @@
     padding: var(--s1) var(--s2); border: 1px solid var(--line); border-radius: var(--r-sm);
   }
   .bridge-pair input[name='paircode'] { width: 8rem; letter-spacing: 0.2em; }
+  .pair-btn {
+    background: var(--mask); color: white; border: none; cursor: pointer;
+    padding: var(--s1) var(--s3); border-radius: var(--r-sm);
+    font-size: var(--t-sm); font-weight: 600;
+  }
+  .pair-btn:hover:not(:disabled) { background: var(--mask-deep); }
+  .pair-btn:disabled { opacity: 0.45; cursor: default; }
   .bridge-port { display: inline-flex; align-items: center; gap: var(--s1); }
   .bridge-port input { width: 4rem; }
   .bridge-err { font-size: var(--t-xs); color: var(--danger-ink); margin: var(--s1) 0; }
