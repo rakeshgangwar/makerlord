@@ -71,6 +71,33 @@ export function compact(
     pressure += p;
   }
 
+  // The cut must never orphan a tool_result from its tool_use: a window
+  // whose head carries results for dropped calls is an invalid
+  // conversation the API rejects outright (observed live on a heavy
+  // research turn). Any results-bearing head IS an orphan — its
+  // assistant partner sits before the window by construction.
+  const carriesToolResults = (m: CountableMessage): boolean =>
+    Array.isArray(m.content) &&
+    (m.content as { type?: string }[]).some((b) => b.type === 'tool_result');
+  while (kept.length > 0 && carriesToolResults(kept[0]!)) kept.shift();
+  // Likewise a head assistant message whose tool_use has no following
+  // result would dangle — but by construction results follow their calls,
+  // so an assistant head keeps its pair inside the window.
+
+  // Degenerate case: everything recent was orphaned results (a single
+  // giant round). Keep the final messages and pull their calls in even
+  // over budget — an over-budget request is survivable, an invalid
+  // conversation is fatal.
+  if (kept.length === 0) {
+    let j = messages.length - 1;
+    kept.push(messages[j]!);
+    j -= 1;
+    while (carriesToolResults(kept[0]!) && j >= 0) {
+      kept.unshift(messages[j]!);
+      j -= 1;
+    }
+  }
+
   const dropped = messages.length - kept.length;
   const summary: CountableMessage = {
     role: 'user',
