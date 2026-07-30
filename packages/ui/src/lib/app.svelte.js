@@ -146,9 +146,20 @@ export function consume(ev, replay = false) {
     app.streamingText += ev.text;
   } else if (ev.t === 'tool.start') {
     flushStreaming();
-    app.messages = [...app.messages, {
-      role: 'tool', callId: ev.callId, name: ev.name, input: ev.input, done: false,
-    }];
+    // ACP adapters re-announce a call as its status moves (pending →
+    // running); the same callId updates its card, never duplicates it.
+    const existing = ev.callId
+      ? app.messages.findLast((m) => m.role === 'tool' && m.callId === ev.callId)
+      : undefined;
+    if (existing && !existing.done) {
+      existing.name = ev.name || existing.name;
+      existing.input = ev.input ?? existing.input;
+      app.messages = [...app.messages];
+    } else if (!existing) {
+      app.messages = [...app.messages, {
+        role: 'tool', callId: ev.callId, name: ev.name, input: ev.input, done: false,
+      }];
+    }
   } else if (ev.t === 'tool.end') {
     const card = app.messages.findLast((m) =>
       m.role === 'tool' && (ev.callId ? m.callId === ev.callId : !m.done));

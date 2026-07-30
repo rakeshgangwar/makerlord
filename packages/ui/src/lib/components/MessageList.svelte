@@ -15,6 +15,12 @@
     toast('Copied');
   }
 
+  /** Adapter plumbing stays out of the maker's eyes: MCP-prefixed
+   *  names render as the tool they are. */
+  function toolName(name) {
+    return String(name ?? '').replace(/^mcp__[a-z0-9_-]+?__/i, '');
+  }
+
   /** Compact JSON for the card body — evidence, not a firehose. */
   function fmt(x) {
     if (x === null || x === undefined) return '';
@@ -30,7 +36,7 @@
         <span class="tool-state mono" aria-hidden="true">
           {m.done ? (m.refused ? '⛔' : '✓') : '◌'}
         </span>
-        <span class="tool-name mono">{m.name}</span>
+        <span class="tool-name mono">{toolName(m.name)}</span>
         <span class="tool-badge mono" class:bad={m.refused}>
           {m.done ? (m.refused ? m.refused : 'done') : 'running'}
         </span>
