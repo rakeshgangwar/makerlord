@@ -57,9 +57,11 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
   wss.on('connection', (ws, req) => {
     const origin = req.headers.origin;
     if (!pairing.verifyOrigin(origin)) {
+      process.stdout.write(`bridge: rejected connection from origin ${origin ?? '(none)'}\n`);
       ws.close(4003, 'origin not allowed');
       return;
     }
+    process.stdout.write(`bridge: browser connected (${origin})\n`);
 
     let authed = false;
     let agent: AcpAgent | undefined;
@@ -99,6 +101,9 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
 
         if (frame.t === 'pair') {
           const token = pairing.redeem(origin!, frame.code);
+          process.stdout.write(token
+            ? 'bridge: paired ✓\n'
+            : `bridge: pairing failed — wrong or spent code "${frame.code}"\n`);
           if (token) send(ws, { t: 'paired', token });
           else send(ws, { t: 'error', message: 'wrong or spent pairing code' });
           return;

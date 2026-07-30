@@ -650,6 +650,16 @@ export function bridgeConnect(quiet = false) {
 export function bridgePair() {
   bridgeWs?.send(JSON.stringify({ t: 'pair', code: app.bridgeCodeDraft.trim() }));
   app.bridgeCodeDraft = '';
+  // Silence is the one forbidden outcome (2026-07-31 report): if the
+  // bridge answers nothing — a stale bundle, a wedged daemon — say so.
+  const pairSentAt = Date.now();
+  setTimeout(() => {
+    if (app.bridgeStatus === 'pair' && !app.bridgeError && Date.now() - pairSentAt >= 4900) {
+      app.bridgeError =
+        'no reply from the bridge — is mlb still running? If it predates '
+        + 'today, reinstall: curl -fsSL https://makerlord.dev/install.sh | bash';
+    }
+  }, 5000);
 }
 
 /** Session boot — called once from the page's onMount. */
