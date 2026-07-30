@@ -1,0 +1,74 @@
+/**
+ * The bench kit scale — every size in the UI comes from here.
+ * Spacing on a 4px-ish ladder, type on five steps, radii on three.
+ * A component that needs a size not on the ladder is asking the wrong
+ * question. (2026-07-31 redesign; bits-ui parts are skinned as .k-*.)
+ */
+:root {
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2.25rem;
+
+  --t-xs: 0.68rem;   /* mono labels, eyebrows, meta */
+  --t-sm: 0.8rem;    /* secondary UI, list rows */
+  --t-md: 0.92rem;   /* body */
+  --t-lg: 1.1rem;    /* panel titles */
+  --t-xl: 1.4rem;    /* the one loud thing on a screen */
+
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 10px;
+
+  --shadow-1: 0 1px 3px rgb(20 24 27 / 8%);
+  --shadow-2: 0 4px 18px rgb(20 24 27 / 14%);
+}
+
+/* ── dialog (bits-ui) ── */
+.k-overlay {
+  position: fixed; inset: 0; background: rgb(20 24 27 / 42%); z-index: 40;
+}
+.k-dialog {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 41; background: var(--panel); border-radius: var(--r-lg);
+  border: 1px solid var(--line); box-shadow: var(--shadow-2);
+  padding: var(--s5); width: min(30rem, calc(100vw - 2rem));
+  max-height: 84vh; overflow-y: auto;
+}
+.k-dialog-title {
+  margin: 0 0 var(--s3); font-size: var(--t-lg); font-weight: 700;
+}
+.k-dialog-x {
+  position: absolute; right: var(--s3); top: var(--s3);
+  border: none; background: transparent; cursor: pointer;
+  color: var(--ink-soft); font-size: var(--t-md); padding: var(--s1);
+  border-radius: var(--r-sm);
+}
+.k-dialog-x:hover { color: var(--ink); background: var(--mat); }
+
+/* ── tooltip (bits-ui) ── */
+.k-tooltip {
+  z-index: 50; background: var(--meter-face); color: #e8f3ec;
+  font-size: var(--t-xs); padding: var(--s1) var(--s2);
+  border-radius: var(--r-sm); max-width: 18rem;
+}
+
+/* ── tabs (bits-ui) ── */
+.k-tablist { display: flex; gap: var(--s1); }
+.k-tab {
+  font-family: var(--font-mono); font-size: var(--t-xs);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: none; background: transparent; color: var(--ink-soft);
+  padding: var(--s2) var(--s2); cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.k-tab[data-state='active'] { color: var(--mask); border-bottom-color: var(--mask); }
+.k-tab:hover { color: var(--ink); }
+
+/* ── toasts (svelte-sonner) — meter-strip cards ── */
+[data-sonner-toast] {
+  font-family: var(--font-body) !important;
+  border-radius: var(--r-md) !important;
+}

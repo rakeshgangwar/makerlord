@@ -66,7 +66,7 @@ test('a finding card names the rule that fired — provenance, not vibes', async
 test('agent prose claiming the fix does not remove the card', async ({ page }) => {
   await openProject(page, DANGER);
   // The transcript's last turn says the blocker is "resolved" — a lie.
-  await page.getByRole('button', { name: 'expand conversation' }).click();
+  // The agent column shows the thread without any expand step now.
   await expect(page.getByText(/the resistor issue is resolved/)).toBeVisible();
   // The card stands: findings only ever come from engine data.
   await expect(page.locator(BLOCKER_CARD).first()).toBeVisible();

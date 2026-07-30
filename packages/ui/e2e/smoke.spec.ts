@@ -17,7 +17,7 @@ test('opening the golden project renders the stage rail', async ({ page }) => {
   await signIn(page);
   await page.goto('/');
   await page.getByText('a desk lamp indicator').click();
-  await expect(page.getByRole('navigation', { name: 'Stages' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Project' })).toBeVisible();
   await expect(page.getByRole('button', { name: /Prototype/ })).toBeVisible();
   // The finding meter is part of the frame on every screen.
   await expect(page.getByLabel('Findings')).toBeVisible();

@@ -40,7 +40,7 @@ test('⑤ simulate inlines the schematic with a layout engine stamp', async ({ p
 });
 
 test('files panel lists the projected artefacts', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Files' }).click();
+  await page.getByText('Files', { exact: true }).click();
   await expect(page.getByText('requirements.md')).toBeVisible();
   await expect(page.getByText('architecture.md')).toBeVisible();
   // The Model group ships collapsed by design; the file is a click away.

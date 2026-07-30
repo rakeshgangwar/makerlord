@@ -1,4 +1,7 @@
 <script>
+  import { Toaster } from 'svelte-sonner';
+  import '$lib/kit/kit.css';
+
   let { children } = $props();
 </script>
 
@@ -6,6 +9,7 @@
 <main class="frame">
   {@render children()}
 </main>
+<Toaster position="bottom-right" offset="3.2rem" />
 
 <style>
   :global(:root) {

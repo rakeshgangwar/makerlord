@@ -5,7 +5,6 @@
   import { adoptUrlParams, app, boot, refreshProjections } from '$lib/app.svelte.js';
   import StageRail from '$lib/components/StageRail.svelte';
   import ConverseStart from '$lib/components/ConverseStart.svelte';
-  import Conversation from '$lib/components/Conversation.svelte';
   import FeasibilityView from '$lib/components/FeasibilityView.svelte';
   import RequirementsView from '$lib/components/RequirementsView.svelte';
   import ArchitectureView from '$lib/components/ArchitectureView.svelte';
@@ -14,8 +13,7 @@
   import FirmwareView from '$lib/components/FirmwareView.svelte';
   import DebugView from '$lib/components/DebugView.svelte';
   import BenchView from '$lib/components/BenchView.svelte';
-  import ChatDock from '$lib/components/ChatDock.svelte';
-  import ArtifactsPanel from '$lib/components/ArtifactsPanel.svelte';
+  import AgentPanel from '$lib/components/AgentPanel.svelte';
   import FileOverlay from '$lib/components/FileOverlay.svelte';
   import FindingStrip from '$lib/components/FindingStrip.svelte';
 
@@ -29,17 +27,13 @@
       if (app.stage === 2) return 'feasibility';
       if (app.stage === 3) return 'requirements';
       if (app.stage === 4) return 'architecture';
-      return app.messages.length === 0 && !app.projectId ? 'start' : 'conversation';
+      return app.projectId ? 'overview' : 'start';
     }
     if (app.stage === 5) return 'simulate';
     if (app.stage === 7) return 'firmware';
     if (app.stage === 8) return 'debug';
     return posture;
   });
-
-  const dockVisible = $derived(
-    app.projectId && lens !== 'start' && lens !== 'conversation',
-  );
 
   onMount(() => {
     // URL first: ?p= and ?stage= win over localStorage — refresh keeps
@@ -90,8 +84,14 @@
     <div class="lens">
       {#if lens === 'start'}
         <ConverseStart />
-      {:else if lens === 'conversation'}
-        <Conversation />
+      {:else if lens === 'overview'}
+        <div class="overview">
+          <p class="facet-eyebrow mono">① Idea — where it all starts</p>
+          <h2 class="intent">{app.projectFile?.project?.intent ?? '…'}</h2>
+          <p class="empty">{STAGE_PURPOSE[1]} The agent column on the right is
+            where the talking happens — the tree on the left fills in as
+            decisions settle.</p>
+        </div>
       {:else if lens === 'feasibility'}
         <FeasibilityView />
       {:else if lens === 'requirements'}
@@ -115,12 +115,11 @@
       {/if}
     </div>
 
-    {#if dockVisible}
-      <ChatDock />
-    {/if}
   </section>
 
-  <ArtifactsPanel />
+  {#if app.projectId}
+    <AgentPanel />
+  {/if}
 </div>
 
 <FileOverlay />
@@ -128,22 +127,29 @@
 
 <style>
   .shell { display: flex; flex: 1; gap: 1.5rem; padding: 1.25rem 1.5rem; min-height: 0; }
-  .shell :global(.rail) { overflow-y: auto; }
-  .shell :global(.artifacts) { overflow-y: auto; }
+  .shell :global(.rail) { overflow: hidden; }
   /* Capped and centered: at 1920 the content column must not hug the
      rail with half the mat empty (2026-07-30 audit). */
   .workspace {
     flex: 1 1 auto; min-width: 0; max-width: 96rem; margin-inline: auto;
     width: 100%; display: flex; flex-direction: column; min-height: 0;
   }
-  /* The lens scrolls; the dock keeps one fixed home below it. */
   .lens { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 0.5rem; }
-  .workspace :global(.dock) { position: static; margin-top: 0.6rem; }
+  .overview { max-width: 40rem; }
+  .overview .intent { font-size: var(--t-xl); margin: var(--s2) 0 var(--s3); }
+  .facet-eyebrow {
+    font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--copper-ink); margin: 0;
+  }
 
-  /* ── responsive: the strip never collapses ── */
-  @media (max-width: 1100px) { .shell :global(.artifacts) { display: none; } }
+  /* ── responsive: the strip never collapses; on phones the agent column
+     docks under the workspace ── */
+  @media (max-width: 1100px) {
+    .shell { flex-wrap: wrap; }
+    .shell :global(.agent) { order: 3; }
+  }
   @media (max-width: 700px) {
     .shell { flex-direction: column; padding: 0.6rem 0.8rem; gap: 0.8rem; }
-    .shell :global(.rail) { min-width: 0; overflow-y: visible; }
+    .shell :global(.rail) { min-width: 0; overflow: visible; }
   }
 </style>

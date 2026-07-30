@@ -16,9 +16,11 @@
     "@makerlord/tools": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",
     "@simplewebauthn/server": "^13.3.2",
+    "bits-ui": "^2.18.1",
     "dompurify": "^3.4.12",
     "esptool-js": "^0.6.0",
-    "marked": "^18.0.7"
+    "marked": "^18.0.7",
+    "svelte-sonner": "^1.1.1"
   },
   "scripts": {
     "dev": "vite dev",

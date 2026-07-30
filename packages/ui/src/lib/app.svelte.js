@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { toast } from 'svelte-sonner';
 import { goto } from '$app/navigation';
 import { inferStage } from '$lib/postures.js';
 
@@ -137,6 +138,11 @@ export function consume(ev, replay = false) {
     if (!ev.result.ok) {
       if (last) last.refused = ev.result.refused;
       app.findings = ev.result.findings.length ? ev.result.findings : app.findings;
+      if (!replay) {
+        toast.error(`${ev.name} refused${ev.result.refused ? ` — ${ev.result.refused}` : ''}`, {
+          description: 'The finding strip has the rule and the fix.',
+        });
+      }
     }
   } else if (ev.t === 'turn.end') {
     if (app.streamingText) {
@@ -146,7 +152,10 @@ export function consume(ev, replay = false) {
     app.turnActive = false;
     if (!replay) refreshProjections();
   } else if (ev.t === 'session.error') {
-    if (!replay) app.lastError = ev.message;
+    if (!replay) {
+      app.lastError = ev.message;
+      toast.error('The agent hit an error', { description: ev.message });
+    }
     app.turnActive = false;
   }
 }

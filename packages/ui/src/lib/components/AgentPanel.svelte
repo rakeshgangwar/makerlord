@@ -1,0 +1,172 @@
+<script>
+  import { app, sendPrompt, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
+  import MessageList from './MessageList.svelte';
+  import ToolTrail from './ToolTrail.svelte';
+
+  /**
+   * The agent column (Cursor anatomy: the assistant lives at your right
+   * hand, full height). Thread on top, verbs and composer at the foot,
+   * the local brain where a model picker belongs — with the composer.
+   * Anatomy follows AI Elements / assistant-ui: messages + tool status
+   * cards inline, retry/edit on the last turn.
+   */
+  let log = $state(null);
+
+  $effect(() => {
+    void app.streamingText;
+    void app.messages.length;
+    void app.toolActivity.length;
+    if (log) log.scrollTop = log.scrollHeight;
+  });
+
+  const lastMaker = $derived(
+    [...app.messages].reverse().find((m) => m.role === 'maker')?.text ?? '',
+  );
+
+  function retry() {
+    if (lastMaker && !app.turnActive) sendPrompt(lastMaker);
+  }
+
+  function editLast() {
+    if (lastMaker && !app.turnActive) app.promptDraft = lastMaker;
+  }
+</script>
+
+<aside class="agent" aria-label="Agent">
+  <header class="agent-head">
+    <span class="mono agent-title">agent</span>
+    <button class="brain" onclick={() => bridgeConnect()}>
+      <span class="lamp-dot" class:on={app.bridgeStatus === 'ready'}></span>
+      {app.bridgeStatus === 'ready'
+        ? `local brain ✓${app.bridgeAgent ? ` · ${app.bridgeAgent}` : ''}`
+        : '⚡ local brain'}
+    </button>
+  </header>
+
+  {#if app.bridgeStatus === 'pair'}
+    <div class="bridge-setup">
+      <p class="small">The bridge is running — its terminal printed a 6-digit
+        <strong>pairing code</strong>. Enter it once:</p>
+      <form class="bridge-pair" onsubmit={(e) => { e.preventDefault(); bridgePair(); }}>
+        <input bind:value={app.bridgeCodeDraft} name="paircode" placeholder="pairing code"
+          inputmode="numeric" maxlength="6" />
+        <label class="bridge-port mono">port
+          <input inputmode="numeric" bind:value={app.bridgePort} name="bridgeport" />
+        </label>
+      </form>
+    </div>
+  {/if}
+  {#if app.bridgeError}<p class="bridge-err">{app.bridgeError}</p>{/if}
+  {#if app.bridgeStatus === 'error'}
+    <details class="bridge-help" open>
+      <summary>how to set up the local brain</summary>
+      <ol>
+        <li>On this machine: <code>mlb</code> (installed once via
+          <code>./install.sh</code>) — or <code>pnpm bridge</code> from a checkout.</li>
+        <li>It auto-detects your agent — Claude Code, Codex, Gemini CLI, Goose,
+          Qwen or Kimi — or takes any stdio ACP agent via <code>--agent</code>.</li>
+        <li>It prints a 6-digit pairing code. Click ⚡ again and enter it.</li>
+      </ol>
+      <label class="bridge-port mono">port
+        <input inputmode="numeric" bind:value={app.bridgePort} name="bridgeport2" />
+      </label>
+    </details>
+  {/if}
+
+  <div class="thread" bind:this={log}>
+    <MessageList list={app.messages} streaming={app.streamingText} cursor />
+    <ToolTrail />
+    {#if app.lastError}<div class="error">{app.lastError}</div>{/if}
+  </div>
+
+  <footer class="agent-foot">
+    {#if lastMaker && !app.turnActive}
+      <div class="verbs">
+        <button class="verb" onclick={retry} title="send the last message again">⟳ retry</button>
+        <button class="verb" onclick={editLast} title="edit the last message">✎ edit</button>
+      </div>
+    {/if}
+    <form class="composer" onsubmit={(e) => { e.preventDefault(); sendPrompt(app.promptDraft); app.promptDraft = ''; }}>
+      <input bind:value={app.promptDraft} name="prompt"
+        placeholder={app.turnActive ? 'steer the agent mid-turn…' : 'ask the agent…'} />
+      <button class="primary send" type="submit">{app.turnActive ? 'Steer' : 'Send'}</button>
+    </form>
+  </footer>
+</aside>
+
+<style>
+  .agent {
+    width: 24rem; min-width: 19rem; display: flex; flex-direction: column;
+    min-height: 0; background: var(--panel); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-1); padding: var(--s3);
+  }
+  .agent-head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--line); padding-bottom: var(--s2);
+    margin-bottom: var(--s2);
+  }
+  .agent-title {
+    font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .brain {
+    border: none; background: transparent; cursor: pointer;
+    font-size: var(--t-xs); color: var(--ink-soft); padding: var(--s1);
+    border-radius: var(--r-sm);
+  }
+  .brain:hover { color: var(--ink); background: var(--mat); }
+  .lamp-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #9aa5a0;
+    display: inline-block; margin-right: var(--s1);
+  }
+  .lamp-dot.on { background: #19c37d; box-shadow: 0 0 6px #19c37d; }
+
+  .bridge-setup, .bridge-help { font-size: var(--t-xs); color: var(--ink-soft); }
+  .bridge-pair { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+  .bridge-pair input, .bridge-port input {
+    font-family: var(--font-mono); font-size: var(--t-sm);
+    padding: var(--s1) var(--s2); border: 1px solid var(--line); border-radius: var(--r-sm);
+  }
+  .bridge-pair input[name='paircode'] { width: 8rem; letter-spacing: 0.2em; }
+  .bridge-port { display: inline-flex; align-items: center; gap: var(--s1); }
+  .bridge-port input { width: 4rem; }
+  .bridge-err { font-size: var(--t-xs); color: #b3423a; margin: var(--s1) 0; }
+  .bridge-help summary { cursor: pointer; color: var(--mask); padding: var(--s1) 0; }
+  .bridge-help ol { margin: var(--s1) 0; padding-left: 1.1rem; }
+  .bridge-help li { margin: var(--s1) 0; }
+  .bridge-help code {
+    font-family: var(--font-mono); font-size: 0.62rem; background: #eef1f0;
+    padding: 0 var(--s1); border-radius: 3px;
+  }
+
+  .thread {
+    flex: 1; min-height: 0; overflow-y: auto; display: flex;
+    flex-direction: column; gap: var(--s2); padding: var(--s2) var(--s1);
+    font-size: var(--t-sm);
+  }
+
+  .agent-foot { border-top: 1px solid var(--line); padding-top: var(--s2); }
+  .verbs { display: flex; gap: var(--s3); margin-bottom: var(--s1); }
+  .verb {
+    border: none; background: transparent; cursor: pointer;
+    font-size: var(--t-xs); color: var(--ink-soft); padding: 0;
+  }
+  .verb:hover { color: var(--mask); }
+  .composer { display: flex; gap: var(--s2); }
+  .composer input {
+    width: 100%; font-size: var(--t-md); padding: var(--s2) var(--s3);
+    box-sizing: border-box; font-family: var(--font-body);
+    border: 1.5px solid var(--line); border-radius: var(--r-md);
+    background: var(--panel);
+  }
+  .composer input:focus { border-color: var(--mask); outline: none; }
+  .send {
+    background: var(--mask); color: white; border: none; cursor: pointer;
+    padding: var(--s2) var(--s4); border-radius: var(--r-md); font-weight: 600;
+  }
+  .send:hover { background: var(--mask-deep); }
+
+  @media (max-width: 1100px) {
+    .agent { width: 100%; min-width: 0; max-height: 45vh; }
+  }
+</style>

@@ -31,7 +31,7 @@ test('the flash panel renders the locked reason, not a flash control (D47)', asy
 });
 
 test('generated firmware files appear in the files panel', async ({ page }) => {
-  await page.getByRole('tab', { name: 'Files' }).click();
+  await page.getByText('Files', { exact: true }).click();
   await expect(page.getByText('pins.h')).toBeVisible();
   await expect(page.getByText('main.cpp')).toBeVisible();
 });
