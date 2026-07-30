@@ -1,6 +1,5 @@
 <script>
   import { page } from '$app/state';
-  import { stagePhase } from '$lib/postures.js';
   import {
     app, gotoStage, newProject, titleFor, loadFiles, openFile,
   } from '$lib/app.svelte.js';
@@ -46,9 +45,18 @@
 
   const STAGE_NAMES = [
     'Idea', 'Feasibility', 'Requirements', 'Architecture', 'Simulate',
-    'Prototype ★', 'Firmware', 'Debug', 'PCB', 'Mechanical',
+    'Prototype', 'Firmware', 'Debug', 'PCB', 'Mechanical',
     'Manufacturing', 'Fabricate', 'First article', 'Test', 'Compliance',
     'Document', 'Produce',
+  ];
+
+  /** The journey in four acts — the metro map's segments. `live` is
+   *  product truth: Design and Prove are built; the rest say so. */
+  const GROUPS = [
+    { name: 'Design', phase: 1, stages: [1, 2, 3, 4], live: true },
+    { name: 'Prove', phase: 2, stages: [5, 6, 7, 8], live: true },
+    { name: 'Industrialize', phase: 3, stages: [9, 10, 11, 12], live: false },
+    { name: 'Ship', phase: 4, stages: [13, 14, 15, 16, 17], live: false },
   ];
 
   const project = $derived(app.projectFile?.project ?? null);
@@ -84,16 +92,24 @@
 
   <div class="tree">
     <div class="stage-list">
-      {#each STAGE_NAMES as name, i}
-        <button
-          class="stage"
-          class:active={current === i + 1}
-          data-phase={stagePhase(i + 1)}
-          onclick={() => { gotoStage(i + 1); railOpen = false; }}
-        >
-          <span class="stage-n">{String(i + 1).padStart(2, '0')}</span>
-          {name}
-        </button>
+      {#each GROUPS as g}
+        <p class="journey-group mono" data-phase={g.phase}>
+          {g.name}{#if !g.live}<span class="soon">soon</span>{/if}
+        </p>
+        <div class="segment" class:future={!g.live} data-phase={g.phase}>
+          {#each g.stages as n}
+            <button
+              class="stage"
+              class:active={current === n}
+              class:behind={n < current}
+              onclick={() => { gotoStage(n); railOpen = false; }}
+            >
+              <span class="node mono" aria-hidden="true">{n < current ? '✓' : current === n ? '●' : '○'}</span>
+              <span class="stage-n">{String(n).padStart(2, '0')}</span>
+              {STAGE_NAMES[n - 1]}
+            </button>
+          {/each}
+        </div>
       {/each}
     </div>
 
@@ -206,19 +222,38 @@
   }
   .wordmark span { color: var(--mask); }
 
-  .stage {
-    display: flex; align-items: baseline; gap: 0.55rem;
-    text-align: left; border: none; background: transparent;
-    border-left: 3px solid transparent;
-    padding: 0.32rem 0.6rem; cursor: pointer; font-size: var(--t-sm);
-    color: var(--ink-soft); border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  /* ── the metro line: one route, four coloured segments ── */
+  .journey-group {
+    display: flex; align-items: baseline; gap: var(--s2);
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); margin: var(--s2) 0 0.1rem var(--s1);
   }
-  .stage[data-phase='1'] { border-left-color: var(--phase-1); }
-  .stage[data-phase='2'] { border-left-color: var(--phase-2); }
-  .stage[data-phase='3'] { border-left-color: var(--phase-3); }
-  .stage[data-phase='4'] { border-left-color: var(--phase-4); }
+  .journey-group .soon {
+    font-size: 0.56rem; letter-spacing: 0.06em; padding: 0 0.3rem;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    color: var(--ink-soft); opacity: 0.8; text-transform: lowercase;
+  }
+  .segment { border-left: 2px solid var(--line); margin-left: 0.55rem; }
+  .segment[data-phase='1'] { border-left-color: var(--phase-1); }
+  .segment[data-phase='2'] { border-left-color: var(--phase-2); }
+  .segment[data-phase='3'] { border-left-color: var(--phase-3); }
+  .segment[data-phase='4'] { border-left-color: var(--phase-4); }
+  .segment.future { border-left-style: dashed; }
+  .segment.future .stage { opacity: 0.55; }
+
+  .stage {
+    display: flex; align-items: baseline; gap: 0.45rem; width: 100%;
+    text-align: left; border: none; background: transparent;
+    padding: 0.28rem 0.5rem 0.28rem 0.4rem; cursor: pointer; font-size: var(--t-sm);
+    color: var(--ink-soft); border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    box-sizing: border-box;
+  }
   .stage:hover { background: var(--hover-bg); color: var(--ink); }
   .stage.active { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
+  .stage.behind { color: var(--ink-soft); }
+  .node { font-size: var(--t-xs); color: var(--ink-soft); width: 0.9em; }
+  .stage.behind .node { color: var(--mask); }
+  .stage.active .node { color: var(--mask); }
   .stage-n { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-soft); }
   .stage.active .stage-n { color: var(--mask); font-weight: 600; }
   .new-project { border-left-color: transparent; }
@@ -256,11 +291,9 @@
     }
     .wordmark { margin-bottom: 0; }
     .stage-list { display: none; }
-    .rail.open .stage-list {
-      display: flex; flex-flow: row wrap; gap: 0.15rem; align-items: flex-start;
-      margin-top: var(--s2);
-    }
-    .rail.open .stage-list .stage { align-self: flex-start; }
+    .rail.open .stage-list { display: block; margin-top: var(--s2); }
+    .rail.open .segment { display: flex; flex-flow: row wrap; gap: 0.15rem; }
+    .rail.open .segment .stage { width: auto; align-self: flex-start; }
     .tree-sections { display: none; }
     .rail.open .tree-sections { display: block; }
   }

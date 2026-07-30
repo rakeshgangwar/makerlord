@@ -43,7 +43,7 @@ test('no control anywhere dismisses, hides or downranks a finding', async ({ pag
     await openProject(page, id);
     const stages: [number, string][] = [
       [1, 'Idea'], [2, 'Feasibility'], [3, 'Requirements'],
-      [4, 'Architecture'], [5, 'Simulate'], [6, 'Prototype ★'],
+      [4, 'Architecture'], [5, 'Simulate'], [6, 'Prototype'],
       [7, 'Firmware'], [8, 'Debug'],
     ];
     for (const [n, name] of stages) {
@@ -75,7 +75,7 @@ test('agent prose claiming the fix does not remove the card', async ({ page }) =
 
 test('the engine refuses the advance in the browser, not just the API', async ({ page }) => {
   await openProject(page, DANGER);
-  await pickStage(page, 6, 'Prototype ★');
+  await pickStage(page, 6, 'Prototype');
   const done = page.getByRole('button', { name: /Done — next step/ }).first();
   await expect(done).toBeVisible();
   await done.click();
