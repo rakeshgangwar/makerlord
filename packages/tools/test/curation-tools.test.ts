@@ -295,3 +295,38 @@ describe('the upload channel (spec §3.5)', () => {
     expect(r.file).toBe('core/Buzzer-v15.fzp');
   }, 120_000);
 });
+
+describe('transport tolerance — the fifteen-retry failure, pinned', () => {
+  it('a stringified profile with numeric strings coerces and files', async () => {
+    const r = await data('profile_propose', {
+      file: 'core/Buzzer-v15.fzp',
+      partId: 'Buzzer-v15',
+      // Exactly what the looping agent sent: JSON-as-string, numbers quoted.
+      profile: JSON.stringify({
+        partId: 'Buzzer-v15',
+        footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+        absMaxVoltageV: '5.0',
+        quiescentMa: '30',
+        hazardClass: 'none',
+      }),
+      citations: JSON.stringify({ absMaxVoltageV: 'https://example.com/ds.pdf', quiescentMa: 'https://example.com/ds.pdf' }),
+    });
+    expect(r.tier).toBe('sourced');
+    const written = readFileSync(join(proposalsDir, 'Buzzer-v15.yaml'), 'utf8');
+    expect(written).toContain('absMaxVoltageV: 5');   // a NUMBER landed
+  });
+
+  it('garbage still fails loudly — coercion is not acceptance', async () => {
+    await expect(call('profile_propose', {
+      file: 'core/Buzzer-v15.fzp',
+      partId: 'Buzzer-v15',
+      profile: JSON.stringify({
+        partId: 'Buzzer-v15',
+        footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+        absMaxVoltageV: 'five volts ish',
+        hazardClass: 'none',
+      }),
+      citations: '{}',
+    })).rejects.toThrow();
+  });
+});

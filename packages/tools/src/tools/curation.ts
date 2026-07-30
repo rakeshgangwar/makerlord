@@ -4,8 +4,8 @@ import { stringify as toYaml } from 'yaml';
 import { z } from 'zod';
 import { readFileSync } from 'node:fs';
 import {
-  datasheetPath, ELECTRICAL_FIELDS, isUploadRef, loadPart, proposalSchema,
-  proposalsDir,
+  datasheetPath, ELECTRICAL_FIELDS, isUploadRef, loadPart, profileSchema,
+  proposalSchema, proposalsDir,
 } from '@makerlord/parts';
 import { tierOf } from '../data.js';
 import type { ToolDef } from '../def.js';
@@ -18,6 +18,29 @@ import { ok, refuse } from '../result.js';
  * promote` lives in the maintainer CLI only, so no agent — local brain
  * included — can move a part to verified. The absence is the guarantee.
  */
+
+/** Transports and models stringify: accept a JSON string where an object
+ *  belongs, and numeric strings in numeric fields — validation still runs
+ *  on the coerced value, so nothing unsound gets through. */
+function coerceJsonString(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw;
+  try { return JSON.parse(raw); } catch { return raw; }
+}
+
+function coerceProfileInput(raw: unknown): unknown {
+  const parsed = coerceJsonString(raw);
+  if (typeof parsed !== 'object' || parsed === null) return parsed;
+  const out = { ...(parsed as Record<string, unknown>) };
+  for (const f of ELECTRICAL_FIELDS) {
+    const v = out[f];
+    if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) {
+      out[f] = Number(v);
+    }
+  }
+  if (typeof out.footprint === 'string') out.footprint = coerceJsonString(out.footprint);
+  if (typeof out.gpio === 'string') out.gpio = coerceJsonString(out.gpio);
+  return out;
+}
 
 /** Family plausibility — cheap sanity that makes human review cheaper. */
 export function plausibilityWarnings(profile: {
@@ -56,11 +79,16 @@ const profilePropose: ToolDef = {
     'profile proposal into the curation queue. Every electrical field needs ' +
     'a citation URL you actually fetched. A human promotes it to verified; ' +
     'you cannot.',
+  // The input schema is the REAL profile schema — the MCP projection then
+  // shows clients the exact fields and types. A lazy record-of-unknown
+  // here cost a live agent fifteen retries of string-typed values.
+  // Preprocessing is the belt: stringified JSON and numeric strings from
+  // any transport coerce before validation.
   input: z.object({
     file: z.string().min(1),
     partId: z.string().min(1),
-    profile: z.record(z.unknown()),
-    citations: z.record(z.string()),
+    profile: z.preprocess(coerceProfileInput, profileSchema),
+    citations: z.preprocess(coerceJsonString, z.record(z.string())),
   }),
   mutates: false,   // mutates the REPO's proposals queue, not project.json
   gated: false,
