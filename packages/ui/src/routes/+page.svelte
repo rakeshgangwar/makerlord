@@ -11,6 +11,7 @@
   import InspectView from '$lib/components/InspectView.svelte';
   import SimulateView from '$lib/components/SimulateView.svelte';
   import FirmwareView from '$lib/components/FirmwareView.svelte';
+  import DebugView from '$lib/components/DebugView.svelte';
   import BenchView from '$lib/components/BenchView.svelte';
   import ChatDock from '$lib/components/ChatDock.svelte';
   import ArtifactsPanel from '$lib/components/ArtifactsPanel.svelte';
@@ -31,6 +32,7 @@
     }
     if (app.stage === 5) return 'simulate';
     if (app.stage === 7) return 'firmware';
+    if (app.stage === 8) return 'debug';
     return posture;
   });
 
@@ -69,6 +71,8 @@
         <SimulateView />
       {:else if lens === 'firmware'}
         <FirmwareView />
+      {:else if lens === 'debug'}
+        <DebugView />
       {:else if lens === 'inspect'}
         <InspectView />
       {:else if lens === 'bench'}

@@ -7,9 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **MakerLord** is a complete assistant for the maker's journey — idea → simulate →
 prototype → product → production, across 17 stages. **All seven design specs
 are implemented and deployed at makerlord.dev** (deploy: `./deploy/deploy.sh
-sync`; infra details in `docs/infra.md`). Thirteen packages: `parts`,
-`circuit`, `project`, `tools` (the 37-tool registry), `cli` (`maker`), `mcp`
+sync`; infra details in `docs/infra.md`). Fifteen packages: `parts`,
+`circuit`, `project`, `tools` (the 47-tool registry), `cli` (`maker`), `mcp`
 (`maker-mcp`), `protocol`, `bridge` (`maker-bridge`), `agent`, `sim`,
+`firmware` (stage ⑦: pin plans, cross-checks, codegen, compile gate),
+`debug` (stage ⑧: fault library, signatures, guided search),
 `artifacts` (file-tree projections + per-project git), `server` (hosted SSE
 API), and `ui` (SvelteKit; `pnpm --filter @makerlord/ui build`). Development follows the
 plans in `docs/superpowers/plans/` **task-by-task, strict TDD**; each plan's

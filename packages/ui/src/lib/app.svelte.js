@@ -67,6 +67,11 @@ export const app = $state({
   serialOpen: false,
   /** @type {import('./flash.js').SerialLine[]} */
   serialLines: [],
+  // debug (stage ⑧)
+  debugSymptomKind: 'element_dead',
+  debugSymptomRef: '',
+  debugReading: '',
+  debugStarting: false,
   // right panel
   panelTab: 'bench',
   libraryQuery: '',
@@ -355,6 +360,41 @@ export async function fwManifestGet() {
   const d = await fwTool('fw_manifest');
   app.fwManifest = d;
   return d;
+}
+
+// ── stage ⑧: the guided search. The engine owns candidates and prunes;
+// the UI records numbers and renders the tree. ──
+
+export async function debugStart() {
+  if (app.debugStarting) return;
+  app.debugStarting = true;
+  try {
+    const input = { kind: app.debugSymptomKind };
+    if (app.debugSymptomRef.trim()) input.ref = app.debugSymptomRef.trim();
+    await fwTool('debug_start', input);
+    await refreshProjections();
+  } finally {
+    app.debugStarting = false;
+  }
+}
+
+export async function debugObserveVoltage(net, rawValue) {
+  const value = Number(rawValue);
+  if (!Number.isFinite(value)) return;
+  await fwTool('debug_observe', { kind: 'voltage', net, value, unit: 'V' });
+  app.debugReading = '';
+  await refreshProjections();
+}
+
+/** SELFTEST lines from the shared monitor feed the search automatically. */
+export async function debugObserveSelftest(role, okFlag) {
+  await fwTool('debug_observe', { kind: 'selftest', role, ok: okFlag });
+  await refreshProjections();
+}
+
+export async function debugClose() {
+  await fwTool('debug_close');
+  await refreshProjections();
 }
 
 export async function openGate() {

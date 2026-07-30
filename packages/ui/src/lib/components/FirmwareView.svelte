@@ -4,7 +4,8 @@
     api, app, fwCheck, fwCompileRun, fwGenerate, fwManifestGet, fwPinPlan,
   } from '$lib/app.svelte.js';
   import { flashPanelState } from '$lib/flash.js';
-  import { flashEsp, hasPort, openMonitor, requestPort } from '$lib/flasher.js';
+  import { flashEsp, hasPort, requestPort } from '$lib/flasher.js';
+  import SerialMonitor from './SerialMonitor.svelte';
 
   const fw = $derived(app.projectFile?.project?.firmware ?? null);
   const behaviors = $derived(fw?.behaviors ?? []);
@@ -22,8 +23,8 @@
     protocol,
   }));
 
-  /** @type {{stop: () => Promise<void>} | null} */
-  let monitor = $state(null);
+  /** @type {any} */
+  let serialMonitor = $state(null);
 
   async function connectPort() {
     try {
@@ -37,7 +38,7 @@
     const manifest = await fwManifestGet();
     if (!manifest) return;
     if (!hasPort() && !(await requestPort().catch(() => false))) return;
-    if (monitor) { await monitor.stop(); monitor = null; app.serialOpen = false; }
+    await serialMonitor?.stopMonitor();
     app.flashState = 'flashing';
     app.flashPercent = 0;
     app.flashError = '';
@@ -57,20 +58,6 @@
     }
   }
 
-  async function toggleMonitor() {
-    if (monitor) {
-      await monitor.stop();
-      monitor = null;
-      app.serialOpen = false;
-      return;
-    }
-    if (!hasPort() && !(await requestPort().catch(() => false))) return;
-    const baud = 115200;   // the scaffold's Serial.begin
-    const m = openMonitor(baud, (line) => {
-      app.serialLines = [...app.serialLines.slice(-199), line];
-    });
-    if (m) { monitor = m; app.serialOpen = true; }
-  }
 </script>
 
 <div class="facet fw">
@@ -167,29 +154,7 @@
     {/if}
   </section>
 
-  <section class="panel-block">
-    <h3>Serial monitor
-      <span class="small">[device output — unverified] — a print claiming “all good” proves nothing</span>
-    </h3>
-    <div class="row">
-      <button class="secondary" onclick={toggleMonitor} disabled={!webSerial}>
-        {app.serialOpen ? 'Stop monitor' : 'Open monitor'}
-      </button>
-    </div>
-    {#if app.serialLines.length > 0}
-      <div class="serial-log mono">
-        {#each app.serialLines as line}
-          {#if line.kind === 'selftest'}
-            <p class="ser-selftest" class:fail={!line.ok}>SELFTEST {line.role} ({line.mode}) {line.ok ? 'ok ✓' : 'FAIL ✗'}</p>
-          {:else if line.kind === 'log'}
-            <p class="ser-log">{line.behavior} = {line.value}</p>
-          {:else}
-            <p class="ser-raw">{line.text}</p>
-          {/if}
-        {/each}
-      </div>
-    {/if}
-  </section>
+  <SerialMonitor bind:this={serialMonitor} />
 </div>
 
 <style>
@@ -218,10 +183,4 @@
   .flash-bar { height: 8px; background: #e4e8e6; border-radius: 4px; margin-top: 0.5rem; overflow: hidden; }
   .flash-fill { height: 100%; background: var(--mask); transition: width 0.2s; }
   .flash-err { color: #b3423a; font-size: 0.82rem; }
-  .serial-log { background: var(--meter-face); border-radius: 8px; padding: 0.5rem 0.8rem; margin-top: 0.6rem; max-height: 30vh; overflow-y: auto; font-size: 0.95rem; }
-  .serial-log p { margin: 0.1rem 0; }
-  .ser-selftest { color: #19c37d; font-weight: 600; }
-  .ser-selftest.fail { color: #ff6b61; }
-  .ser-log { color: #8ecbff; }
-  .ser-raw { color: #b9c3c0; }
 </style>

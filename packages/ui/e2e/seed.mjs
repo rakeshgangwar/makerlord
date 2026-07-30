@@ -109,6 +109,20 @@ export default async function seed() {
     });
     await step('fw_pin_plan');
     await step('fw_generate');
+
+    // The debug leg (stage ⑧): a live guided search mid-flight. Needs a
+    // CLOSED electrical loop (D5 → LED → R → GND) and ngspice at seed
+    // time — the CI e2e job installs it.
+    const resRef = parts.find(
+      (p) => p.blockId === 'indicator' && p.defId === 'ResistorModuleID',
+    ).ref;
+    await step('connect', { from: `${ledRef}.cathode`, to: `${resRef}.Pin 0` });
+    await step('connect', { from: `${resRef}.Pin 1`, to: `${mcuRef}.GND` });
+    await step('sim_stimulus_set', {
+      id: 's1', target: `${mcuRef}.D5 PWM`, kind: 'dc', params: { volts: 5 },
+      provenance: 'stated', rationale: 'D5 driven high — the branch under test',
+    });
+    await step('debug_start', { kind: 'element_dead', ref: ledRef });
   });
 
   // ── danger: LED with no series resistor — a LIVE engine BLOCKER ──────

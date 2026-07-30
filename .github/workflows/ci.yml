@@ -101,6 +101,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # The e2e seeder runs debug_start, whose fault signatures need the
+      # real solver.
+      - name: Install ngspice
+        run: sudo apt-get update -q && sudo apt-get install -y -q ngspice
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
