@@ -37,6 +37,48 @@
     --phase-4: #d4ac0d;      /* yellow */
     --font-body: 'Archivo', system-ui, sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    /* tone surfaces — every tinted background reads from here so the
+       dark bench (below) can restate them */
+    --code-bg: #eef1f0;
+    --maker-bubble: #dcefe6;
+    --gate-bg: #f2faf6;
+    --ok-bg: #e7f3ed;
+    --ok-ink: #0a5238;
+    --warn-bg: #f3e8cf;
+    --warn-ink: #7c5000;
+    --danger-bg: #fdf0ee;
+    --danger-ink: #c22f1e;
+    --hover-bg: rgb(255 255 255 / 75%);
+    --mat-veil: rgb(233 236 238 / 82%);
+  }
+
+  /* ── the bench at night — same identity, lights off ── */
+  :global(:root[data-theme='dark']) {
+    --mat: #171b1e;
+    --panel: #21262a;
+    --ink: #e8edf0;
+    --ink-soft: #9aa7ae;
+    --line: #343d43;
+    --mask: #35b384;
+    --mask-deep: #2a8f6a;
+    --copper: #c98b57;
+    --copper-ink: #d9a06c;
+    --meter-face: #101416;
+    --sev-refuse: #e07b7b;
+    --sev-blocker: #ef6a57;
+    --sev-warning: #d99a2b;
+    --sev-note: #6aa5dd;
+    --code-bg: #2a3136;
+    --maker-bubble: #1f3a2f;
+    --gate-bg: #1e2c26;
+    --ok-bg: #1f3129;
+    --ok-ink: #7fd6b0;
+    --warn-bg: #3b331c;
+    --warn-ink: #e3b34c;
+    --danger-bg: #3d2521;
+    --danger-ink: #ef8a7a;
+    --hover-bg: rgb(255 255 255 / 6%);
+    --mat-veil: rgb(23 27 30 / 82%);
   }
   :global(body) {
     margin: 0;
@@ -55,7 +97,7 @@
     content: '';
     position: fixed;
     inset: 0;
-    background: rgb(233 236 238 / 82%);
+    background: var(--mat-veil);
     pointer-events: none;
     z-index: 0;
   }
@@ -101,7 +143,7 @@
   }
   :global(.badge-assumed) {
     font-family: var(--font-mono); font-size: 0.62rem; margin-left: 0.3rem;
-    background: #f3e8cf; color: #7c5000; padding: 0 0.3rem; border-radius: var(--r-md);
+    background: var(--warn-bg); color: var(--warn-ink); padding: 0 0.3rem; border-radius: var(--r-md);
   }
 
   /* markdown inside agent messages */
@@ -109,8 +151,8 @@
   :global(.md table) { border-collapse: collapse; margin: 0.4em 0; font-size: 0.9em; }
   :global(.md th), :global(.md td) { border: 1px solid var(--line); padding: 0.25em 0.55em; text-align: left; }
   :global(.md th) { font-family: var(--font-mono); font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.06em; }
-  :global(.md code) { font-family: var(--font-mono); font-size: 0.88em; background: #eef1f0; padding: 0 0.25em; border-radius: var(--r-sm); }
-  :global(.md pre) { background: #eef1f0; padding: 0.6em 0.8em; border-radius: var(--r-md); overflow-x: auto; }
+  :global(.md code) { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 0 0.25em; border-radius: var(--r-sm); }
+  :global(.md pre) { background: var(--code-bg); padding: 0.6em 0.8em; border-radius: var(--r-md); overflow-x: auto; }
   :global(.md ul), :global(.md ol) { margin: 0.3em 0; padding-left: 1.3em; }
   :global(.md h1), :global(.md h2), :global(.md h3) { font-size: 1.05em; margin: 0.5em 0 0.2em; }
   @media (prefers-reduced-motion: reduce) {

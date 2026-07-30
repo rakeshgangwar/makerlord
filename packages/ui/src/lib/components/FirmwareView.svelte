@@ -168,19 +168,19 @@
   .empty { color: var(--ink-soft); font-size: var(--t-sm); }
   .beh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
   .beh-id { font-weight: 600; font-size: var(--t-sm); }
-  .beh-kind { background: #eef1f0; border-radius: var(--r-sm); padding: 0 0.35rem; font-size: var(--t-xs); margin: 0 0.4rem; }
+  .beh-kind { background: var(--code-bg); border-radius: var(--r-sm); padding: 0 0.35rem; font-size: var(--t-xs); margin: 0 0.4rem; }
   .plan-table { border-collapse: collapse; width: 100%; font-size: var(--t-sm); }
   .plan-table th { text-align: left; font-size: var(--t-xs); color: var(--ink-soft); font-weight: 500; padding: 0.15rem 0.6rem 0.15rem 0; }
   .plan-table td { padding: 0.2rem 0.6rem 0.2rem 0; }
   .role { font-weight: 600; }
-  .pin-locked { background: #eef1f0; border-radius: var(--r-sm); padding: 0.05rem 0.35rem; font-size: var(--t-sm); cursor: not-allowed; }
-  .unbound { color: #b3423a; font-size: var(--t-sm); }
+  .pin-locked { background: var(--code-bg); border-radius: var(--r-sm); padding: 0.05rem 0.35rem; font-size: var(--t-sm); cursor: not-allowed; }
+  .unbound { color: var(--danger-ink); font-size: var(--t-sm); }
   .row { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
   .verdict.ok { color: #19794d; }
-  .verdict.bad { color: #b3423a; }
+  .verdict.bad { color: var(--danger-ink); }
   .compile-log { background: var(--meter-face); color: #dfe5e2; font-size: var(--t-xs); padding: 0.6rem 0.8rem; border-radius: var(--r-md); max-height: 32vh; overflow: auto; white-space: pre-wrap; }
   .flash-locked { color: var(--ink-soft); font-size: var(--t-sm); }
-  .flash-bar { height: 8px; background: #e4e8e6; border-radius: var(--r-sm); margin-top: 0.5rem; overflow: hidden; }
+  .flash-bar { height: 8px; background: color-mix(in srgb, var(--ink-soft) 12%, var(--panel)); border-radius: var(--r-sm); margin-top: 0.5rem; overflow: hidden; }
   .flash-fill { height: 100%; background: var(--mask); transition: width 0.2s; }
-  .flash-err { color: #b3423a; font-size: var(--t-sm); }
+  .flash-err { color: var(--danger-ink); font-size: var(--t-sm); }
 </style>

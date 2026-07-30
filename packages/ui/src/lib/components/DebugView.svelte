@@ -125,7 +125,7 @@
   .hint { color: var(--ink-soft); margin: 0.6rem 0 0; }
 
   /* The proposal is the bench's headline: huge type, hands busy. */
-  .proposal { border: 2px solid var(--mask); background: #f2faf6; }
+  .proposal { border: 2px solid var(--mask); background: var(--gate-bg); }
   .prop-eyebrow { font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mask); margin: 0; }
   .prop-net { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0.3rem 0; letter-spacing: -0.02em; }
   .prop-why { color: var(--ink-soft); margin: 0 0 0.7rem; }

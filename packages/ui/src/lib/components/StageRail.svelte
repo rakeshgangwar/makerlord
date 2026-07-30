@@ -18,6 +18,14 @@
   let tokenDialogOpen = $state(false);
   let mintedToken = $state('');
 
+  function toggleTheme() {
+    const root = document.documentElement;
+    const dark = root.dataset.theme === 'dark';
+    if (dark) delete root.dataset.theme;
+    else root.dataset.theme = 'dark';
+    try { localStorage.setItem('makerlord.theme', dark ? 'light' : 'dark'); } catch {}
+  }
+
   async function signOut() {
     await fetch('/auth/logout', { method: 'POST' });
     location.href = '/login';
@@ -66,6 +74,8 @@
 <nav class="rail" class:open={railOpen} aria-label="Project">
   <div class="rail-top">
     <div class="wordmark">Maker<span>Lord</span></div>
+    <button class="theme-toggle" onclick={toggleTheme}
+      title="light / dark" aria-label="Toggle colour theme">◐</button>
     <button class="rail-toggle mono" aria-expanded={railOpen}
       onclick={() => (railOpen = !railOpen)}>
       {String(current).padStart(2, '0')} {STAGE_NAMES[current - 1]} ▾
@@ -89,6 +99,7 @@
 
     {#if app.projectId && project}
       <div class="tree-sections">
+        <p class="tree-group mono">on the bench</p>
         {#if project.requirements.length > 0}
           <details class="tree-sec" open>
             <summary class="mono">Requirements <span class="small">({project.requirements.length})</span></summary>
@@ -122,32 +133,32 @@
             </ul>
           </details>
         {/if}
-        <details class="tree-sec"
-          ontoggle={(e) => { if (e.currentTarget.open) loadFiles(); }}>
-          <summary class="mono">Files</summary>
-          {#each fileGroups as [group, files]}
-            <details class="tree-sub" open={group !== 'Journal' && group !== 'Model'}>
-              <summary class="mono">{group} <span class="small">({files.length})</span></summary>
-              <ul class="tree-list file-list">
-                {#each files as f}
-                  <li><button class="file-link mono" class:openfile={app.fileOpen?.path === f.path}
-                      onclick={() => openFile(f.path)}>{basename(f.path)}</button>
-                    <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
-                {/each}
-              </ul>
-            </details>
-          {/each}
-          {#if app.commits.length > 0}
-            <details class="tree-sub">
-              <summary class="mono">History <span class="small">({app.commits.length})</span></summary>
-              <ul class="tree-list">
-                {#each app.commits as c}
-                  <li><span class="mono small">{c.date}</span> {c.subject}</li>
-                {/each}
-              </ul>
-            </details>
-          {/if}
-        </details>
+      </div>
+
+      <div class="tree-sections">
+        <p class="tree-group mono">files</p>
+        {#each fileGroups as [group, files]}
+          <details class="tree-sec" open={group === 'Design documents'}>
+            <summary class="mono">{group} <span class="small">({files.length})</span></summary>
+            <ul class="tree-list file-list">
+              {#each files as f}
+                <li><button class="file-link mono" class:openfile={app.fileOpen?.path === f.path}
+                    onclick={() => openFile(f.path)}>{basename(f.path)}</button>
+                  <span class="mono small">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} kB`}</span></li>
+              {/each}
+            </ul>
+          </details>
+        {/each}
+        {#if app.commits.length > 0}
+          <details class="tree-sec">
+            <summary class="mono">History <span class="small">({app.commits.length})</span></summary>
+            <ul class="tree-list">
+              {#each app.commits as c}
+                <li><span class="mono small">{c.date}</span> {c.subject}</li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
       </div>
     {/if}
 
@@ -182,6 +193,12 @@
   .tree { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
   .rail-top { display: flex; align-items: baseline; justify-content: space-between; }
   .rail-toggle { display: none; }
+  .theme-toggle {
+    border: none; background: transparent; cursor: pointer;
+    color: var(--ink-soft); font-size: var(--t-md); padding: 0 var(--s1);
+    border-radius: var(--r-sm); line-height: 1;
+  }
+  .theme-toggle:hover { color: var(--ink); background: var(--hover-bg); }
   .stage-list { display: flex; flex-direction: column; gap: 1px; }
   .wordmark {
     font-weight: 800; font-size: var(--t-lg); letter-spacing: -0.02em;
@@ -200,7 +217,7 @@
   .stage[data-phase='2'] { border-left-color: var(--phase-2); }
   .stage[data-phase='3'] { border-left-color: var(--phase-3); }
   .stage[data-phase='4'] { border-left-color: var(--phase-4); }
-  .stage:hover { background: rgb(255 255 255 / 75%); color: var(--ink); }
+  .stage:hover { background: var(--hover-bg); color: var(--ink); }
   .stage.active { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-1); }
   .stage-n { font-family: var(--font-mono); font-size: var(--t-xs); color: var(--ink-soft); }
   .stage.active .stage-n { color: var(--mask); font-weight: 600; }
@@ -209,12 +226,15 @@
 
   /* ── settled artifacts + files, as tree sections ── */
   .tree-sections { margin-top: var(--s4); border-top: 1px solid var(--line); padding-top: var(--s2); }
-  .tree-sec > summary, .tree-sub > summary {
+  .tree-group {
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-soft); opacity: 0.75; margin: 0 0 var(--s1) var(--s1);
+  }
+  .tree-sec > summary {
     cursor: pointer; font-size: var(--t-xs); text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--ink-soft); padding: var(--s1) var(--s1);
   }
   .tree-sec[open] > summary { color: var(--mask); }
-  .tree-sub { margin-left: var(--s2); }
   .tree-list {
     list-style: none; padding: 0 0 0 var(--s3); margin: 0 0 var(--s1);
     font-size: var(--t-sm);
@@ -260,7 +280,7 @@
   .user-act:hover { color: var(--mask); }
   .token-value {
     display: block; word-break: break-all; font-size: var(--t-xs);
-    background: #eef1f0; padding: var(--s2) var(--s3); border-radius: var(--r-sm);
+    background: var(--code-bg); padding: var(--s2) var(--s3); border-radius: var(--r-sm);
     margin: var(--s3) 0;
   }
 </style>

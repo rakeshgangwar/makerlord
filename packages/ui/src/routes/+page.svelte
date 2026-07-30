@@ -14,7 +14,7 @@
   import DebugView from '$lib/components/DebugView.svelte';
   import BenchView from '$lib/components/BenchView.svelte';
   import AgentPanel from '$lib/components/AgentPanel.svelte';
-  import FileOverlay from '$lib/components/FileOverlay.svelte';
+  import FileView from '$lib/components/FileView.svelte';
   import FindingStrip from '$lib/components/FindingStrip.svelte';
 
   const posture = $derived(postureFor(app.stage));
@@ -82,7 +82,9 @@
       {app.projectFile?.project?.intent ?? 'MakerLord'} — stage {app.stage}
     </h1>
     <div class="lens">
-      {#if lens === 'start'}
+      {#if app.fileOpen}
+        <FileView />
+      {:else if lens === 'start'}
         <ConverseStart />
       {:else if lens === 'overview'}
         <div class="overview">
@@ -122,7 +124,6 @@
   {/if}
 </div>
 
-<FileOverlay />
 <FindingStrip />
 
 <style>

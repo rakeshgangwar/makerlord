@@ -33,9 +33,9 @@
   .primary { background: var(--mask); color: white; }
   .primary:hover:not(:disabled) { background: var(--mask-deep); }
   .secondary { background: var(--panel); color: var(--mask); border-color: var(--mask); }
-  .secondary:hover:not(:disabled) { background: #eef6f2; }
+  .secondary:hover:not(:disabled) { background: var(--ok-bg); }
   .ghost { background: transparent; color: var(--ink-soft); }
-  .ghost:hover:not(:disabled) { background: rgb(255 255 255 / 75%); color: var(--ink); }
+  .ghost:hover:not(:disabled) { background: var(--hover-bg); color: var(--ink); }
   .danger { background: transparent; color: var(--sev-blocker); border-color: var(--sev-blocker); }
-  .danger:hover:not(:disabled) { background: #fdf0ee; }
+  .danger:hover:not(:disabled) { background: var(--danger-bg); }
 </style>

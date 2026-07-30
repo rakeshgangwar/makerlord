@@ -30,8 +30,8 @@ test('the flash panel renders the locked reason, not a flash control (D47)', asy
   await expect(panel.getByRole('button', { name: /flash the board/i })).toHaveCount(0);
 });
 
-test('generated firmware files appear in the files panel', async ({ page }) => {
-  await page.getByText('Files', { exact: true }).click();
+test('generated firmware files appear in the file tree', async ({ page }) => {
+  await page.locator('nav summary', { hasText: 'Firmware' }).click();
   await expect(page.getByText('pins.h')).toBeVisible();
   await expect(page.getByText('main.cpp')).toBeVisible();
 });

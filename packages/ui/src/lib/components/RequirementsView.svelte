@@ -63,8 +63,8 @@
     font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase;
     padding: 0.05rem 0.4rem; border-radius: var(--r-md);
   }
-  .prov-stated { background: #dcefe6; color: var(--mask); }
-  .prov-derived { background: #e8ecf7; color: var(--sev-note); }
-  .prov-assumed { background: #f3e8cf; color: var(--sev-warning); }
+  .prov-stated { background: var(--maker-bubble); color: var(--mask); }
+  .prov-derived { background: color-mix(in srgb, var(--sev-note) 12%, var(--panel)); color: var(--sev-note); }
+  .prov-assumed { background: var(--warn-bg); color: var(--sev-warning); }
   .legend { font-size: var(--t-sm); color: var(--ink-soft); margin-top: 0.6rem; }
 </style>

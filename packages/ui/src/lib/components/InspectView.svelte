@@ -92,5 +92,5 @@
   .sim-table { border-collapse: collapse; margin: 0.5rem 1.5rem 0.5rem 0; display: inline-table; }
   .sim-table th, .sim-table td { border: 1px solid var(--line); padding: 0.2rem 0.6rem; font-size: var(--t-sm); text-align: left; }
   .sim-table th { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
-  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-sm); overflow-x: auto; }
+  .cir { background: var(--code-bg); padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-sm); overflow-x: auto; }
 </style>

@@ -214,7 +214,7 @@
   h2 { margin: 0 0 0.6rem; font-size: var(--t-lg); }
   h2 .small { font-weight: 400; margin-left: 0.4rem; }
   h3 { margin: 0.8rem 0 0.3rem; font-size: var(--t-sm); }
-  .gap { border: 1.5px solid var(--copper); background: #fdf8f3; }
+  .gap { border: 1.5px solid var(--copper); background: var(--warn-bg); }
   .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
   .rows li { display: flex; align-items: baseline; gap: 0.5rem; }
   .row-hit { border: none; background: none; cursor: pointer; color: var(--ink); text-align: left; padding: 0; font-size: var(--t-md); }
@@ -244,15 +244,15 @@
   .card[data-tier='sourced'] { border-left: 3px solid #b87400; }
   .card[data-tier='geometry'] { border-left: 3px solid #9aa5a0; }
   .card:hover { border-color: var(--mask); }
-  .card.active { border-color: var(--mask); background: #f2faf6; }
+  .card.active { border-color: var(--mask); background: var(--gate-bg); }
   .card-title { font-size: var(--t-sm); flex: 1; }
   .tier {
     font-size: 0.6rem; border-radius: var(--r-sm); padding: 0.05rem 0.3rem;
     text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
   }
   .tier-verified { background: #e7f5ee; color: var(--mask); border: 1px solid #bfe3d2; }
-  .tier-sourced { background: #fdf3e3; color: #9a6b1f; border: 1px solid #e8cfa0; }
-  .tier-geometry { background: #eef1f0; color: var(--ink-soft); border: 1px solid var(--line); }
+  .tier-sourced { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid #e8cfa0; }
+  .tier-geometry { background: var(--code-bg); color: var(--ink-soft); border: 1px solid var(--line); }
   .tier-note { font-size: var(--t-sm); color: var(--ink-soft); }
   .detail { border: 1.5px solid var(--mask); }
   .geo-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }

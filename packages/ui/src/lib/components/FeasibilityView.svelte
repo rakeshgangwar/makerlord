@@ -85,10 +85,10 @@
   .claim-text { flex: 1; min-width: 12rem; }
   .grade {
     font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase;
-    padding: 0.05rem 0.4rem; border-radius: var(--r-md); background: #eef1f0; color: var(--ink-soft);
+    padding: 0.05rem 0.4rem; border-radius: var(--r-md); background: var(--code-bg); color: var(--ink-soft);
   }
-  .grade-verified { background: #dcefe6; color: var(--mask); }
-  .grade-sourced { background: #e8ecf7; color: var(--sev-note); }
-  .grade-inferred { background: #f3e8cf; color: var(--sev-warning); }
+  .grade-verified { background: var(--maker-bubble); color: var(--mask); }
+  .grade-sourced { background: color-mix(in srgb, var(--sev-note) 12%, var(--panel)); color: var(--sev-note); }
+  .grade-inferred { background: var(--warn-bg); color: var(--sev-warning); }
   .evidence { font-size: var(--t-xs); color: var(--ink-soft); text-decoration: none; }
 </style>

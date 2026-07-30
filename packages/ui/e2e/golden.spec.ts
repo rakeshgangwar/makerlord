@@ -39,11 +39,10 @@ test('⑤ simulate inlines the schematic with a layout engine stamp', async ({ p
   await expect(svg).toHaveAttribute('data-layout', /ladder|elk/);
 });
 
-test('files panel lists the projected artefacts', async ({ page }) => {
-  await page.getByText('Files', { exact: true }).click();
+test('the file tree lists the projected artefacts', async ({ page }) => {
+  // Design documents ship open in the tree; deeper groups are a click away.
   await expect(page.getByText('requirements.md')).toBeVisible();
   await expect(page.getByText('architecture.md')).toBeVisible();
-  // The Model group ships collapsed by design; the file is a click away.
   await page.getByText('Model', { exact: false }).click();
   await expect(page.getByText('project.json')).toBeVisible();
 });

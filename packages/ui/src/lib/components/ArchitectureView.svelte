@@ -80,11 +80,11 @@
   }
   .src {
     font-family: var(--font-mono); font-size: var(--t-xs); padding: 0.05rem 0.45rem;
-    border-radius: var(--r-md); background: #eef1f0; color: var(--ink-soft);
+    border-radius: var(--r-md); background: var(--code-bg); color: var(--ink-soft);
   }
-  .src-buy { background: #dcefe6; color: var(--mask); }
-  .src-build { background: #f0e4d7; color: var(--copper-ink); }
-  .src-undecided { background: #f3e8cf; color: var(--sev-warning); }
+  .src-buy { background: var(--maker-bubble); color: var(--mask); }
+  .src-build { background: color-mix(in srgb, var(--copper) 16%, var(--panel)); color: var(--copper-ink); }
+  .src-undecided { background: var(--warn-bg); color: var(--sev-warning); }
   .dec-list li { background: var(--panel); border-radius: var(--r-md); padding: 0.6rem 0.85rem; }
   .dec-id { font-size: var(--t-xs); color: var(--copper-ink); }
   .dec-body { margin: 0.25rem 0 0; font-size: var(--t-md); }

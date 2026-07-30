@@ -32,8 +32,6 @@ export const app = $state({
   /** @type {{role: string, text: string}[]} */
   messages: [],
   streamingText: '',
-  /** @type {{name: string, done: boolean, refused?: string}[]} */
-  toolActivity: [],
   /** @type {{severity: string, ruleId: string, message: string, suggestedFix?: string}[]} */
   findings: [],
   /** @type {{projectId: string, intent: string, updatedAt: string}[]} */
@@ -125,16 +123,26 @@ function openEvents() {
   });
 }
 
-/** The one SessionEvent consumer — findings only ever from engine data. */
+/** Flush the in-flight agent text into the timeline as a segment. */
+function flushStreaming() {
+  if (app.streamingText.trim()) {
+    app.messages = [...app.messages, { role: 'agent', text: app.streamingText }];
+  }
+  app.streamingText = '';
+}
+
+/** The one SessionEvent consumer — findings only ever from engine data.
+ *  Tool calls land IN the timeline at the moment they fire, between the
+ *  text segments they interrupt — the thread reads chronologically. */
 export function consume(ev, replay = false) {
   if (ev.t === 'message.delta') {
     app.streamingText += ev.text;
   } else if (ev.t === 'tool.start') {
-    app.toolActivity = [...app.toolActivity, { name: ev.name, done: false }];
+    flushStreaming();
+    app.messages = [...app.messages, { role: 'tool', name: ev.name, done: false }];
   } else if (ev.t === 'tool.end') {
-    const last = app.toolActivity.findLast((a) => a.name && !a.done);
+    const last = app.messages.findLast((m) => m.role === 'tool' && !m.done);
     if (last) last.done = true;
-    app.toolActivity = [...app.toolActivity];
     if (!ev.result.ok) {
       if (last) last.refused = ev.result.refused;
       app.findings = ev.result.findings.length ? ev.result.findings : app.findings;
@@ -144,11 +152,9 @@ export function consume(ev, replay = false) {
         });
       }
     }
+    app.messages = [...app.messages];
   } else if (ev.t === 'turn.end') {
-    if (app.streamingText) {
-      app.messages = [...app.messages, { role: 'agent', text: app.streamingText }];
-    }
-    app.streamingText = '';
+    flushStreaming();
     app.turnActive = false;
     if (!replay) refreshProjections();
   } else if (ev.t === 'session.error') {
@@ -168,7 +174,6 @@ async function replayTranscript() {
   for (const record of r.data.records ?? []) {
     if (record.kind === 'maker') {
       app.messages = [...app.messages, { role: 'maker', text: record.text }];
-      app.toolActivity = [];
     } else if (record.kind === 'event') {
       consume(record.event, true);
     }
@@ -205,7 +210,6 @@ export async function startProject() {
 export async function sendPrompt(text) {
   if (!text.trim() || !app.projectId) return;
   app.messages = [...app.messages, { role: 'maker', text }];
-  app.toolActivity = [];
   app.turnActive = true;
   app.lastError = '';
   // The local brain drives when connected — same events, same consumer.
@@ -632,6 +636,7 @@ export async function boot() {
   await replayTranscript();
   if (app.projectId) {
     refreshProjections();
-    loadInventoryGap();   // also the part-title source for the panel
+    loadInventoryGap();   // also the part-title source for the tree
+    loadFiles();          // the tree lists files up front now
   } else loadProjectList();
 }

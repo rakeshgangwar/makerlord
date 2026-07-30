@@ -197,7 +197,7 @@
     cursor: pointer; font-size: var(--t-sm); padding: 0.4rem 0.2rem;
   }
 
-  .gate { border: 2px solid var(--mask); border-radius: var(--r-lg); padding: 1rem; margin-top: 0.7rem; background: #f2faf6; font-size: 0.75em; }
+  .gate { border: 2px solid var(--mask); border-radius: var(--r-lg); padding: 1rem; margin-top: 0.7rem; background: var(--gate-bg); font-size: 0.75em; }
   .gate-title { font-weight: 600; margin: 0 0 0.6rem; font-size: 1.1em; }
   .check { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.3rem 0; }
   .check.done { color: var(--mask); }

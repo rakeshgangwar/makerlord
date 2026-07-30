@@ -2,7 +2,6 @@
   import { STAGE_PURPOSE } from '$lib/postures.js';
   import { app, sendPrompt, bridgeConnect, bridgePair } from '$lib/app.svelte.js';
   import MessageList from './MessageList.svelte';
-  import ToolTrail from './ToolTrail.svelte';
 
   /**
    * The agent column (Cursor anatomy: the assistant lives at your right
@@ -16,7 +15,6 @@
   $effect(() => {
     void app.streamingText;
     void app.messages.length;
-    void app.toolActivity.length;
     if (log) log.scrollTop = log.scrollHeight;
   });
 
@@ -79,7 +77,6 @@
       <p class="thread-empty">{STAGE_PURPOSE[app.stage]}</p>
     {/if}
     <MessageList list={app.messages} streaming={app.streamingText} cursor />
-    <ToolTrail />
     {#if app.lastError}<div class="error">{app.lastError}</div>{/if}
   </div>
 
@@ -134,12 +131,12 @@
   .bridge-pair input[name='paircode'] { width: 8rem; letter-spacing: 0.2em; }
   .bridge-port { display: inline-flex; align-items: center; gap: var(--s1); }
   .bridge-port input { width: 4rem; }
-  .bridge-err { font-size: var(--t-xs); color: #b3423a; margin: var(--s1) 0; }
+  .bridge-err { font-size: var(--t-xs); color: var(--danger-ink); margin: var(--s1) 0; }
   .bridge-help summary { cursor: pointer; color: var(--mask); padding: var(--s1) 0; }
   .bridge-help ol { margin: var(--s1) 0; padding-left: 1.1rem; }
   .bridge-help li { margin: var(--s1) 0; }
   .bridge-help code {
-    font-family: var(--font-mono); font-size: 0.62rem; background: #eef1f0;
+    font-family: var(--font-mono); font-size: 0.62rem; background: var(--code-bg);
     padding: 0 var(--s1); border-radius: 3px;
   }
 

@@ -271,10 +271,10 @@
   .rungs { display: flex; gap: 0.4rem; }
   .rung {
     font-size: var(--t-xs); padding: 0.15rem 0.5rem; border-radius: var(--r-md);
-    background: #eef1f0; color: var(--ink-soft); opacity: 0.5;
+    background: var(--code-bg); color: var(--ink-soft); opacity: 0.5;
     transition: all 0.3s;
   }
-  .rung.lit { background: #dcefe6; color: var(--mask); opacity: 1; }
+  .rung.lit { background: var(--maker-bubble); color: var(--mask); opacity: 1; }
 
   .knob label { font-size: var(--t-xs); color: var(--ink-soft); display: block; margin-bottom: 0.2rem; }
   .knob input { width: 100%; accent-color: var(--mask); }
@@ -294,5 +294,5 @@
 
   .verdict-line { font-size: var(--t-xs); color: var(--ink-soft); }
   .cir-details summary { font-size: var(--t-xs); cursor: pointer; color: var(--ink-soft); }
-  .cir { background: #eef1f0; padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-xs); overflow-x: auto; max-height: 30vh; }
+  .cir { background: var(--code-bg); padding: 0.6rem 0.8rem; border-radius: var(--r-md); font-size: var(--t-xs); overflow-x: auto; max-height: 30vh; }
 </style>

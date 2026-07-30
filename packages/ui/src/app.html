@@ -28,6 +28,15 @@
     </style>
     <link rel="preload" href="%sveltekit.assets%/fonts/archivo-var.woff2"
       as="font" type="font/woff2" crossorigin />
+    <script>
+      // Theme before paint — no flash. 'makerlord.theme' wins; the OS decides otherwise.
+      try {
+        const t = localStorage.getItem('makerlord.theme');
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      } catch {}
+    </script>
     <title>MakerLord</title>
     %sveltekit.head%
   </head>
