@@ -6,7 +6,8 @@ import {
   burnInvite, createInvite, createSession, createUser, findUserByHandle,
   getSession, listInvites, mintToken, resolveToken, storeCredential,
   credentialsForUser, allCredentials, touchSession, deleteSession, listUsers,
-  setProviderConfig, getProviderConfig, describeProviderConfig, clearProviderConfig,
+  addProviderConfig, getProviderConfig, listProviderConfigs,
+  removeProviderConfig, setActiveProvider,
 } from '../src/stores.js';
 
 /**
@@ -85,20 +86,33 @@ describe('tokens — shown once, stored hashed', () => {
   });
 });
 
-describe('BYOK provider configs — keys encrypted at rest, masked outward', () => {
-  it('round-trips, never stores the clear key, masks the description', () => {
+describe('BYOK provider books — many providers, one active, keys sealed', () => {
+  it('adds, lists masked, switches active, removes; clear key never lands on disk', () => {
     const u = createUser('keyed');
-    setProviderConfig(u.id, {
+    const a = addProviderConfig(u.id, {
       provider: 'openrouter', model: 'meta-llama/llama-4', apiKey: 'sk-or-secret-tail9',
     });
+    const b = addProviderConfig(u.id, {
+      provider: 'openai', model: 'gpt-5.2', apiKey: 'sk-oa-secret-zz42',
+    });
+    // First added is active; the active config decrypts for sessions.
     expect(getProviderConfig(u.id)?.apiKey).toBe('sk-or-secret-tail9');
+    const listed = listProviderConfigs(u.id);
+    expect(listed).toHaveLength(2);
+    expect(listed.find((x) => x.id === a)?.active).toBe(true);
+    expect(listed.find((x) => x.id === b)?.keyTail).toBe('zz42');
+
+    expect(setActiveProvider(u.id, b)).toBe(true);
+    expect(getProviderConfig(u.id)?.provider).toBe('openai');
+
     const raw = readFileSync(
       join(process.env.MAKERLORD_USERS_PATH!, 'providers.json'), 'utf8');
     expect(raw).not.toContain('sk-or-secret');
-    expect(describeProviderConfig(u.id)).toEqual({
-      provider: 'openrouter', model: 'meta-llama/llama-4', keyTail: 'ail9',
-    });
-    clearProviderConfig(u.id);
+    expect(raw).not.toContain('sk-oa-secret');
+
+    removeProviderConfig(u.id, b);
+    expect(getProviderConfig(u.id)?.provider).toBe('openrouter');   // active falls back
+    removeProviderConfig(u.id, a);
     expect(getProviderConfig(u.id)).toBeNull();
   });
 });

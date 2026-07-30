@@ -44,3 +44,14 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
     headers: { 'content-type': 'application/json' },
   });
 };
+
+export const DELETE: RequestHandler = async ({ params, locals }) => {
+  const upstream = await fetch(`${API()}/api/${params.path}`, {
+    method: 'DELETE',
+    headers: headers(locals.userId),
+  });
+  return new Response(await upstream.text(), {
+    status: upstream.status,
+    headers: { 'content-type': 'application/json' },
+  });
+};

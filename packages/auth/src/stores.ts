@@ -245,43 +245,87 @@ function decrypt(key: ProviderConfigStored['key']): string {
   ]).toString('utf8');
 }
 
-export function setProviderConfig(
+interface ProviderBook {
+  active?: string;
+  providers: Record<string, ProviderConfigStored>;
+}
+
+/** Read a user's provider book, migrating the 2026-07-31 single-config
+ *  shape (one stored config, no ids) in place. */
+function bookOf(userId: string): ProviderBook {
+  const all = readStore<Record<string, unknown>>('providers.json', {});
+  const raw = all[userId];
+  if (!raw) return { providers: {} };
+  const asBook = raw as ProviderBook;
+  if (asBook.providers) return asBook;
+  // legacy: the value IS a single stored config
+  const legacy = raw as ProviderConfigStored;
+  const id = 'p_legacy';
+  return { active: id, providers: { [id]: legacy } };
+}
+
+function writeBook(userId: string, book: ProviderBook): void {
+  const all = readStore<Record<string, unknown>>('providers.json', {});
+  all[userId] = book;
+  writeStore('providers.json', all);
+}
+
+export function addProviderConfig(
   userId: string,
   cfg: { provider: string; model: string; apiKey: string; baseURL?: string },
-): void {
-  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
+): string {
+  const book = bookOf(userId);
+  const id = `p_${randomBytes(4).toString('hex')}`;
   const stored: ProviderConfigStored = {
     provider: cfg.provider, model: cfg.model, key: encrypt(cfg.apiKey),
   };
   if (cfg.baseURL) stored.baseURL = cfg.baseURL;
-  all[userId] = stored;
-  writeStore('providers.json', all);
+  book.providers[id] = stored;
+  book.active ??= id;   // the first one becomes active
+  writeBook(userId, book);
+  return id;
 }
 
+export function removeProviderConfig(userId: string, id: string): void {
+  const book = bookOf(userId);
+  delete book.providers[id];
+  if (book.active === id) {
+    const [next] = Object.keys(book.providers);
+    if (next) book.active = next;
+    else delete book.active;
+  }
+  writeBook(userId, book);
+}
+
+export function setActiveProvider(userId: string, id: string): boolean {
+  const book = bookOf(userId);
+  if (!book.providers[id]) return false;
+  book.active = id;
+  writeBook(userId, book);
+  return true;
+}
+
+/** The browser's view: tails only, active flagged. */
+export function listProviderConfigs(
+  userId: string,
+): { id: string; provider: string; model: string; keyTail: string; active: boolean }[] {
+  const book = bookOf(userId);
+  return Object.entries(book.providers).map(([id, p]) => ({
+    id, provider: p.provider, model: p.model,
+    keyTail: decrypt(p.key).slice(-4), active: book.active === id,
+  }));
+}
+
+/** The session-construction view: the ACTIVE config, key in the clear. */
 export function getProviderConfig(
   userId: string,
 ): { provider: string; model: string; apiKey: string; baseURL?: string } | null {
-  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
-  const stored = all[userId];
+  const book = bookOf(userId);
+  const stored = book.active ? book.providers[book.active] : undefined;
   if (!stored) return null;
   const out: { provider: string; model: string; apiKey: string; baseURL?: string } = {
     provider: stored.provider, model: stored.model, apiKey: decrypt(stored.key),
   };
   if (stored.baseURL) out.baseURL = stored.baseURL;
   return out;
-}
-
-/** What the browser may see: no key material beyond the tail. */
-export function describeProviderConfig(
-  userId: string,
-): { provider: string; model: string; keyTail: string } | null {
-  const cfg = getProviderConfig(userId);
-  if (!cfg) return null;
-  return { provider: cfg.provider, model: cfg.model, keyTail: cfg.apiKey.slice(-4) };
-}
-
-export function clearProviderConfig(userId: string): void {
-  const all = readStore<Record<string, ProviderConfigStored>>('providers.json', {});
-  delete all[userId];
-  writeStore('providers.json', all);
 }

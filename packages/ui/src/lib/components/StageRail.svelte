@@ -187,6 +187,7 @@
   {#if page.data.handle}
     <div class="user-box">
       <span class="who mono">◉ {page.data.handle}</span>
+      <a class="user-act" href="/settings">⚙ settings</a>
       <button class="user-act" onclick={mintBridgeToken}>bridge token</button>
       <button class="user-act" onclick={signOut}>sign out</button>
     </div>
@@ -310,6 +311,7 @@
     font-size: 0.66rem; color: var(--ink-soft); text-decoration: underline;
     padding: 0;
   }
+  a.user-act { display: inline; }
   .user-act:hover { color: var(--mask); }
   .token-value {
     display: block; word-break: break-all; font-size: var(--t-xs);

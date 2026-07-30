@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { dirname } from 'node:path';
-import { clearProviderConfig, describeProviderConfig, resolveToken, setProviderConfig } from '@makerlord/auth';
+import { addProviderConfig, listProviderConfigs, removeProviderConfig, resolveToken, setActiveProvider } from '@makerlord/auth';
 import { buildSequence } from '@makerlord/circuit';
 import {
   ALL_TOOLS, circuitRuleContext, loadSession, runTool,
@@ -193,18 +193,19 @@ async function route(
     return;
   }
 
-  // BYOK provider config (2026-07-31): set/inspect/clear the maker's own
-  // model provider. The key goes in once and only its tail comes back.
-  if (path === '/api/provider') {
+  // BYOK provider book (2026-07-31): many providers per maker, one
+  // active. Keys go in once; only tails come back.
+  if (path === '/api/providers') {
     if (req.method === 'GET') {
-      json(res, 200, { config: describeProviderConfig(user) });
+      json(res, 200, { providers: listProviderConfigs(user) });
       return;
     }
     if (req.method === 'POST') {
       const { provider, model, apiKey, baseURL } = await readBody(req);
       const PROVIDERS = ['anthropic', 'openai', 'google', 'mistral', 'groq',
         'openrouter', 'deepseek', 'xai', 'ollama', 'custom'];
-      if (typeof provider !== 'string' || !PROVIDERS.includes(provider) || typeof model !== 'string' || !model
+      if (typeof provider !== 'string' || !PROVIDERS.includes(provider)
+          || typeof model !== 'string' || !model
           || typeof apiKey !== 'string' || !apiKey) {
         json(res, 400, { error: 'provider, model and apiKey are required' });
         return;
@@ -215,15 +216,25 @@ async function route(
       }
       const cfg = { provider, model, apiKey: apiKey as string };
       if (typeof baseURL === 'string' && baseURL) Object.assign(cfg, { baseURL });
-      setProviderConfig(user, cfg);
-      json(res, 200, { config: describeProviderConfig(user) });
+      addProviderConfig(user, cfg);
+      json(res, 200, { providers: listProviderConfigs(user) });
       return;
     }
-    if (req.method === 'DELETE') {
-      clearProviderConfig(user);
-      json(res, 200, { config: null });
+  }
+  if (path === '/api/providers/active' && req.method === 'POST') {
+    const { id } = await readBody(req);
+    if (typeof id !== 'string' || !setActiveProvider(user, id)) {
+      json(res, 404, { error: 'no such provider config' });
       return;
     }
+    json(res, 200, { providers: listProviderConfigs(user) });
+    return;
+  }
+  const providerMatch = /^\/api\/providers\/(p_[0-9a-f]+)$/.exec(path);
+  if (req.method === 'DELETE' && providerMatch) {
+    removeProviderConfig(user, providerMatch[1]!);
+    json(res, 200, { providers: listProviderConfigs(user) });
+    return;
   }
 
   // The conversation, persisted with the project.

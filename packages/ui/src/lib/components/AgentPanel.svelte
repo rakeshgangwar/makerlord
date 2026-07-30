@@ -1,61 +1,35 @@
 <script>
   import { toast } from 'svelte-sonner';
   import { STAGE_PURPOSE } from '$lib/postures.js';
-  import { api, app, sendPrompt, bridgeConnect, bridgePair, store } from '$lib/app.svelte.js';
-  import { Dialog, Field } from '$lib/kit/index.js';
+  import { app, sendPrompt, bridgeConnect, bridgePair, store } from '$lib/app.svelte.js';
   import MessageList from './MessageList.svelte';
 
-  /** BYOK (2026-07-31): the maker's own provider drives the same engine. */
-  const PROVIDERS = [
-    ['anthropic', 'Anthropic (your key)'], ['openai', 'OpenAI'], ['google', 'Google'],
-    ['mistral', 'Mistral'], ['groq', 'Groq'], ['openrouter', 'OpenRouter'],
-    ['deepseek', 'DeepSeek'], ['xai', 'xAI'], ['ollama', 'Ollama (local)'], ['custom', 'Custom endpoint'],
-  ];
-  let providerOpen = $state(false);
-  let provider = $state('openrouter');
-  let model = $state('');
-  let apiKey = $state('');
-  let baseURL = $state('');
-  let current = $state(null);
+  /** BYOK (2026-07-31): the maker's provider book — the active entry
+   *  answers; a picker appears in the chat once there's a real choice. */
+  let providers = $state([]);
+  const active = $derived(providers.find((p) => p.active) ?? null);
 
-  async function loadProvider() {
-    const r = await api('provider');
-    current = r.status === 200 ? r.data.config : null;
-    if (current) { provider = current.provider; model = current.model; }
+  async function loadProviders() {
+    const r = await fetch('/app-api/providers');
+    if (r.ok) providers = (await r.json()).providers;
   }
 
-  async function saveProvider() {
-    const body = { provider, model: model.trim(), apiKey: apiKey.trim() };
-    if (baseURL.trim()) body.baseURL = baseURL.trim();
-    const r = await api('provider', body);
-    if (r.status === 200) {
-      current = r.data.config;
-      apiKey = '';
-      providerOpen = false;
-      store.del('makerlord.sessionId');   // the next message minds the new brain
+  async function switchProvider(id) {
+    const r = await fetch('/app-api/providers/active', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    if (r.ok) {
+      providers = (await r.json()).providers;
+      store.del('makerlord.sessionId');
       app.sessionId = null;
-      toast('Provider saved — takes effect on your next message');
-    } else {
-      toast.error(r.data.error ?? 'could not save the provider');
+      toast('Brain switched — takes effect on your next message');
     }
   }
 
-  async function clearProvider() {
-    await fetch('/app-api/provider', { method: 'DELETE' });
-    current = null;
-    providerOpen = false;
-    store.del('makerlord.sessionId');
-    app.sessionId = null;
-    toast('Back to the hosted brain');
-  }
+  $effect(() => { loadProviders(); });
 
-  /**
-   * The agent column (Cursor anatomy: the assistant lives at your right
-   * hand, full height). Thread on top, verbs and composer at the foot,
-   * the local brain where a model picker belongs — with the composer.
-   * Anatomy follows AI Elements / assistant-ui: messages + tool status
-   * cards inline, retry/edit on the last turn.
-   */
   let log = $state(null);
 
   // The column is the maker's to size — drag the left edge, kept per
@@ -106,10 +80,10 @@
     aria-label="Resize agent panel" onpointerdown={startResize}></div>
   <header class="agent-head">
     <span class="mono agent-title">agent</span>
-    <button class="brain" onclick={() => { loadProvider(); providerOpen = true; }}
-      title="choose the model provider — your key, your models">
-      ◇ {current ? `${current.provider} · ${current.model}` : 'hosted'}
-    </button>
+    <a class="brain brain-link" href="/settings"
+      title="providers and agents — settings">
+      ◇ {active ? `${active.provider} · ${active.model}` : 'set up a brain'}
+    </a>
     <button class="brain" onclick={() => bridgeConnect()}>
       <span class="lamp-dot" class:on={app.bridgeStatus === 'ready'}></span>
       {app.bridgeStatus === 'ready'
@@ -164,6 +138,14 @@
         <button class="verb" onclick={editLast} title="edit the last message">✎ edit</button>
       </div>
     {/if}
+    {#if providers.length > 1}
+      <select class="brain-pick mono" aria-label="Active model provider"
+        value={active?.id} onchange={(e) => switchProvider(e.currentTarget.value)}>
+        {#each providers as p (p.id)}
+          <option value={p.id}>{p.provider} · {p.model}</option>
+        {/each}
+      </select>
+    {/if}
     <form class="composer" onsubmit={(e) => { e.preventDefault(); sendPrompt(app.promptDraft); app.promptDraft = ''; }}>
       <input bind:value={app.promptDraft} name="prompt"
         placeholder={app.turnActive ? 'steer the agent mid-turn…' : 'ask the agent…'} />
@@ -172,31 +154,7 @@
   </footer>
 </aside>
 
-<Dialog bind:open={providerOpen} title="Model provider">
-  <p class="small">Bring your own key — the engine, gates and findings stay
-    identical whichever brain drives (D3/D4). Keys are encrypted at rest and
-    never shown again{current ? ` · current: ${current.provider} · ${current.model} · …${current.keyTail}` : ''}.</p>
-  <Field label="Provider">
-    <select bind:value={provider}>
-      {#each PROVIDERS as [id, label]}<option value={id}>{label}</option>{/each}
-    </select>
-  </Field>
-  <Field label="Model" hint="e.g. gpt-5.2, gemini-3-pro, meta-llama/llama-4-maverick">
-    <input bind:value={model} placeholder="model id" />
-  </Field>
-  <Field label="API key">
-    <input bind:value={apiKey} type="password" placeholder="pasted once, stored encrypted" />
-  </Field>
-  {#if provider === 'custom' || provider === 'ollama'}
-    <Field label="Base URL" hint="an OpenAI-compatible endpoint">
-      <input bind:value={baseURL} placeholder="http://127.0.0.1:11434/v1" />
-    </Field>
-  {/if}
-  <div class="provider-acts">
-    <button class="primary" onclick={saveProvider} disabled={!model.trim() || !apiKey.trim()}>Save</button>
-    {#if current}<button class="secondary" onclick={clearProvider}>Use the hosted brain</button>{/if}
-  </div>
-</Dialog>
+
 
 <style>
   .agent {
@@ -257,7 +215,12 @@
   .thread-empty { color: var(--ink-soft); font-size: var(--t-sm); margin: var(--s2) var(--s1); }
 
   .agent-foot { border-top: 1px solid var(--line); padding-top: var(--s2); }
-  .provider-acts { display: flex; gap: var(--s3); margin-top: var(--s2); }
+  .brain-link { text-decoration: none; }
+  .brain-pick {
+    width: 100%; margin-bottom: var(--s1); font-size: var(--t-xs);
+    padding: var(--s1) var(--s2); border: 1px solid var(--line);
+    border-radius: var(--r-sm); background: var(--panel); color: var(--ink);
+  }
   .verbs { display: flex; gap: var(--s3); margin-bottom: var(--s1); }
   .verb {
     border: none; background: transparent; cursor: pointer;
