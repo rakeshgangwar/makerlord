@@ -39,12 +39,15 @@ test('owning a part from the gap moves it into inventory', async ({ page }) => {
 });
 
 test('a geometry part offers both roads: agent research and datasheet upload', async ({ page }) => {
+  // First corpus browse builds the ~1,800-part index server-side — give
+  // a cold CI runner real headroom.
+  test.setTimeout(120_000);
   await page.goto(`/library?p=${GOLDEN}`);
   await page.getByLabel('search parts').fill('buzzer');
   // The corpus toggle surfaces geometry parts (first call builds the index).
   await page.getByText(/whole corpus/).click();
   const geometryCard = page.locator('.card', { hasText: 'Buzzer' }).first();
-  await expect(geometryCard).toBeVisible({ timeout: 25_000 });
+  await expect(geometryCard).toBeVisible({ timeout: 90_000 });
   await geometryCard.click();
   await expect(page.getByRole('button', { name: /ask the agent to research it/i }))
     .toBeVisible();
