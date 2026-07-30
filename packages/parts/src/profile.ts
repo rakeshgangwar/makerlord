@@ -10,6 +10,24 @@ const pinLimit = z.object({
   logicLevelV: z.number().nonnegative().optional(),
 });
 
+/** D48: per-pin MCU capability, hand-authored from the datasheet — strap
+ *  pins and analog domains live there, not in Arduino core headers. */
+const gpioPin = z.object({
+  digital: z.boolean().optional(),
+  analogIn: z.boolean().optional(),
+  /** Max voltage at the BOARD pin (dividers included — D1 mini A0 is 3.2). */
+  analogMaxV: z.number().nonnegative().optional(),
+  pwm: z.boolean().optional(),
+  interrupt: z.boolean().optional(),
+  /** Boot-strapping requirement: the level this pin must sit at during
+   *  reset for the chip to boot normally. */
+  strap: z
+    .object({ atBoot: z.enum(['HIGH', 'LOW']), why: z.string().optional() })
+    .optional(),
+  builtinLed: z.boolean().optional(),
+  note: z.string().optional(),
+});
+
 export const profileSchema = z.object({
   partId: z.string().min(1),
   footprint: z.object({ pins: z.record(offset) }),
@@ -30,6 +48,27 @@ export const profileSchema = z.object({
     .enum(['none', 'lipo', 'mains', 'inductive', 'highCurrent'])
     .default('none'),
   pinLimits: z.record(pinLimit).optional(),
+  gpio: z.record(gpioPin).optional(),
+  /** arduino-cli board identity; presence marks the profile as an MCU. */
+  fqbn: z.string().min(1).optional(),
+  /** How the browser flashes it (D37: WebSerial, no installs). */
+  flash: z
+    .object({
+      protocol: z.enum(['esptool-js', 'stk500v1']),
+      baud: z.number().int().positive().optional(),
+    })
+    .optional(),
+}).superRefine((p, ctx) => {
+  // A gpio entry for a pin the footprint doesn't have is a typo that would
+  // silently disable its rules — reject it loudly.
+  for (const pin of Object.keys(p.gpio ?? {})) {
+    if (!(pin in p.footprint.pins)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `gpio names pin "${pin}" absent from the footprint`,
+      });
+    }
+  }
 });
 
 export type SafetyProfile = z.infer<typeof profileSchema>;

@@ -14,3 +14,6 @@ export * from './architecture/expand.js';
 
 export * from './feasibility/types.js';
 export * from './feasibility/schema.js';
+
+export * from './firmware/types.js';
+export * from './firmware/schema.js';

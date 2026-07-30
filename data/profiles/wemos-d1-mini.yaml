@@ -33,3 +33,25 @@ regulatorMaxMa: 500
 absMaxVoltageV: 6
 quiescentMa: 75
 hazardClass: none
+# ── D48 GPIO facet. Sources: ESP8266EX datasheet §3 (strapping: GPIO0/
+# GPIO2 HIGH, GPIO15 LOW at reset — table "Strapping Pins"); D1 mini
+# schematic (A0 = ADC via 220k/100k divider → 3.2 V max at the BOARD pin;
+# bare-chip TOUT limit is 1.0 V); GPIO16 (D0) is the RTC wake pin — no
+# PWM, no attachInterrupt. TX/RX are UART0 — usable as GPIO but noted, the
+# serial monitor owns them. Board pin ↔ GPIO: D0=16 D1=5 D2=4 D3=0 D4=2
+# D5=14 D6=12 D7=13 D8=15.
+fqbn: esp8266:esp8266:d1_mini
+flash: { protocol: esptool-js, baud: 460800 }
+gpio:
+  A0: { analogIn: true, analogMaxV: 3.2 }
+  D0: { digital: true, pwm: false, interrupt: false, note: "GPIO16 — deep-sleep wake, no PWM/interrupt" }
+  D1: { digital: true, pwm: true, interrupt: true, note: "GPIO5 — I2C SCL by convention" }
+  D2: { digital: true, pwm: true, interrupt: true, note: "GPIO4 — I2C SDA by convention" }
+  D3: { digital: true, pwm: true, interrupt: true, strap: { atBoot: HIGH, why: "GPIO0 LOW at reset enters flash mode" } }
+  D4: { digital: true, pwm: true, interrupt: true, builtinLed: true, strap: { atBoot: HIGH, why: "GPIO2 must be HIGH at reset to boot" } }
+  D5: { digital: true, pwm: true, interrupt: true, note: "GPIO14 — SPI SCK" }
+  D6: { digital: true, pwm: true, interrupt: true, note: "GPIO12 — SPI MISO" }
+  D7: { digital: true, pwm: true, interrupt: true, note: "GPIO13 — SPI MOSI" }
+  D8: { digital: true, pwm: true, interrupt: true, strap: { atBoot: LOW, why: "GPIO15 HIGH at reset prevents boot" } }
+  TX: { digital: true, note: "GPIO1 — UART0 TX; the serial monitor owns it" }
+  RX: { digital: true, note: "GPIO3 — UART0 RX; the serial monitor owns it" }

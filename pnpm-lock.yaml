@@ -118,6 +118,21 @@ importers:
         specifier: ^3.23.0
         version: 3.25.76
 
+  packages/firmware:
+    dependencies:
+      '@makerlord/circuit':
+        specifier: workspace:*
+        version: link:../circuit
+      '@makerlord/parts':
+        specifier: workspace:*
+        version: link:../parts
+      '@makerlord/project':
+        specifier: workspace:*
+        version: link:../project
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+
   packages/mcp:
     dependencies:
       '@makerlord/tools':

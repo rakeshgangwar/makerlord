@@ -1,5 +1,9 @@
 # partId and pin names verified against core/arduino_Uno_Rev3(fix).fzp —
-# the corpus names D13 as "D13/SCK".
+# the corpus bakes role tags into names ("D13/SCK", "D3 PWM", "A4/SDA");
+# footprint keys must match them exactly. Original five offsets unchanged;
+# the digital and analog headers were appended 2026-07-30 for the D48 GPIO
+# facet (rows are nominal grid positions — the Uno never sits ON the
+# breadboard, so offsets are identity, not geometry).
 partId: arduino_Uno_Rev3(fix)
 footprint:
   pins:
@@ -8,6 +12,25 @@ footprint:
     "3V3": [2, 0]
     "D13/SCK": [3, 0]
     A0: [4, 0]
+    VIN: [0, 1]
+    A1: [1, 1]
+    A2: [2, 1]
+    A3: [3, 1]
+    "A4/SDA": [4, 1]
+    "A5/SCL": [5, 1]
+    "D0/RX": [0, 2]
+    "D1/TX": [1, 2]
+    D2: [2, 2]
+    "D3 PWM": [3, 2]
+    D4: [4, 2]
+    "D5 PWM": [5, 2]
+    "D6 PWM": [6, 2]
+    D7: [7, 2]
+    D8: [0, 3]
+    "D9 PWM": [1, 3]
+    "D10 PWM/SS": [2, 3]
+    "D11 PWM/MOSI": [3, 3]
+    "D12/MISO": [4, 3]
 logicLevelV: 5.0
 pinMaxMa: 20
 portTotalMaxMa: 100
@@ -15,3 +38,31 @@ regulatorMaxMa: 400
 absMaxVoltageV: 5.5
 quiescentMa: 45
 hazardClass: none
+# ── D48 GPIO facet. Sources: ATmega328P datasheet (PWM = OC0A/B, OC1A/B,
+# OC2A/B on D3/D5/D6/D9/D10/D11; external interrupts INT0=D2, INT1=D3;
+# ADC0–5 on A0–A5, 10-bit, AVcc reference → 5.0 V max); Uno R3 board:
+# built-in LED on D13, UART0 on D0/D1 shared with the USB bridge. AVR has
+# no boot-strapping pins — no strap entries is correct, not an omission.
+fqbn: arduino:avr:uno
+flash: { protocol: stk500v1, baud: 115200 }
+gpio:
+  A0: { analogIn: true, digital: true, analogMaxV: 5.0 }
+  A1: { analogIn: true, digital: true, analogMaxV: 5.0 }
+  A2: { analogIn: true, digital: true, analogMaxV: 5.0 }
+  A3: { analogIn: true, digital: true, analogMaxV: 5.0 }
+  "A4/SDA": { analogIn: true, digital: true, analogMaxV: 5.0, note: "I2C SDA" }
+  "A5/SCL": { analogIn: true, digital: true, analogMaxV: 5.0, note: "I2C SCL" }
+  "D0/RX": { digital: true, note: "UART0 RX — shared with USB; the serial monitor owns it" }
+  "D1/TX": { digital: true, note: "UART0 TX — shared with USB; the serial monitor owns it" }
+  D2: { digital: true, interrupt: true, note: "INT0" }
+  "D3 PWM": { digital: true, pwm: true, interrupt: true, note: "INT1, OC2B" }
+  D4: { digital: true }
+  "D5 PWM": { digital: true, pwm: true, note: "OC0B" }
+  "D6 PWM": { digital: true, pwm: true, note: "OC0A" }
+  D7: { digital: true }
+  D8: { digital: true }
+  "D9 PWM": { digital: true, pwm: true, note: "OC1A" }
+  "D10 PWM/SS": { digital: true, pwm: true, note: "OC1B, SPI SS" }
+  "D11 PWM/MOSI": { digital: true, pwm: true, note: "OC2A, SPI MOSI" }
+  "D12/MISO": { digital: true, note: "SPI MISO" }
+  "D13/SCK": { digital: true, builtinLed: true, note: "SPI SCK — built-in LED loads this pin" }

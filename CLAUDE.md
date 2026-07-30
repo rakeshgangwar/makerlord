@@ -18,9 +18,10 @@ source of truth for all design intent; `docs/decisions.md` (D1–D48) is the
 decision log. Phase 2/3 scoping and the stage-⑦ firmware spec
 (2026-07-30) are approved and next to implement.
 
-The Tier-1 danger corpus (`packages/circuit/test/danger-corpus.test.ts`) is
-release-blocking: a failure there is not a flaky test, it is a maker's
-destroyed board. Never weaken it to get to green.
+The Tier-1 danger corpus (`packages/circuit/test/danger-corpus.test.ts`) and
+the firmware danger corpus (`packages/firmware/test/fw-danger-corpus.test.ts`)
+are release-blocking: a failure there is not a flaky test, it is a maker's
+destroyed board or bricked MCU. Never weaken either to get to green.
 
 ## Commands
 

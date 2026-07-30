@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "pnpm typecheck && vitest run",
-    "typecheck": "tsc -b packages/parts packages/circuit packages/project packages/sim packages/tools packages/cli packages/mcp packages/protocol packages/bridge packages/agent packages/artifacts packages/server packages/ui",
+    "typecheck": "tsc -b packages/parts packages/circuit packages/project packages/sim packages/firmware packages/tools packages/cli packages/mcp packages/protocol packages/bridge packages/agent packages/artifacts packages/server packages/ui",
     "bridge": "node packages/bridge/dist/main.js"
   },
   "devDependencies": {

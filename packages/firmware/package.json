@@ -1,0 +1,13 @@
+{
+  "name": "@makerlord/firmware",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@makerlord/parts": "workspace:*",
+    "@makerlord/circuit": "workspace:*",
+    "@makerlord/project": "workspace:*",
+    "zod": "^3.23.0"
+  }
+}

@@ -80,3 +80,66 @@ describe('loadProfiles', () => {
     expect(m.get('5mmColorLEDModuleID')?.polarity).toBe('polarized');
   });
 });
+
+// ── the GPIO facet (D48): hand-authored, datasheet-cited MCU pin data ──
+
+const MCU = `
+partId: mcu-x
+footprint:
+  pins:
+    A0: [0, 0]
+    D3: [0, 1]
+    D5: [0, 2]
+    G: [0, 3]
+fqbn: esp8266:esp8266:d1_mini
+flash: { protocol: esptool-js, baud: 460800 }
+gpio:
+  A0: { analogIn: true, analogMaxV: 3.2 }
+  D3: { digital: true, strap: { atBoot: HIGH, why: "GPIO0 LOW enters flash mode" } }
+  D5: { digital: true, pwm: true, interrupt: true }
+`;
+
+describe('the GPIO facet (D48)', () => {
+  it('parses per-pin capabilities, strap requirements, fqbn and flash', () => {
+    const p = parseProfile(MCU);
+    expect(p.fqbn).toBe('esp8266:esp8266:d1_mini');
+    expect(p.flash).toEqual({ protocol: 'esptool-js', baud: 460800 });
+    expect(p.gpio?.A0).toEqual({ analogIn: true, analogMaxV: 3.2 });
+    expect(p.gpio?.D3?.strap).toEqual({
+      atBoot: 'HIGH', why: 'GPIO0 LOW enters flash mode',
+    });
+    expect(p.gpio?.D5).toMatchObject({ digital: true, pwm: true, interrupt: true });
+  });
+
+  it('rejects a gpio pin name absent from the footprint', () => {
+    expect(() => parseProfile(`
+partId: mcu-x
+footprint: { pins: { A0: [0, 0] } }
+gpio:
+  D9: { digital: true }
+`)).toThrow(/D9/);
+  });
+
+  it('rejects an unknown flash protocol', () => {
+    expect(() => parseProfile(`
+partId: mcu-x
+footprint: { pins: { A0: [0, 0] } }
+flash: { protocol: usb-dfu }
+`)).toThrow();
+  });
+
+  it('rejects a strap level that is not HIGH or LOW', () => {
+    expect(() => parseProfile(`
+partId: mcu-x
+footprint: { pins: { A0: [0, 0] } }
+gpio:
+  A0: { digital: true, strap: { atBoot: FLOATING } }
+`)).toThrow();
+  });
+
+  it('profiles without the facet stay valid', () => {
+    const p = parseProfile(LED);
+    expect(p.gpio).toBeUndefined();
+    expect(p.fqbn).toBeUndefined();
+  });
+});

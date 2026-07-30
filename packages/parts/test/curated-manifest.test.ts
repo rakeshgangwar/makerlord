@@ -34,3 +34,39 @@ describe('the shipped curated manifest', () => {
     expect(inductive.length).toBeGreaterThanOrEqual(3);   // motor, relay, servo
   });
 });
+
+/** D48: an MCU (a profile with an fqbn) must carry its GPIO facet — the
+ *  firmware cross-check rules stand on it. */
+describe('the GPIO curation gate (D48)', () => {
+  it('every MCU profile carries gpio + flash, and both curated MCUs exist', () => {
+    const profiles = loadProfiles();
+    const mcus = [...profiles.values()].filter((p) => p.fqbn !== undefined);
+    const ids = mcus.map((p) => p.partId).sort();
+    expect(ids).toContain('arduino_Uno_Rev3(fix)');
+    expect(ids).toContain('WeMos_D1_mini_male_headers_above_fix');
+    for (const mcu of mcus) {
+      expect(mcu.gpio, `${mcu.partId} has fqbn but no gpio facet`).toBeDefined();
+      expect(Object.keys(mcu.gpio!).length).toBeGreaterThan(0);
+      expect(mcu.flash, `${mcu.partId} has fqbn but no flash protocol`).toBeDefined();
+    }
+  });
+
+  it('the D1 mini facet carries the strap pins and the A0 divider', () => {
+    const p = loadProfiles().get('WeMos_D1_mini_male_headers_above_fix')!;
+    expect(p.gpio?.D3?.strap?.atBoot).toBe('HIGH');
+    expect(p.gpio?.D4?.strap?.atBoot).toBe('HIGH');
+    expect(p.gpio?.D8?.strap?.atBoot).toBe('LOW');
+    expect(p.gpio?.A0?.analogMaxV).toBe(3.2);
+    expect(p.gpio?.D0?.pwm).toBe(false);
+  });
+
+  it('the Uno facet carries PWM, interrupts and the built-in LED', () => {
+    const p = loadProfiles().get('arduino_Uno_Rev3(fix)')!;
+    for (const pin of ['D3 PWM', 'D5 PWM', 'D6 PWM', 'D9 PWM']) {
+      expect(p.gpio?.[pin]?.pwm, `${pin} should be pwm`).toBe(true);
+    }
+    expect(p.gpio?.D2?.interrupt).toBe(true);
+    expect(p.gpio?.['D13/SCK']?.builtinLed).toBe(true);
+    expect(p.gpio?.A0?.analogIn).toBe(true);
+  });
+});
