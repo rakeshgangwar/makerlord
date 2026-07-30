@@ -75,6 +75,13 @@ corepack enable --install-directory /opt/node-v22/bin > /dev/null 2>&1 || true
 corepack prepare --activate > /dev/null 2>&1 || true
 pnpm install --frozen-lockfile
 pnpm typecheck
+# The curl-able installer: the bridge bundle + install.sh ride the UI's
+# static dir (served before the auth gate) so
+#   curl -fsSL https://makerlord.dev/install.sh | bash
+# works with no checkout.
+node scripts/build-bridge-bundle.mjs
+cp dist/bridge.cjs packages/ui/static/bridge.cjs
+cp install.sh packages/ui/static/install.sh
 ORIGIN=https://makerlord.dev pnpm --filter @makerlord/ui build
 EOF
 

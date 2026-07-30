@@ -156,10 +156,9 @@
       <li>
         <strong>Install the bridge</strong> on the machine where your agent
         runs (one time):
-        <pre class="mono cmd">git clone https://github.com/rakeshgangwar/makerlord && cd makerlord
-./install.sh --token &lt;your mlt_… token&gt;</pre>
+        <pre class="mono cmd">curl -fsSL https://makerlord.dev/install.sh | bash -s -- --token &lt;your mlt_… token&gt;</pre>
         This installs <code>mlb</code> and writes the token to
-        <code>~/.config/makerlord/bridge.json</code>.
+        <code>~/.makerlord/bridge.json</code> (0600). Needs node ≥ 20.
       </li>
       <li>
         <strong>Start it</strong>: run <code>mlb</code>. It auto-detects your

@@ -29,10 +29,13 @@ All three run the same 50-tool registry against the same engine. The gates hold 
 ### Connect your own agent
 
 ```sh
-git clone https://github.com/rakeshgangwar/makerlord && cd makerlord
-./install.sh --token <your mlt_… token>   # minted in Settings on the web app
-mlb                                        # prints a 6-digit pairing code
+curl -fsSL https://makerlord.dev/install.sh | bash -s -- --token <your mlt_… token>
+mlb   # prints a 6-digit pairing code
 ```
+
+The token is minted in Settings on the web app; the installer fetches a
+prebuilt bridge bundle (node ≥ 20 is the only requirement). From a repo
+checkout, `./install.sh` builds the bundle locally instead.
 
 Then click **⚡ local brain** in the web app and enter the code. Full instructions live on the Settings page.
 
