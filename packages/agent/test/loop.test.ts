@@ -507,3 +507,24 @@ describe('the live lessons: sub-tool names and giant blocks', () => {
     expect(wire).toContain('clipped');
   });
 });
+
+describe('a stripped code-called tool never gets an orphan tool_result', () => {
+  it('its result travels as text; the request stays valid', async () => {
+    fake.enqueue(
+      {
+        content: [
+          // Code-called client tool (caller field), NO container captured.
+          { type: 'tool_use', id: 'tu_cc', name: 'inventory_add',
+            input: { freeText: 'LEDs' }, caller: { type: 'code_execution' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    const events = await turn(makeAgent(), 'note my LEDs');
+    expect(events.some((e) => e.t === 'session.error')).toBe(false);
+    const wire = JSON.stringify(fake.requests[1]!.messages);
+    expect(wire).not.toContain('tu_cc');                       // no orphan pair
+    expect(wire).toContain('delivered out-of-band');           // info flows
+  });
+});

@@ -207,7 +207,7 @@ export class AgentSession {
    *  sub-tool names (bash_code_execution, …) and the live API refused to
    *  continue past exactly the one a name-match missed. A pending server
    *  tool we cannot resume is a wedge either way. */
-  private stripPendingCodeExecution(): void {
+  private stripPendingCodeExecution(): Set<string> {
     const orphanedClientCalls = new Set<string>();
     for (const m of this.messages) {
       if (m.role !== 'assistant' || !Array.isArray(m.content)) continue;
@@ -230,7 +230,7 @@ export class AgentSession {
         return true;
       }) as never;
     }
-    if (orphanedClientCalls.size === 0) return;
+    if (orphanedClientCalls.size === 0) return orphanedClientCalls;
     for (const m of this.messages) {
       if (m.role !== 'user' || !Array.isArray(m.content)) continue;
       m.content = (m.content as { type?: string; tool_use_id?: string; content?: unknown }[])
@@ -239,6 +239,7 @@ export class AgentSession {
           ? { type: 'text', text: `[tool result delivered out-of-band] ${JSON.stringify(b.content).slice(0, 4000)}` }
           : b) as never;
     }
+    return orphanedClientCalls;
   }
 
   async send(userText: string, onEvent: (e: SessionEvent) => void): Promise<void> {
@@ -333,7 +334,7 @@ export class AgentSession {
         // or a server restart lost the id) 400s FOREVER. Strip the
         // pending blocks — the code execution is lost, the session is
         // not — and retry the round once.
-        if (/container_id is required/.test(message) && containerHeals < 3) {
+        if (/container/i.test(message) && /400|invalid_request/.test(message) && containerHeals < 3) {
           containerHeals += 1;
           this.containerId = undefined;
           this.stripPendingCodeExecution();
@@ -373,7 +374,11 @@ export class AgentSession {
       // pending code-execution block without a container id to resume it.
       // If capture failed (stream shape drift), drop the pending block now
       // — the model simply re-runs its computation; the session survives.
-      if (this.containerId === undefined) this.stripPendingCodeExecution();
+      // Calls the strip removed MUST NOT get tool_result blocks either
+      // (an orphan result is its own 400): their results deliver as text.
+      const strippedCalls = this.containerId === undefined
+        ? this.stripPendingCodeExecution()
+        : new Set<string>();
 
       const toolUses = (response.content ?? []).filter((b) => b.type === 'tool_use');
       if (toolUses.length === 0) {
@@ -412,11 +417,21 @@ export class AgentSession {
           if (ref !== undefined) this.readUploads.add(ref);
         }
         onEvent({ t: 'tool.end', callId: call.id ?? '', result });
-        results.push({
-          type: 'tool_result',
-          tool_use_id: call.id ?? '',
-          content: JSON.stringify(result),
-        });
+        if (call.id !== undefined && strippedCalls.has(call.id)) {
+          // The call block was stripped from history (code-called, no
+          // container) — a tool_result would orphan. Text carries it.
+          results.push({
+            type: 'text',
+            text: `[result of code-called tool ${call.name} delivered ` +
+              `out-of-band] ${JSON.stringify(result).slice(0, 4000)}`,
+          });
+        } else {
+          results.push({
+            type: 'tool_result',
+            tool_use_id: call.id ?? '',
+            content: JSON.stringify(result),
+          });
+        }
 
         // Bounded objections: a refused gated call re-attempted is an
         // objection against the blocking finding.

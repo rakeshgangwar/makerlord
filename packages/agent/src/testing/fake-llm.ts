@@ -122,7 +122,10 @@ function serveSse(
     } else if (block.type === 'tool_use') {
       send('content_block_start', {
         type: 'content_block_start', index,
-        content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} },
+        content_block: {
+          type: 'tool_use', id: block.id, name: block.name, input: {},
+          ...(block.caller ? { caller: block.caller } : {}),
+        },
       });
       send('content_block_delta', {
         type: 'content_block_delta', index,
