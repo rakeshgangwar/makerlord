@@ -5,6 +5,7 @@
   "references": [
     { "path": "../parts/tsconfig.json" },
     { "path": "../circuit/tsconfig.json" },
+    { "path": "../firmware/tsconfig.json" },
     { "path": "../project/tsconfig.json" },
     { "path": "../sim/tsconfig.json" },
     { "path": "../tools/tsconfig.json" }

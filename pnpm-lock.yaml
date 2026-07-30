@@ -65,6 +65,9 @@ importers:
       '@makerlord/circuit':
         specifier: workspace:*
         version: link:../circuit
+      '@makerlord/firmware':
+        specifier: workspace:*
+        version: link:../firmware
       '@makerlord/parts':
         specifier: workspace:*
         version: link:../parts
@@ -222,6 +225,9 @@ importers:
       '@makerlord/circuit':
         specifier: workspace:*
         version: link:../circuit
+      '@makerlord/firmware':
+        specifier: workspace:*
+        version: link:../firmware
       '@makerlord/parts':
         specifier: workspace:*
         version: link:../parts

@@ -13,8 +13,8 @@ function freshProject() {
 }
 
 describe('registry invariants', () => {
-  it('holds all 37 tools (32 core + 4 simulation + decision_record)', () => {
-    expect(ALL_TOOLS).toHaveLength(37);
+  it('holds all 43 tools (32 core + 4 simulation + decision_record + 6 firmware)', () => {
+    expect(ALL_TOOLS).toHaveLength(43);
   });
 
   it('none of the simulation tools gate — simulation is advisory by nature', () => {
@@ -35,15 +35,19 @@ describe('registry invariants', () => {
     }
   });
 
-  it('marks every gated tool as mutating', () => {
-    for (const t of ALL_TOOLS.filter((x) => x.gated)) {
+  it('marks every gated tool as mutating — except the one gated release', () => {
+    // fw_manifest is gated (D47: flashing is powering) but mutates nothing:
+    // it RELEASES an artifact. A gated read is a stronger guarantee, not a
+    // weaker one — the exception is named so it stays deliberate.
+    for (const t of ALL_TOOLS.filter((x) => x.gated && x.name !== 'fw_manifest')) {
       expect(t.mutates, t.name).toBe(true);
     }
   });
 
-  it('gates exactly the four gated tools', () => {
+  it('gates exactly the six gated tools', () => {
     expect(ALL_TOOLS.filter((t) => t.gated).map((t) => t.name).sort()).toEqual([
-      'advance_build_step', 'expand', 'gate_open', 'measure',
+      'advance_build_step', 'expand', 'fw_generate', 'fw_manifest',
+      'gate_open', 'measure',
     ]);
   });
 

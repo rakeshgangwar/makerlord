@@ -63,4 +63,10 @@ export interface Firmware {
   target: { ref: string };
   behaviors: Behavior[];
   roles: Role[];
+  /** The ONE agent-authored region (D46) — held in the model so
+   *  main.cpp stays a pure projection and regeneration never eats it. */
+  applicationRegion?: string;
+  /** The last compile-gate verdict; bin is repo-relative. Set only by
+   *  fw_compile — firmware.bin exists only if compilation succeeded. */
+  lastBuild?: { ok: boolean; bin?: string; at: string };
 }

@@ -37,6 +37,25 @@ jobs:
       - name: Install ngspice
         run: sudo apt-get update -q && sudo apt-get install -y -q ngspice
 
+      # The firmware compile gate runs against the real compiler — same
+      # contract. Cores are the heavy part; cache them by pinned version.
+      - uses: actions/cache@v4
+        id: arduino-cores
+        with:
+          path: ~/.arduino15
+          key: arduino-cores-avr1.8.8-esp8266-3.1.2
+      - name: Install arduino-cli
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR="$HOME/.local/bin" sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install cores
+        if: steps.arduino-cores.outputs.cache-hit != 'true'
+        run: |
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr esp8266:esp8266
+
       - run: pnpm install --frozen-lockfile
 
       # Typecheck + the full Vitest suite (danger corpus included).

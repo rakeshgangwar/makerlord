@@ -25,7 +25,7 @@ function upperSnake(s: string): string {
 /** The single MCU: exactly one part whose profile carries an fqbn. */
 export function findMcu(
   circuit: Circuit,
-  profiles: Map<string, SafetyProfile>,
+  profiles: ReadonlyMap<string, SafetyProfile>,
 ): { ref: string; profile: SafetyProfile } {
   const mcus = circuit.parts.filter((p) => profiles.get(p.defId)?.fqbn !== undefined);
   if (mcus.length === 0) {
@@ -42,7 +42,7 @@ export function findMcu(
 
 export function derivePinPlan(
   circuit: Circuit,
-  profiles: Map<string, SafetyProfile>,
+  profiles: ReadonlyMap<string, SafetyProfile>,
   behaviors: Behavior[],
   previousRoles: Role[] = [],
 ): PinPlan {

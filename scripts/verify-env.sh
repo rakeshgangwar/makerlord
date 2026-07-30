@@ -12,6 +12,24 @@ check() {
 echo "toolchain:"
 for c in node pnpm git docker; do check "$c"; done
 
+echo "engines (integration tests skip LOUDLY without these):"
+for c in ngspice arduino-cli; do
+  if command -v "$c" >/dev/null 2>&1; then
+    printf '  ok    %-12s %s\n' "$c" "$($c --version 2>&1 | head -1)"
+  else
+    printf '  WARN  %-12s missing — its integration suite will skip\n' "$c"
+  fi
+done
+if command -v arduino-cli >/dev/null 2>&1; then
+  for core in arduino:avr esp8266:esp8266; do
+    if arduino-cli core list 2>/dev/null | grep -q "^${core} "; then
+      printf '  ok    core %s\n' "$core"
+    else
+      printf '  WARN  core %s not installed (arduino-cli core install %s)\n' "$core" "$core"
+    fi
+  done
+fi
+
 echo "corpus:"
 corpus="${MAKERLORD_FRITZING_PATH:-./vendor/fritzing-parts}"
 count=$(find "$corpus/core" -name '*.fzp' 2>/dev/null | wc -l | tr -d ' ')

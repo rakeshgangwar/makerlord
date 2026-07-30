@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -70,5 +70,29 @@ describe('golden end-to-end: front door to circuit, no LLM', () => {
     expect(onDisk.file.project.architecture.blocks).toHaveLength(2);
     expect(onDisk.file.project.circuit?.parts.map((p) => p.blockId).sort())
       .toEqual(['indicator', 'indicator', 'mcu']);
+
+    // ── the firmware leg (spec §7 grown): behavior → plan → check →
+    // generate, still no LLM anywhere. Wire the indicator to a gpio pin
+    // first — expand only strung the power rail.
+    const parts = onDisk.file.project.circuit!.parts;
+    const mcuRef = parts.find((p) => p.blockId === 'mcu')!.ref;
+    const ledRef = parts.find(
+      (p) => p.blockId === 'indicator' && p.defId === '5mmColorLEDModuleID',
+    )!.ref;
+    await step('connect', { from: `${mcuRef}.D5 PWM`, to: `${ledRef}.anode` });
+
+    await step('fw_behavior_set', {
+      set: { id: 'blink-on', kind: 'drive', role: 'INDICATOR', to: 'HIGH' },
+    });
+    const plan = await step('fw_pin_plan');
+    expect(plan.roles).toEqual([
+      { role: 'INDICATOR', ref: ledRef, pin: 'anode', mcuPin: 'D5 PWM', mode: 'OUTPUT' },
+    ]);
+    const fwCheck = await step('check_firmware');
+    expect(fwCheck.findings).toEqual([]);
+    const gen = await step('fw_generate');
+    expect(gen.files).toContain('firmware/pins.h');
+    expect(readFileSync(join(dir, 'firmware', 'pins.h'), 'utf8'))
+      .toContain('#define INDICATOR 5');
   });
 });

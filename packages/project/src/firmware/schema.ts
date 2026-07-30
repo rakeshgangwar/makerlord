@@ -51,6 +51,14 @@ export const firmwareSchema = z
     target: z.object({ ref: z.string().min(1) }),
     behaviors: z.array(behaviorSchema),
     roles: z.array(roleSchema),
+    applicationRegion: z.string().optional(),
+    lastBuild: z
+      .object({
+        ok: z.boolean(),
+        bin: z.string().optional(),
+        at: z.string().min(1),
+      })
+      .optional(),
   })
   .superRefine((fw, ctx) => {
     const behaviorIds = fw.behaviors.map((b) => b.id);

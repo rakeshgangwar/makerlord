@@ -12,8 +12,8 @@ import type { Firmware, Role } from '@makerlord/project';
  */
 export interface FwRuleContext {
   circuit: Circuit;
-  defs: Map<string, PartDefinition>;
-  profiles: Map<string, SafetyProfile>;
+  defs: ReadonlyMap<string, PartDefinition>;
+  profiles: ReadonlyMap<string, SafetyProfile>;
   firmware: Firmware;
   /** From derivePinPlan — behaviors naming roles no wiring supports. */
   unbound: { behaviorId: string; role: string }[];

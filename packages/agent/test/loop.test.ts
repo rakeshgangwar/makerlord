@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
@@ -48,7 +48,7 @@ async function turn(agent: AgentSession, text: string): Promise<SessionEvent[]> 
 describe('apiTools — the fourth consumer of one schema', () => {
   it('exposes every registry tool with its canonical name and summary', () => {
     const tools = apiTools();
-    expect(tools).toHaveLength(37);
+    expect(tools).toHaveLength(43);
     const propose = tools.find((t) => t.name === 'req_propose')!;
     expect(propose.description).toMatch(/call this/i);
   });
@@ -258,5 +258,32 @@ describe('server-side compaction pass-through (beta compact-2026-01-12)', () => 
     fake.enqueue(textTurn('ok'));
     await turn(makeAgent(), 'hi');
     expect(fake.requests[0]!.context_management).toBeUndefined();
+  });
+});
+
+describe('the D46 loop: a raw pin literal is refused, the role version lands', () => {
+  it('fw_generate refuses the literal with the finding, then accepts the fix', async () => {
+    fake.enqueue(
+      toolTurn('part_add', { ref: 'U1', defId: 'arduino_Uno_Rev3(fix)' }, 'tu_a'),
+      toolTurn('part_add', { ref: 'LED1', defId: '5mmColorLEDModuleID' }, 'tu_b'),
+      toolTurn('connect', { from: 'U1.D5 PWM', to: 'LED1.anode' }, 'tu_c'),
+      toolTurn('fw_pin_plan', {}, 'tu_d'),
+      // The model writes fluent, WRONG code: a raw pin literal.
+      toolTurn('fw_generate', { applicationRegion: '  digitalWrite(5, HIGH);' }, 'tu_e'),
+      // …and corrects itself through the role symbol.
+      toolTurn('fw_generate', { applicationRegion: '  digitalWrite(LED1, HIGH);' }, 'tu_f'),
+      textTurn('generated'),
+    );
+    const events = await turn(makeAgent(), 'make the LED turn on');
+    const ends = events.filter((e) => e.t === 'tool.end');
+    const refusal = ends.find((e) => e.t === 'tool.end' && !e.result.ok)!;
+    if (refusal.t === 'tool.end' && !refusal.result.ok) {
+      expect(refusal.result.findings.map((f) => f.ruleId))
+        .toContain('RULE_FW_RAW_PIN_LITERAL');
+    }
+    // The corrected call succeeded and the artefact carries the ROLE.
+    const main = readFileSync(join(dir, 'firmware', 'main.cpp'), 'utf8');
+    expect(main).toContain('digitalWrite(LED1, HIGH);');
+    expect(events.at(-1)).toEqual({ t: 'turn.end', reason: 'end_turn' });
   });
 });

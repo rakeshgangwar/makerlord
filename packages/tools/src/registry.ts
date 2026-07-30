@@ -13,6 +13,7 @@ import { PARTS_TOOLS } from './tools/parts.js';
 import { PROJECT_TOOLS } from './tools/project.js';
 import { REQUIREMENT_TOOLS } from './tools/requirements.js';
 import { SIM_TOOLS } from './tools/sim.js';
+import { FIRMWARE_TOOLS } from './tools/firmware.js';
 
 /** The registry name is canonical; adapters map onto it. */
 export const ALL_TOOLS: readonly ToolDef[] = [
@@ -26,6 +27,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...CHECK_TOOLS,
   ...GATED_TOOLS,
   ...SIM_TOOLS,
+  ...FIRMWARE_TOOLS,
   ...HISTORY_TOOLS,
 ];
 

@@ -5,6 +5,7 @@ import {
   board, bundle, circuitRuleContext, defsMap, profilesMap,
 } from '@makerlord/tools';
 import { buildSequence, deriveNetlist } from '@makerlord/circuit';
+import { writeSketch } from '@makerlord/firmware';
 import type { Footprint } from '@makerlord/parts';
 import { renderBlockDiagram } from './renderers/blocks.js';
 import { renderBreadboard } from './renderers/breadboard.js';
@@ -184,6 +185,19 @@ export async function writeArchitectureSvg(dir: string, session: Session): Promi
   return true;
 }
 
+/** firmware/ is a projection like everything else (D2, firmware spec §5):
+ *  pins.h and the scaffold regenerate from the facet; the agent-authored
+ *  region rides in the MODEL, so regeneration never eats it. */
+export function writeFirmwareDir(dir: string, session: Session): boolean {
+  const fw = session.file.project.firmware;
+  if (!fw || fw.roles.length === 0) return false;
+  const mcu = session.file.project.circuit?.parts.find((p) => p.ref === fw.target.ref);
+  const fqbn = mcu && profilesMap().get(mcu.defId)?.fqbn;
+  if (fqbn === undefined) return false;
+  writeSketch(dir, fw, fqbn, fw.applicationRegion ?? '');
+  return true;
+}
+
 /** Write every projection the current project state supports. */
 export async function writeAllArtifacts(session: Session): Promise<string[]> {
   const dir = dirname(session.path);
@@ -195,6 +209,9 @@ export async function writeAllArtifacts(session: Session): Promise<string[]> {
   if (await writeArchitectureSvg(dir, session)) written.push('architecture.svg');
   if (await writeCircuitDir(dir, session)) {
     written.push('circuit/netlist.json', 'circuit/schematic.svg', 'circuit/breadboard.svg', 'circuit/build-steps.md');
+  }
+  if (writeFirmwareDir(dir, session)) {
+    written.push('firmware/pins.h', 'firmware/main.cpp');
   }
   return written;
 }

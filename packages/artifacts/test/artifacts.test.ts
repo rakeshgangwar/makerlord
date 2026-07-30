@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { initProjectFile, loadSession, runTool, type ToolCtx } from '@makerlord/tools';
+import { initProjectFile, loadSession, runTool, saveSession, type ToolCtx } from '@makerlord/tools';
 import { commitAll, initProjectRepo, log, writeAllArtifacts } from '../src/index.js';
 
 let dir: string;
@@ -131,5 +131,35 @@ describe('D34: a real git repo', () => {
     // A clean tree is a no-op, not an empty commit.
     expect(commitAll(dir, 'nothing changed')).toBe(false);
     expect(log(dir)).toHaveLength(2);
+  });
+});
+
+describe('the firmware projection', () => {
+  it('writes firmware/ when the facet has roles, and skips when absent', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'makerlord-art-'));
+    const session = initProjectFile(join(dir, 'project.json'), 'a lamp');
+    // No facet → no files, no error.
+    expect(await writeAllArtifacts(session)).not.toContain('firmware/pins.h');
+
+    session.file.project.circuit = {
+      boardId: 'half',
+      parts: [
+        { ref: 'U1', defId: 'arduino_Uno_Rev3(fix)' },
+        { ref: 'LED1', defId: '5mmColorLEDModuleID' },
+      ],
+      wires: [],
+      intent: [{ name: 'n', members: [{ ref: 'U1', pin: 'D5 PWM' }, { ref: 'LED1', pin: 'anode' }] }],
+    };
+    session.file.project.firmware = {
+      target: { ref: 'U1' },
+      behaviors: [{ id: 'on', kind: 'drive', role: 'LED1', to: 'HIGH' }],
+      roles: [{ role: 'LED1', ref: 'LED1', pin: 'anode', mcuPin: 'D5 PWM', mode: 'OUTPUT' }],
+      applicationRegion: '  // steady\n  delay(5);',
+    };
+    saveSession(session);
+    const written = await writeAllArtifacts(loadSession(join(dir, 'project.json')));
+    expect(written).toContain('firmware/pins.h');
+    expect(readFileSync(join(dir, 'firmware', 'pins.h'), 'utf8')).toContain('#define LED1 5');
+    expect(readFileSync(join(dir, 'firmware', 'main.cpp'), 'utf8')).toContain('steady');
   });
 });

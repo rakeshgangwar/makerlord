@@ -46,6 +46,20 @@ EOF
 echo "== corpus (public fork, cloned server-side)"
 ssh "$HOST" "cd $DIR && [ -d vendor/fritzing-parts/core ] || git clone --depth 1 https://github.com/rakeshgangwar/fritzing-parts vendor/fritzing-parts"
 
+echo "== firmware toolchain (arduino-cli + cores, D37: compiles run here)"
+ssh "$HOST" bash -s <<'EOF'
+set -euo pipefail
+if ! command -v arduino-cli >/dev/null 2>&1; then
+  curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh
+fi
+if ! arduino-cli core list 2>/dev/null | grep -q '^arduino:avr '; then
+  arduino-cli config init --overwrite
+  arduino-cli config add board_manager.additional_urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
+  arduino-cli core update-index
+  arduino-cli core install arduino:avr esp8266:esp8266
+fi
+EOF
+
 echo "== build"
 ssh "$HOST" bash -s <<'EOF'
 set -euo pipefail

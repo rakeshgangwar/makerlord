@@ -6,6 +6,7 @@
   "types": "./dist/index.d.ts",
   "dependencies": {
     "@makerlord/circuit": "workspace:*",
+    "@makerlord/firmware": "workspace:*",
     "@makerlord/parts": "workspace:*",
     "@makerlord/project": "workspace:*",
     "@makerlord/sim": "workspace:*",
