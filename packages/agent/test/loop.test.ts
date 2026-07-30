@@ -290,6 +290,9 @@ describe('the D46 loop: a raw pin literal is refused, the role version lands', (
 
 describe('profile_propose citations face the fetched-URL ledger too', () => {
   it('an uncited-in-session URL is refused; a fetched one passes', async () => {
+    // Guard: if adjudication ever regresses and the tool executes, the
+    // proposal must land in a scratch dir, never the repo's real queue.
+    process.env.MAKERLORD_PROPOSALS_PATH = mkdtempSync(join(tmpdir(), 'makerlord-prop-'));
     const agent = makeAgent({ webResearch: true, stage: 2 });
     fake.enqueue(researchTurn(['https://real.example/buzzer.pdf']));
     await turn(agent, 'research the buzzer');
@@ -311,5 +314,6 @@ describe('profile_propose citations face the fetched-URL ledger too', () => {
     const end = events.find((e) => e.t === 'tool.end');
     expect(end && end.t === 'tool.end' && !end.result.ok
       && end.result.refused === 'EVIDENCE_UNFETCHED').toBe(true);
+    delete process.env.MAKERLORD_PROPOSALS_PATH;
   });
 });
