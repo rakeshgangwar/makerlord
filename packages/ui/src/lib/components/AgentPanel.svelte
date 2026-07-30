@@ -76,7 +76,8 @@
     {#if app.messages.length === 0 && !app.streamingText}
       <p class="thread-empty">{STAGE_PURPOSE[app.stage]}</p>
     {/if}
-    <MessageList list={app.messages} streaming={app.streamingText} cursor />
+    <MessageList list={app.messages} streaming={app.streamingText} cursor
+      onretry={(text) => { if (!app.turnActive) sendPrompt(text); }} />
     {#if app.lastError}<div class="error">{app.lastError}</div>{/if}
   </div>
 

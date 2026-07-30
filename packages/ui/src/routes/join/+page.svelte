@@ -79,7 +79,7 @@
   .card {
     background: var(--panel, white); border: 1px solid var(--line, #d8dde1);
     border-radius: var(--r-lg); padding: 2.2rem 2.6rem; width: 22rem; text-align: center;
-    box-shadow: 0 2px 14px rgb(20 24 27 / 6%);
+    box-shadow: var(--shadow-2);
   }
   h1 { margin: 0 0 0.2rem; font-size: 1.4rem; }
   .tag { color: var(--ink-soft, #4c555c); font-size: var(--t-sm); margin: 0 0 1.3rem; }
@@ -91,7 +91,9 @@
     display: block; width: 100%; box-sizing: border-box; margin-top: 0.25rem;
     padding: 0.45rem 0.6rem; border: 1px solid var(--line, #d8dde1);
     border-radius: var(--r-md); font-size: var(--t-md);
+    background: var(--panel); color: var(--ink);
   }
+  input:focus-visible { outline: 2px solid var(--mask); outline-offset: 0; border-color: var(--mask); }
   button { width: 100%; padding: 0.6rem; border-radius: var(--r-md); font-size: var(--t-md); cursor: pointer; }
   button:disabled { opacity: 0.6; cursor: wait; }
   .small { margin-top: 1.1rem; }

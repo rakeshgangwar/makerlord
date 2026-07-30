@@ -117,8 +117,15 @@ export async function api(path, body) {
 
 function openEvents() {
   if (!app.sessionId || eventSource) return;
-  eventSource = new EventSource(`/app-api/sessions/${app.sessionId}/events`);
+  // Resume past the browser's high-water mark: the transcript replay
+  // already rebuilt history, so replaying the session's whole event log
+  // over SSE would double every message and tool card on refresh.
+  const seen = Number(store.get(`makerlord.lei.${app.sessionId}`) ?? 0);
+  eventSource = new EventSource(
+    `/app-api/sessions/${app.sessionId}/events?lastEventId=${seen}`,
+  );
   eventSource.addEventListener('session', (e) => {
+    store.set(`makerlord.lei.${app.sessionId}`, e.lastEventId);
     consume(JSON.parse(e.data));
   });
 }
@@ -139,15 +146,21 @@ export function consume(ev, replay = false) {
     app.streamingText += ev.text;
   } else if (ev.t === 'tool.start') {
     flushStreaming();
-    app.messages = [...app.messages, { role: 'tool', name: ev.name, done: false }];
+    app.messages = [...app.messages, {
+      role: 'tool', callId: ev.callId, name: ev.name, input: ev.input, done: false,
+    }];
   } else if (ev.t === 'tool.end') {
-    const last = app.messages.findLast((m) => m.role === 'tool' && !m.done);
-    if (last) last.done = true;
+    const card = app.messages.findLast((m) =>
+      m.role === 'tool' && (ev.callId ? m.callId === ev.callId : !m.done));
+    if (card) {
+      card.done = true;
+      card.result = ev.result.ok ? (ev.result.data ?? null) : (ev.result.findings ?? null);
+    }
     if (!ev.result.ok) {
-      if (last) last.refused = ev.result.refused;
+      if (card) card.refused = ev.result.refused;
       app.findings = ev.result.findings.length ? ev.result.findings : app.findings;
       if (!replay) {
-        toast.error(`${ev.name} refused${ev.result.refused ? ` — ${ev.result.refused}` : ''}`, {
+        toast.error(`${card?.name ?? 'tool'} refused${ev.result.refused ? ` — ${ev.result.refused}` : ''}`, {
           description: 'The finding strip has the rule and the fix.',
         });
       }

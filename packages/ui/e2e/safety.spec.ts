@@ -84,3 +84,13 @@ test('the engine refuses the advance in the browser, not just the API', async ({
   await expect(page.locator(BLOCKER_CARD).first()).toBeVisible();
   await expect(done).toBeVisible();
 });
+
+test('tool calls survive a refresh — the transcript replays them inline', async ({ page }) => {
+  // 2026-07-31 report: refreshing dropped the tool cards. The timeline
+  // now rebuilds from the transcript, so the refusal card must be there
+  // before AND after a reload.
+  await openProject(page, DANGER);
+  await expect(page.locator('.tool-card').first()).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.tool-card').first()).toBeVisible();
+});
