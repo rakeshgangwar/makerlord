@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Bundle, HoleGrid, PartDefinition, SafetyProfile } from '@makerlord/parts';
-import { buildBundle, loadPart, loadProfiles } from '@makerlord/parts';
+import { buildBundle, listCorePartFiles, loadPart, loadProfiles, loadProposals, type PartTier } from '@makerlord/parts';
 import type { Board } from '@makerlord/circuit';
 import { makeBoard } from '@makerlord/circuit';
 
@@ -25,6 +25,7 @@ let cachedBoard: Board | undefined;
 export function resetDataCache(): void {
   cachedBundle = undefined;
   cachedBoard = undefined;
+  cachedGeometryIndex = undefined;
 }
 
 export function bundle(): Bundle {
@@ -33,9 +34,39 @@ export function bundle(): Bundle {
       file: string;
       partId: string;
     }[];
-    cachedBundle = buildBundle(curated, loadProfiles());
+    cachedBundle = buildBundle(curated, loadProfiles(), undefined, loadProposals());
   }
   return cachedBundle;
+}
+
+/** D50: tier is location. verified/sourced from the bundle; anything
+ *  else in the corpus is geometry — browse-only, never in a circuit. */
+export function tierOf(partId: string): PartTier | 'geometry' {
+  return bundle().tiers[partId] ?? 'geometry';
+}
+
+export interface GeometryHit {
+  id: string;
+  title: string;
+  family: string;
+  file: string;
+}
+
+let cachedGeometryIndex: GeometryHit[] | undefined;
+
+/** The whole-corpus browse index (~1,800 parts) — built lazily, once. */
+export function geometryIndex(): GeometryHit[] {
+  if (!cachedGeometryIndex) {
+    const hits: GeometryHit[] = [];
+    for (const file of listCorePartFiles()) {
+      try {
+        const def = loadPart(file);
+        hits.push({ id: def.id, title: def.title, family: def.family, file });
+      } catch { /* unparseable corpus stragglers are not browsable */ }
+    }
+    cachedGeometryIndex = hits;
+  }
+  return cachedGeometryIndex;
 }
 
 export function board(): Board {

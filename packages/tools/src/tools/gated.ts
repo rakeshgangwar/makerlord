@@ -10,7 +10,7 @@ import type { ToolDef } from '../def.js';
 import { requireSession } from '../def.js';
 import type { RefusalCode, ToolResult } from '../result.js';
 import { ok, refuse } from '../result.js';
-import { circuitFindings, circuitRuleContext } from './checks.js';
+import { circuitFindings, circuitRuleContext, unverifiedParts } from './checks.js';
 
 /**
  * Maps live findings to the refusal a gated tool must return, or null when
@@ -157,6 +157,17 @@ const gateOpen: ToolDef = {
         'MEASUREMENT_REQUIRED',
         'no measurements recorded — the gate collects readings, never consent. ' +
           'Use measure first.',
+      );
+    }
+    // D50: nothing physical happens on sourced data. Design and sim ran;
+    // POWER demands human-verified profiles for every part.
+    const sourced = unverifiedParts(s);
+    if (sourced.length > 0) {
+      return refuse(
+        'PROFILE_UNVERIFIED',
+        `${sourced.join(', ')} carry sourced profiles — the power gate needs ` +
+        'human-verified limits. Promote the proposals (maker curate) or swap ' +
+        'in verified parts.',
       );
     }
     s.file.build.gateOpen = true;

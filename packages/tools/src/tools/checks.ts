@@ -7,7 +7,7 @@ import type { Footprint } from '@makerlord/parts';
 import {
   checkArchitecture, checkRequirements, makeProjectContext,
 } from '@makerlord/project';
-import { board, bundle, defsMap, profilesMap } from '../data.js';
+import { board, bundle, defsMap, profilesMap, tierOf } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { requireSession } from '../def.js';
 import { ok } from '../result.js';
@@ -28,8 +28,35 @@ export function circuitRuleContext(s: Session): RuleContext {
   return makeContext(board(), circuit, nets, divergences, defsMap(), profilesMap());
 }
 
+/** D50: sourced parts design freely, but every check says so — and the
+ *  gates refuse them (unverifiedParts below is what the gates read). */
+export function unverifiedParts(s: Session): string[] {
+  const circuit = s.file.project.circuit;
+  if (!circuit) return [];
+  return [...new Set(
+    circuit.parts.filter((p) => tierOf(p.defId) !== 'verified').map((p) => p.ref),
+  )];
+}
+
 export function circuitFindings(s: Session): Finding[] {
-  return runRules(ALL_RULES, circuitRuleContext(s));
+  const findings = runRules(ALL_RULES, circuitRuleContext(s));
+  const sourced = unverifiedParts(s);
+  if (sourced.length > 0) {
+    findings.push({
+      ruleId: 'PART_PROFILE_SOURCED',
+      severity: 'NOTE',
+      message:
+        `${sourced.join(', ')} carr${sourced.length === 1 ? 'ies' : 'y'} a ` +
+        'sourced (agent-researched) profile — cited, not human-verified. ' +
+        'Design and simulation run as normal; the power gate will refuse ' +
+        'until the proposal is promoted',
+      affected: { parts: sourced },
+      suggestedFix:
+        'review the proposal with `maker curate show`, check its citations, ' +
+        'and promote it — or swap in a verified part',
+    });
+  }
+  return findings;
 }
 
 const checkRequirementsTool: ToolDef = {

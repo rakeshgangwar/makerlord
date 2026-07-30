@@ -120,6 +120,25 @@ export class AgentSession {
     return null;
   }
 
+  /** Curation citations face the same ledger (curation spec §4): every
+   *  cited datasheet URL must have been ACTUALLY fetched this session. */
+  private adjudicateProposalCitations(input: unknown): ToolResult<never> | null {
+    const citations = (input as { citations?: Record<string, string> }).citations;
+    for (const [field, url] of Object.entries(citations ?? {})) {
+      if (!this.fetchedUrls.has(url)) {
+        return {
+          ok: false,
+          refused: 'EVIDENCE_UNFETCHED',
+          findings: [],
+          message:
+            `citation for "${field}" (${url}) was not fetched this session — ` +
+            'read the datasheet first, then cite what you read',
+        };
+      }
+    }
+    return null;
+  }
+
   /** Mid-turn steering (spec §10): folded in at the next round boundary. */
   steer(text: string): void {
     this.steeringQueue.push(text);
@@ -261,7 +280,9 @@ export class AgentSession {
         try {
           const refusal = call.name === 'feasibility_claim'
             ? this.adjudicateSourcedClaim(call.input)
-            : null;
+            : call.name === 'profile_propose'
+              ? this.adjudicateProposalCitations(call.input)
+              : null;
           const ctx: ToolCtx = { session: this.opts.toolSession, cwd: this.opts.cwd };
           result = refusal ?? await runTool(call.name ?? '', call.input, ctx);
         } catch (e) {

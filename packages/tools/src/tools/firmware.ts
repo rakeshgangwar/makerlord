@@ -13,7 +13,7 @@ import { requireSession } from '../def.js';
 import type { Session } from '../session.js';
 import { ok, refuse } from '../result.js';
 import { refusalFor } from './gated.js';
-import { circuitFindings } from './checks.js';
+import { circuitFindings, unverifiedParts } from './checks.js';
 
 /**
  * The six firmware tools (spec §7). Roles are derived, never authored —
@@ -210,6 +210,14 @@ const fwManifest: ToolDef = {
         'GATE_NOT_OPEN',
         'flashing powers the board through USB — record the gate ' +
         'measurements and open the power gate first (D47)',
+      );
+    }
+    const sourced = unverifiedParts(s);
+    if (sourced.length > 0) {
+      return refuse(
+        'PROFILE_UNVERIFIED',
+        `${sourced.join(', ')} carry sourced profiles — flashing powers the ` +
+        'board (D47), and nothing physical happens on unverified limits (D50)',
       );
     }
     const fw = facetOf(s);

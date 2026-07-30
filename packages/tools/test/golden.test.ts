@@ -96,3 +96,44 @@ describe('golden end-to-end: front door to circuit, no LLM', () => {
       .toContain('#define INDICATOR 5');
   });
 });
+
+describe('golden: the curation pipeline leg (D50/D51)', () => {
+  it('propose → sourced tier → the gate refuses → the absence holds', async () => {
+    const { mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { resetDataCache } = await import('../src/data.js');
+    process.env.MAKERLORD_PROPOSALS_PATH = mkdtempSync(join(tmpdir(), 'makerlord-gold-prop-'));
+    resetDataCache();
+    try {
+      const dir = mkdtempSync(join(tmpdir(), 'makerlord-gold-cur-'));
+      const ctx: ToolCtx = { cwd: dir };
+      const step = async (name: string, input: unknown = {}) => {
+        const r = await runTool(name, input, ctx);
+        expect(r.ok, `${name} should succeed`).toBe(true);
+        return (r as { ok: true; data: never }).data as Record<string, unknown>;
+      };
+      await step('project_init', { intent: 'a beeper' });
+      const proposed = await step('profile_propose', {
+        file: 'core/Buzzer-v15.fzp',
+        partId: 'Buzzer-v15',
+        profile: {
+          partId: 'Buzzer-v15',
+          footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+          absMaxVoltageV: 5.0,
+          hazardClass: 'none',
+        },
+        citations: { absMaxVoltageV: 'https://example.com/ds.pdf' },
+      });
+      expect(proposed.tier).toBe('sourced');
+      resetDataCache();
+      await step('part_add', { ref: 'BZ1', defId: 'Buzzer-v15' });
+      await step('measure', { name: 'continuity', value: 1, unit: 'ohm' });
+      const gate = await runTool('gate_open', {}, ctx);
+      expect(gate.ok).toBe(false);
+      if (!gate.ok) expect(gate.refused).toBe('PROFILE_UNVERIFIED');
+    } finally {
+      delete process.env.MAKERLORD_PROPOSALS_PATH;
+      resetDataCache();
+    }
+  });
+});

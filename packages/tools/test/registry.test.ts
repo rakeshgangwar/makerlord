@@ -13,8 +13,8 @@ function freshProject() {
 }
 
 describe('registry invariants', () => {
-  it('holds all 48 tools (33 core + 4 sim + decision_record + 6 firmware + 4 debug)', () => {
-    expect(ALL_TOOLS).toHaveLength(48);
+  it('holds all 49 tools (33 core + 4 sim + decision_record + 6 firmware + 4 debug + profile_propose)', () => {
+    expect(ALL_TOOLS).toHaveLength(49);
   });
 
   it('none of the simulation tools gate — simulation is advisory by nature', () => {
@@ -53,7 +53,7 @@ describe('registry invariants', () => {
 
   it('GUARD-RAIL: no tool name suggests an escape hatch', () => {
     for (const t of ALL_TOOLS) {
-      expect(t.name).not.toMatch(/dismiss|override|suppress|force/);
+      expect(t.name).not.toMatch(/dismiss|override|suppress|force|promote/);
     }
   });
 

@@ -107,3 +107,55 @@ describe('maker CLI subprocess — the three exit codes', () => {
     expect(out.stdout).toContain('gate open');
   });
 });
+
+describe('maker curate — the human-only pipeline half (D51)', () => {
+  it('promote round-trips: proposal → verified profile + manifest entry, queue emptied', async () => {
+    const { curateList, curatePromote } = await import('../src/curate.js');
+    const { mkdirSync, mkdtempSync, readFileSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+
+    const root = mkdtempSync(join(tmpdir(), 'makerlord-curate-'));
+    const proposals = join(root, 'proposals');
+    const profiles = join(root, 'profiles');
+    mkdirSync(proposals, { recursive: true });
+    mkdirSync(profiles, { recursive: true });
+    writeFileSync(join(root, 'curated.json'), '[]\n');
+    writeFileSync(join(proposals, 'Buzzer-v15.yaml'), `
+partId: Buzzer-v15
+file: core/Buzzer-v15.fzp
+proposedAt: 2026-07-30T18:00:00Z
+citations:
+  absMaxVoltageV: https://example.com/ds.pdf
+profile:
+  partId: Buzzer-v15
+  footprint:
+    pins:
+      "+": [0, 0]
+      "-": [0, 1]
+  absMaxVoltageV: 5.0
+  hazardClass: none
+`);
+    process.env.MAKERLORD_PROPOSALS_PATH = proposals;
+    process.env.MAKERLORD_PROFILES_PATH = profiles;
+    process.env.MAKERLORD_CURATED_PATH = join(root, 'curated.json');
+    try {
+      expect(curateList()).toMatch(/Buzzer-v15/);
+      const out = curatePromote('Buzzer-v15');
+      expect(out).toMatch(/verified/);
+      const promoted = readFileSync(join(profiles, 'Buzzer-v15.yaml'), 'utf8');
+      expect(promoted).toMatch(/Citations reviewed at promotion/);
+      expect(promoted).toMatch(/absMaxVoltageV: 5/);
+      const manifest = JSON.parse(readFileSync(join(root, 'curated.json'), 'utf8'));
+      expect(manifest).toEqual([{ file: 'core/Buzzer-v15.fzp', partId: 'Buzzer-v15' }]);
+      expect(curateList()).toMatch(/empty/);
+      // Promoting twice is refused — the manifest already carries it.
+      writeFileSync(join(proposals, 'Buzzer-v15.yaml'), 'partId: Buzzer-v15\n');
+      expect(() => curatePromote('Buzzer-v15')).toThrow();
+    } finally {
+      delete process.env.MAKERLORD_PROPOSALS_PATH;
+      delete process.env.MAKERLORD_PROFILES_PATH;
+      delete process.env.MAKERLORD_CURATED_PATH;
+    }
+  });
+});

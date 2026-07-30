@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 prototype → product → production, across 17 stages. **All seven design specs
 are implemented and deployed at makerlord.dev** (deploy: `./deploy/deploy.sh
 sync`; infra details in `docs/infra.md`). Fifteen packages: `parts`,
-`circuit`, `project`, `tools` (the 47-tool registry), `cli` (`maker`), `mcp`
+`circuit`, `project`, `tools` (the 49-tool registry), `cli` (`maker`), `mcp`
 (`maker-mcp`), `protocol`, `bridge` (`maker-bridge`), `agent`, `sim`,
 `firmware` (stage ⑦: pin plans, cross-checks, codegen, compile gate),
 `debug` (stage ⑧: fault library, signatures, guided search),

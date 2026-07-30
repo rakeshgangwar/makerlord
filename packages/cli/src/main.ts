@@ -76,6 +76,13 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
 
+  // The HUMAN half of the curation pipeline (D51) — deliberately outside
+  // the registry, so no agent surface can reach it.
+  if (argv[0] === 'curate') {
+    const { curateMain } = await import('./curate.js');
+    return curateMain(argv.slice(1));
+  }
+
   try {
     const parsed = parseArgv(argv);
     const ctx: ToolCtx = { cwd: process.cwd() };

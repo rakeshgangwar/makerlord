@@ -48,7 +48,7 @@ async function turn(agent: AgentSession, text: string): Promise<SessionEvent[]> 
 describe('apiTools — the fourth consumer of one schema', () => {
   it('exposes every registry tool with its canonical name and summary', () => {
     const tools = apiTools();
-    expect(tools).toHaveLength(48);
+    expect(tools).toHaveLength(49);
     const propose = tools.find((t) => t.name === 'req_propose')!;
     expect(propose.description).toMatch(/call this/i);
   });
@@ -285,5 +285,31 @@ describe('the D46 loop: a raw pin literal is refused, the role version lands', (
     const main = readFileSync(join(dir, 'firmware', 'main.cpp'), 'utf8');
     expect(main).toContain('digitalWrite(LED1, HIGH);');
     expect(events.at(-1)).toEqual({ t: 'turn.end', reason: 'end_turn' });
+  });
+});
+
+describe('profile_propose citations face the fetched-URL ledger too', () => {
+  it('an uncited-in-session URL is refused; a fetched one passes', async () => {
+    const agent = makeAgent({ webResearch: true, stage: 2 });
+    fake.enqueue(researchTurn(['https://real.example/buzzer.pdf']));
+    await turn(agent, 'research the buzzer');
+    fake.enqueue(
+      toolTurn('profile_propose', {
+        file: 'core/Buzzer-v15.fzp',
+        partId: 'Buzzer-v15',
+        profile: {
+          partId: 'Buzzer-v15',
+          footprint: { pins: { '+': [0, 0], '-': [0, 1] } },
+          absMaxVoltageV: 5.0,
+          hazardClass: 'none',
+        },
+        citations: { absMaxVoltageV: 'https://invented.example/nope.pdf' },
+      }, 'tu_bad'),
+      textTurn('hm'),
+    );
+    const events = await turn(agent, 'file it');
+    const end = events.find((e) => e.t === 'tool.end');
+    expect(end && end.t === 'tool.end' && !end.result.ok
+      && end.result.refused === 'EVIDENCE_UNFETCHED').toBe(true);
   });
 });

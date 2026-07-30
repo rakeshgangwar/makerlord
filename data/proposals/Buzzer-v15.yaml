@@ -1,0 +1,17 @@
+partId: Buzzer-v15
+file: core/Buzzer-v15.fzp
+proposedAt: 2026-07-30T09:52:34.470Z
+citations:
+  absMaxVoltageV: https://invented.example/nope.pdf
+profile:
+  partId: Buzzer-v15
+  footprint:
+    pins:
+      +:
+        - 0
+        - 0
+      "-":
+        - 0
+        - 1
+  absMaxVoltageV: 5
+  hazardClass: none

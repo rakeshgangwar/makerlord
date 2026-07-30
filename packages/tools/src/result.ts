@@ -14,7 +14,8 @@ export type RefusalCode =
   | 'TIER_NOT_OPEN'
   | 'STALE_PROJECT'
   | 'EVIDENCE_UNFETCHED'
-  | 'STIMULUS_REQUIRED';
+  | 'STIMULUS_REQUIRED'
+  | 'PROFILE_UNVERIFIED';
 
 export type ToolResult<T> =
   | { ok: true; data: T }

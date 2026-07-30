@@ -11,6 +11,7 @@
     "@makerlord/sim": "workspace:*",
     "@makerlord/firmware": "workspace:*",
     "@makerlord/debug": "workspace:*",
+    "yaml": "^2.4.0",
     "zod": "^3.23.0"
   }
 }

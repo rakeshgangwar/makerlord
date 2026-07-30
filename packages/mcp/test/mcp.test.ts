@@ -119,7 +119,7 @@ describe('the remote adapter: local schemas, hosted execution', () => {
     await remoteClient.connect(ct);
 
     const tools = await remoteClient.listTools();
-    expect(tools.tools.length).toBe(47);   // all but project_init
+    expect(tools.tools.length).toBe(48);   // all but project_init
     expect(tools.tools.map((t) => t.name)).not.toContain('project_init');
 
     const result = await remoteClient.callTool({ name: 'expand', arguments: {} });

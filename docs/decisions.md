@@ -1153,3 +1153,40 @@ not denied.
 **Rejected — inventory as a library filter:** owning a part is a fact
 about the maker, not a property of the catalog; conflating them makes
 the curated library look smaller than it is.
+
+---
+
+## D50 — The provenance-tiered library
+
+*2026-07-30. Curation spec §2, §5.*
+
+Tier is LOCATION, computed and never stored: `data/profiles/` + a
+curated-manifest entry = verified; `data/proposals/` = sourced; a bare
+corpus part = geometry. Sourced parts design, check and simulate with
+findings unsoftened (their numbers are cited, not invented) — but
+`gate_open` and `fw_manifest` refuse `PROFILE_UNVERIFIED` while any
+circuit part is not verified: **nothing physical happens on sourced
+data.** Geometry parts browse only.
+
+**Rejected — severity-capping sourced findings:** a cited number
+deserves its finding; the gate is the enforcement point, not the prose.
+
+**Rejected — the binary curated-or-invisible status quo:** it made the
+library look tiny and starved the demand signal that should drive the
+drip.
+
+---
+
+## D51 — Promotion is human-only, by absence
+
+*2026-07-30. Curation spec §4.*
+
+`maker curate promote` exists solely in the maintainer CLI — not in the
+registry, therefore not in MCP, therefore unreachable by any agent,
+local brain included. The guard-rail regex grows `promote`. Same
+principle as `dismiss_finding`: the agent cannot call what was never
+defined where agents live.
+
+**Rejected — an agent-callable promote behind a confirmation:** a
+confirmation is one fluent prompt away from wrong; the precedent
+applies unchanged.

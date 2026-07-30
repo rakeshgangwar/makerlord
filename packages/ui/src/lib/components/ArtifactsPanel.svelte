@@ -90,7 +90,10 @@
     {:else if app.libraryPart}
       <button class="lib-back" onclick={() => (app.libraryPart = null)}>← back</button>
       <h3>{app.libraryPart.definition.title}</h3>
-      <p class="mono panel-id">{app.libraryPart.definition.family}</p>
+      <p class="mono panel-id">{app.libraryPart.definition.family}
+        {#if app.libraryPart.tier === 'sourced'}<span class="tier tier-sourced" title="agent-researched, cited — the power gate requires verification">sourced</span>{/if}
+        {#if app.libraryPart.tier === 'geometry'}<span class="tier tier-geometry" title="geometry only — ask the agent to research a profile">geometry</span>{/if}
+      </p>
       <button class="secondary own-btn" onclick={() => ownPart(app.libraryPart.definition.id)}>
         + I own this
       </button>
@@ -130,7 +133,10 @@
           <summary class="mono">{family} <span class="small">({hits.length})</span></summary>
           <ul class="panel-list">
             {#each hits as hit}
-              <li><button class="lib-hit" onclick={() => openPart(hit.id)}>{hit.title}</button></li>
+              <li>
+                <button class="lib-hit" onclick={() => openPart(hit.id)}>{hit.title}</button>
+                {#if hit.tier === 'sourced'}<span class="tier tier-sourced">sourced</span>{/if}
+              </li>
             {/each}
           </ul>
         </details>
@@ -175,6 +181,12 @@
     font-size: 0.66rem; padding: 0.1rem 0.4rem; cursor: pointer; color: var(--ink-soft);
   }
   .own-inline:hover { border-color: var(--mask); color: var(--mask); }
+  .tier {
+    font-size: 0.6rem; border-radius: 4px; padding: 0.05rem 0.3rem;
+    margin-left: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .tier-sourced { background: #fdf3e3; color: #9a6b1f; border: 1px solid #e8cfa0; }
+  .tier-geometry { background: #eef1f0; color: var(--ink-soft); border: 1px solid var(--line); }
   .gap-box {
     border: 1.5px solid var(--copper); border-radius: 8px;
     padding: 0.5rem 0.7rem; margin-bottom: 0.7rem; background: #fdf8f3;

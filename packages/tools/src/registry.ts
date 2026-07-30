@@ -15,6 +15,7 @@ import { REQUIREMENT_TOOLS } from './tools/requirements.js';
 import { SIM_TOOLS } from './tools/sim.js';
 import { FIRMWARE_TOOLS } from './tools/firmware.js';
 import { DEBUG_TOOLS } from './tools/debug.js';
+import { CURATION_TOOLS } from './tools/curation.js';
 
 /** The registry name is canonical; adapters map onto it. */
 export const ALL_TOOLS: readonly ToolDef[] = [
@@ -30,6 +31,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...SIM_TOOLS,
   ...FIRMWARE_TOOLS,
   ...DEBUG_TOOLS,
+  ...CURATION_TOOLS,
   ...HISTORY_TOOLS,
 ];
 
