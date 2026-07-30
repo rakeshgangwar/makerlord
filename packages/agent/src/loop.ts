@@ -194,7 +194,7 @@ export class AgentSession {
   async send(userText: string, onEvent: (e: SessionEvent) => void): Promise<void> {
     this.objections.resetOnUserMessage();
     this.messages.push({ role: 'user', content: userText });
-    let healedContainer = false;
+    let containerHeals = 0;
 
     for (let round = 0; round < MAX_ROUNDS; round += 1) {
       const limit = this.opts.pressureLimitBytes ?? DEFAULT_PRESSURE_LIMIT;
@@ -249,7 +249,13 @@ export class AgentSession {
             const anyEv = ev as {
               type: string;
               delta?: { type?: string; text?: string; thinking?: string };
+              message?: { container?: { id?: string } };
+              container?: { id?: string };
             };
+            // The container id can ride message_start or a later frame —
+            // capture wherever it appears; missing it wedges the session.
+            const cid = anyEv.message?.container?.id ?? anyEv.container?.id;
+            if (cid !== undefined) this.containerId = cid;
             if (anyEv.type === 'content_block_delta') {
               if (anyEv.delta?.type === 'text_delta' && anyEv.delta.text) {
                 onEvent({ t: 'message.delta', text: anyEv.delta.text });
@@ -274,8 +280,8 @@ export class AgentSession {
         // or a server restart lost the id) 400s FOREVER. Strip the
         // pending blocks — the code execution is lost, the session is
         // not — and retry the round once.
-        if (/container_id is required/.test(message) && !healedContainer) {
-          healedContainer = true;
+        if (/container_id is required/.test(message) && containerHeals < 3) {
+          containerHeals += 1;
           this.containerId = undefined;
           this.stripPendingCodeExecution();
           round -= 1;
@@ -306,6 +312,11 @@ export class AgentSession {
       this.recordFetches((response.content ?? []) as never);
       const container = (response as { container?: { id?: string } }).container;
       if (container?.id !== undefined) this.containerId = container.id;
+      // The invariant that keeps sessions un-wedgeable: NEVER hold a
+      // pending code-execution block without a container id to resume it.
+      // If capture failed (stream shape drift), drop the pending block now
+      // — the model simply re-runs its computation; the session survives.
+      if (this.containerId === undefined) this.stripPendingCodeExecution();
 
       const toolUses = (response.content ?? []).filter((b) => b.type === 'tool_use');
       if (toolUses.length === 0) {

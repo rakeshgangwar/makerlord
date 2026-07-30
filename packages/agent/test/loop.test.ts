@@ -407,3 +407,44 @@ describe('code-execution containers — the API runs it unasked (Opus 5)', () =>
     expect(history).not.toContain('code_execution');
   });
 });
+
+describe('pending code-exec without a captured container never reaches the wire', () => {
+  it('proactive strip: no container in the response → the block is dropped at push time', async () => {
+    fake.enqueue(
+      // The live failure shape: pending code-exec + a client tool, and the
+      // response carries NO container id we can resume with.
+      {
+        content: [
+          { type: 'server_tool_use', id: 'ce_x', name: 'code_execution', input: {} },
+          { type: 'tool_use', id: 'tu_inv', name: 'inventory_add', input: { freeText: 'LEDs' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    const events = await turn(makeAgent(), 'note my LEDs');
+    expect(events.some((e) => e.t === 'session.error')).toBe(false);
+    // The follow-up request went out WITHOUT the unresumable block.
+    const second = fake.requests[1]!;
+    expect(JSON.stringify(second.messages)).not.toContain('code_execution');
+    expect(second.container).toBeUndefined();
+  });
+
+  it('resolved code-exec (result in the same message) is kept — only PENDING strips', async () => {
+    fake.enqueue(
+      {
+        content: [
+          { type: 'server_tool_use', id: 'ce_ok', name: 'code_execution', input: {} },
+          { type: 'code_execution_tool_result', tool_use_id: 'ce_ok', content: { stdout: '42' } },
+          { type: 'tool_use', id: 'tu_inv', name: 'inventory_add', input: { freeText: 'LEDs' } },
+        ],
+        stop_reason: 'tool_use',
+      },
+      textTurn('done'),
+    );
+    const events = await turn(makeAgent(), 'note my LEDs');
+    expect(events.some((e) => e.t === 'session.error')).toBe(false);
+    const second = fake.requests[1]!;
+    expect(JSON.stringify(second.messages)).toContain('ce_ok');   // pair intact
+  });
+});
