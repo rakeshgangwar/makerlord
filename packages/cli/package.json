@@ -5,6 +5,7 @@
   "bin": { "maker": "./dist/main.js" },
   "main": "./dist/main.js",
   "dependencies": {
+    "@makerlord/auth": "workspace:*",
     "@makerlord/parts": "workspace:*",
     "@makerlord/tools": "workspace:*",
     "yaml": "^2.4.0",

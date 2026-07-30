@@ -83,6 +83,12 @@ export async function main(argv: string[]): Promise<number> {
     return curateMain(argv.slice(1));
   }
 
+  // Admission is human-minted (D52): invites, users, tokens — CLI only.
+  if (argv[0] === 'invite' || argv[0] === 'users' || argv[0] === 'token') {
+    const { adminMain } = await import('./admin.js');
+    return adminMain(argv);
+  }
+
   try {
     const parsed = parseArgv(argv);
     const ctx: ToolCtx = { cwd: process.cwd() };

@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": "./src", "outDir": "./dist" },
   "include": ["src/**/*"],
-  "references": [{ "path": "../parts/tsconfig.json" },
+  "references": [{ "path": "../auth/tsconfig.json" },
+    { "path": "../parts/tsconfig.json" },
     { "path": "../tools/tsconfig.json" }]
 }

@@ -159,3 +159,38 @@ profile:
     }
   });
 });
+
+describe('maker invite/users/token — admission is human-minted (D52)', () => {
+  it('invite → join(user) → adopt migrates root projects → token mints', async () => {
+    const { adminMain } = await import('../src/admin.js');
+    const { burnInvite, createUser, resolveToken, listInvites } = await import('@makerlord/auth');
+    const { mkdirSync, mkdtempSync, writeFileSync, existsSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+
+    process.env.MAKERLORD_USERS_PATH = mkdtempSync(join(tmpdir(), 'ml-users-'));
+    const projectsRoot = mkdtempSync(join(tmpdir(), 'ml-projects-'));
+    process.env.MAKERLORD_PROJECTS_ROOT = projectsRoot;
+    try {
+      expect(adminMain(['invite', 'new', '--note', 'neighbour'])).toBe(0);
+      const code = listInvites()[0]!.code;
+
+      // The join flow (exercised fully in the UI e2e): burn + create.
+      const user = createUser('sam');
+      expect(burnInvite(code, user.id)).toBe(true);
+
+      // Legacy root-level project migrates on adopt.
+      mkdirSync(join(projectsRoot, 'abc123'), { recursive: true });
+      writeFileSync(join(projectsRoot, 'abc123', 'project.json'), '{}');
+      expect(adminMain(['users', 'adopt', 'sam'])).toBe(0);
+      expect(existsSync(join(projectsRoot, user.id, 'abc123', 'project.json'))).toBe(true);
+      expect(existsSync(join(projectsRoot, 'abc123'))).toBe(false);
+
+      // Token minting resolves to the user.
+      expect(adminMain(['token', 'new', '--user', 'sam'])).toBe(0);
+    } finally {
+      delete process.env.MAKERLORD_USERS_PATH;
+      delete process.env.MAKERLORD_PROJECTS_ROOT;
+    }
+  });
+});

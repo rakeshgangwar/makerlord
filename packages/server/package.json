@@ -9,6 +9,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
     "@makerlord/agent": "workspace:*",
+    "@makerlord/auth": "workspace:*",
     "@makerlord/protocol": "workspace:*",
     "@makerlord/tools": "workspace:*",
     "@makerlord/circuit": "workspace:*",

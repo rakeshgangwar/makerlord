@@ -66,8 +66,14 @@ export class HostedSessions {
   }
 
   /** Every project on the bench, newest first. */
-  listProjects(): { projectId: string; intent: string; updatedAt: string }[] {
-    const root = resolve(this.opts.projectsRoot);
+  /** D54: projects are per-user — the layout IS the ownership model. */
+  userRoot(userId: string): string {
+    if (!/^u_[a-f0-9]+$/.test(userId)) throw new Error('bad user id');
+    return join(resolve(this.opts.projectsRoot), userId);
+  }
+
+  listProjects(userId: string): { projectId: string; intent: string; updatedAt: string }[] {
+    const root = this.userRoot(userId);
     if (!existsSync(root)) return [];
     const out: { projectId: string; intent: string; updatedAt: string }[] = [];
     for (const entry of readdirSync(root)) {
@@ -87,9 +93,9 @@ export class HostedSessions {
     return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
-  createProject(intent: string): { projectId: string } {
+  createProject(userId: string, intent: string): { projectId: string } {
     const projectId = randomBytes(8).toString('hex');
-    const dir = join(resolve(this.opts.projectsRoot), projectId);
+    const dir = join(this.userRoot(userId), projectId);
     mkdirSync(dir, { recursive: true });
     initProjectFile(join(dir, 'project.json'), intent);
     // D34: each project is a REAL git repo from its first breath.
@@ -108,8 +114,8 @@ export class HostedSessions {
     }
   }
 
-  async createSession(projectId: string): Promise<{ sessionId: string }> {
-    const projectDir = join(resolve(this.opts.projectsRoot), projectId);
+  async createSession(userId: string, projectId: string): Promise<{ sessionId: string }> {
+    const projectDir = this.projectDir(userId, projectId);
     const agent = this.opts.backend === 'acp'
       ? await this.acpAgent(projectDir)
       : this.sdkAgent(projectDir);
@@ -208,8 +214,8 @@ export class HostedSessions {
   /** Bridge turns happen off-server (the maker's own agent); the bridge
    *  flushes them here after each turn so a reload replays ONE history —
    *  the transcript belongs to the project, not to whichever brain drove. */
-  appendTranscriptRecords(projectId: string, records: unknown[]): void {
-    const dir = this.projectDir(projectId);
+  appendTranscriptRecords(userId: string, projectId: string, records: unknown[]): void {
+    const dir = this.projectDir(userId, projectId);
     for (const record of records) {
       const kind = (record as { kind?: string }).kind;
       if (kind !== 'maker' && kind !== 'event') {
@@ -221,10 +227,8 @@ export class HostedSessions {
 
   /** The conversation survives reloads and redeploys: it lives with the
    *  project, not with the in-memory session. */
-  readTranscript(projectId: string): unknown[] {
-    const path = this.transcriptPath(
-      join(resolve(this.opts.projectsRoot), projectId),
-    );
+  readTranscript(userId: string, projectId: string): unknown[] {
+    const path = this.transcriptPath(this.projectDir(userId, projectId));
     if (!existsSync(path)) return [];
     return readFileSync(path, 'utf8')
       .split('\n')
@@ -273,8 +277,10 @@ export class HostedSessions {
     return () => s.listeners.delete(listener);
   }
 
-  private projectDir(projectId: string): string {
-    const dir = join(resolve(this.opts.projectsRoot), projectId);
+  private projectDir(userId: string, projectId: string): string {
+    // Cross-user access dies HERE, as not-found: existence is private
+    // too (auth spec §8).
+    const dir = join(this.userRoot(userId), projectId);
     if (!existsSync(join(dir, 'project.json'))) {
       throw new Error(`no project "${projectId}"`);
     }
@@ -282,8 +288,8 @@ export class HostedSessions {
   }
 
   /** The artifact tree, .git excluded — the repo made visible, read-only. */
-  listFiles(projectId: string): { path: string; size: number }[] {
-    const dir = this.projectDir(projectId);
+  listFiles(userId: string, projectId: string): { path: string; size: number }[] {
+    const dir = this.projectDir(userId, projectId);
     const out: { path: string; size: number }[] = [];
     const walk = (d: string): void => {
       for (const entry of readdirSync(d)) {
@@ -299,8 +305,8 @@ export class HostedSessions {
   }
 
   /** Read one artifact file. Refuses any path that escapes the project. */
-  readFile(projectId: string, relPath: string, encoding: 'utf8' | 'base64' = 'utf8'): string {
-    const dir = this.projectDir(projectId);
+  readFile(userId: string, projectId: string, relPath: string, encoding: 'utf8' | 'base64' = 'utf8'): string {
+    const dir = this.projectDir(userId, projectId);
     const full = resolve(dir, relPath);
     const rel = relative(dir, full);
     if (rel.startsWith('..') || rel.split(sep).includes('.git')) {
@@ -314,16 +320,16 @@ export class HostedSessions {
     return readFileSync(full).toString(encoding);
   }
 
-  gitLog(projectId: string): { subject: string; date: string }[] {
-    return logDetailed(this.projectDir(projectId));
+  gitLog(userId: string, projectId: string): { subject: string; date: string }[] {
+    return logDetailed(this.projectDir(userId, projectId));
   }
 
   projectDirOf(sessionId: string): string {
     return this.get(sessionId).projectDir;
   }
 
-  projectPath(projectId: string): string {
-    return join(resolve(this.opts.projectsRoot), projectId, 'project.json');
+  projectPath(userId: string, projectId: string): string {
+    return join(this.userRoot(userId), projectId, 'project.json');
   }
 
   count(): number {

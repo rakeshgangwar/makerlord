@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { dirname } from 'node:path';
+import { resolveToken } from '@makerlord/auth';
 import { buildSequence } from '@makerlord/circuit';
 import {
   ALL_TOOLS, circuitRuleContext, loadSession, runTool,
@@ -61,19 +62,39 @@ async function route(
     return;
   }
 
-  if (path.startsWith('/api/') && accessToken !== undefined) {
+  // ── identity (D53): every /api request maps to a user id or dies.
+  // Two credentials, one resolution: a per-user token (the bridge's
+  // path, mlt_…), or the internal service token PLUS the user header
+  // the UI server stamps after authenticating the cookie. The service
+  // token alone never authorizes a project route.
+  let userId: string | null = null;
+  if (path.startsWith('/api/')) {
     const supplied =
       req.headers.authorization?.replace(/^Bearer /, '') ??
       url.searchParams.get('token') ??   // EventSource cannot set headers
       '';
-    if (supplied !== accessToken) {
-      json(res, 401, { error: 'missing or wrong access token' });
+    if (supplied.startsWith('mlt_')) {
+      userId = resolveToken(supplied);
+    } else if (accessToken !== undefined && supplied === accessToken) {
+      const header = req.headers['x-makerlord-user'];
+      userId = typeof header === 'string' && /^u_[a-f0-9]+$/.test(header)
+        ? header : null;
+    } else if (accessToken === undefined) {
+      // Test/dev mode (no service token configured): the header IS the
+      // user, defaulting to a fixed dev identity.
+      const header = req.headers['x-makerlord-user'];
+      userId = typeof header === 'string' && /^u_[a-f0-9]+$/.test(header)
+        ? header : 'u_de00000000000000';
+    }
+    if (userId === null) {
+      json(res, 401, { error: 'sign in required' });
       return;
     }
   }
+  const user = userId as string;   // non-null on every /api route below
 
   if (req.method === 'GET' && path === '/api/projects') {
-    json(res, 200, { projects: sessions.listProjects() });
+    json(res, 200, { projects: sessions.listProjects(user) });
     return;
   }
 
@@ -83,7 +104,7 @@ async function route(
       json(res, 400, { error: 'intent is required' });
       return;
     }
-    json(res, 201, sessions.createProject(intent));
+    json(res, 201, sessions.createProject(user, intent));
     return;
   }
 
@@ -116,7 +137,7 @@ async function route(
       return;
     }
     try {
-      json(res, 201, await sessions.createSession(projectId));
+      json(res, 201, await sessions.createSession(user, projectId));
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -127,7 +148,7 @@ async function route(
   const projectMatch = /^\/api\/projects\/([0-9a-f]+)$/.exec(path);
   if (req.method === 'GET' && projectMatch) {
     try {
-      const session = loadSession(sessions.projectPath(projectMatch[1]!));
+      const session = loadSession(sessions.projectPath(user, projectMatch[1]!));
       json(res, 200, { file: session.file, hash: session.hash });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
@@ -139,7 +160,7 @@ async function route(
   const filesMatch = /^\/api\/projects\/([0-9a-f]+)\/files$/.exec(path);
   if (req.method === 'GET' && filesMatch) {
     try {
-      json(res, 200, { files: sessions.listFiles(filesMatch[1]!) });
+      json(res, 200, { files: sessions.listFiles(user, filesMatch[1]!) });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -154,7 +175,7 @@ async function route(
       json(res, 200, {
         path: relPath,
         encoding,
-        content: sessions.readFile(fileMatch[1]!, relPath, encoding),
+        content: sessions.readFile(user, fileMatch[1]!, relPath, encoding),
       });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
@@ -165,7 +186,7 @@ async function route(
   const logMatch = /^\/api\/projects\/([0-9a-f]+)\/log$/.exec(path);
   if (req.method === 'GET' && logMatch) {
     try {
-      json(res, 200, { commits: sessions.gitLog(logMatch[1]!) });
+      json(res, 200, { commits: sessions.gitLog(user, logMatch[1]!) });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -175,7 +196,11 @@ async function route(
   // The conversation, persisted with the project.
   const transcriptMatch = /^\/api\/projects\/([0-9a-f]+)\/transcript$/.exec(path);
   if (req.method === 'GET' && transcriptMatch) {
-    json(res, 200, { records: sessions.readTranscript(transcriptMatch[1]!) });
+    try {
+      json(res, 200, { records: sessions.readTranscript(user, transcriptMatch[1]!) });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
     return;
   }
 
@@ -188,7 +213,7 @@ async function route(
       return;
     }
     try {
-      sessions.appendTranscriptRecords(transcriptMatch[1]!, records);
+      sessions.appendTranscriptRecords(user, transcriptMatch[1]!, records);
       json(res, 200, { appended: records.length });
     } catch (e) {
       json(res, 400, { error: e instanceof Error ? e.message : String(e) });
@@ -200,7 +225,7 @@ async function route(
   const stepsMatch = /^\/api\/projects\/([0-9a-f]+)\/steps$/.exec(path);
   if (req.method === 'GET' && stepsMatch) {
     try {
-      const session = loadSession(sessions.projectPath(stepsMatch[1]!));
+      const session = loadSession(sessions.projectPath(user, stepsMatch[1]!));
       const steps = session.file.project.circuit
         ? buildSequence(circuitRuleContext(session))
         : [];
@@ -227,7 +252,7 @@ async function route(
       return;
     }
     try {
-      const projectPath = sessions.projectPath(toolMatch[1]!);
+      const projectPath = sessions.projectPath(user, toolMatch[1]!);
       const session = loadSession(projectPath);
       const result = await runTool(name, input ?? {}, {
         session,

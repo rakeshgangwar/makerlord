@@ -110,7 +110,7 @@ describe('the hosted surface', () => {
 
     // The artefact: the hosted turn mutated the project on disk.
     const onDisk = loadSession(
-      join(projectsRoot, project.data.projectId as string, 'project.json'),
+      join(projectsRoot, 'u_de00000000000000', project.data.projectId as string, 'project.json'),
     );
     expect(onDisk.file.project.inventory).toEqual([{ freeText: 'a bag of LEDs' }]);
   });
@@ -143,7 +143,7 @@ describe('the hosted surface', () => {
     const p2 = (await post('/api/projects', { intent: 'two' })).data;
     expect(p1.projectId).not.toBe(p2.projectId);
     const one = loadSession(
-      join(projectsRoot, p1.projectId as string, 'project.json'),
+      join(projectsRoot, 'u_de00000000000000', p1.projectId as string, 'project.json'),
     );
     expect(one.file.project.intent).toBe('one');
   });
@@ -239,11 +239,33 @@ describe('access token', () => {
       body: JSON.stringify({ intent: 'x' }),
     });
     expect(noToken.status).toBe(401);
+    // D53: the service token alone never authorizes a project route —
+    // it only vouches for the user header the UI server stamps.
+    const tokenAlone = await fetch(`${gbase}/api/projects`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer sekrit',
+      },
+      body: JSON.stringify({ intent: 'x' }),
+    });
+    expect(tokenAlone.status).toBe(401);
+    // A spoofed user header without the service token dies too.
+    const spoofed = await fetch(`${gbase}/api/projects`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-makerlord-user': 'u_de00000000000000',
+      },
+      body: JSON.stringify({ intent: 'x' }),
+    });
+    expect(spoofed.status).toBe(401);
     const withHeader = await fetch(`${gbase}/api/projects`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         authorization: 'Bearer sekrit',
+        'x-makerlord-user': 'u_de00000000000000',
       },
       body: JSON.stringify({ intent: 'x' }),
     });
@@ -273,7 +295,7 @@ describe('the artifact files surface — the repo is visible, read-only', () => 
     const { data: p } = await post('/api/projects', { intent: 'a lamp' });
     const pid = p.projectId as string;
     // Plant bytes that would mangle through utf8.
-    const dir = sessions.projectPath(pid).replace(/project\.json$/, '');
+    const dir = sessions.projectPath('u_de00000000000000', pid).replace(/project\.json$/, '');
     mkdirSync(join(dir, 'firmware', 'build'), { recursive: true });
     const bytes = Buffer.from([0xe9, 0x00, 0xff, 0x10, 0x80]);
     writeFileSync(join(dir, 'firmware', 'build', 'firmware.bin'), bytes);
@@ -406,5 +428,79 @@ describe('the transcript flush endpoint — bridge turns join the history', () =
       records: [{ kind: 'sneaky' }],
     });
     expect(bad.status).toBe(400);
+  });
+});
+
+describe('the ownership property (auth spec §8) — 404, not 403', () => {
+  const A = 'u_aaaaaaaaaaaaaaaa';
+  const B = 'u_bbbbbbbbbbbbbbbb';
+
+  async function as(user: string, path: string, init: RequestInit = {}) {
+    return fetch(`${base}${path}`, {
+      ...init,
+      headers: { ...(init.headers as Record<string, string>), 'x-makerlord-user': user },
+    });
+  }
+
+  it('user A cannot list, read, or transcript user B\'s project', async () => {
+    fake.enqueue(textTurn('hello'));
+    const created = await as(A, '/api/projects', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ intent: 'secret lamp' }),
+    });
+    expect(created.status).toBe(201);
+    const pid = ((await created.json()) as { projectId: string }).projectId;
+
+    // A sees it; B's listing is empty — existence is private.
+    const aList = (await (await as(A, '/api/projects')).json()) as { projects: unknown[] };
+    expect(aList.projects).toHaveLength(1);
+    const bList = (await (await as(B, '/api/projects')).json()) as { projects: unknown[] };
+    expect(bList.projects).toHaveLength(0);
+
+    // Every project route 404s across the boundary.
+    for (const path of [
+      `/api/projects/${pid}/files`,
+      `/api/projects/${pid}/file?path=project.json`,
+      `/api/projects/${pid}/log`,
+      `/api/projects/${pid}/transcript`,
+    ]) {
+      expect((await as(B, path)).status, path).toBe(404);
+    }
+    const bSession = await as(B, '/api/sessions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projectId: pid }),
+    });
+    expect(bSession.status).toBe(404);
+    // …and A still gets through.
+    expect((await as(A, `/api/projects/${pid}/files`)).status).toBe(200);
+  });
+
+  it('a per-user mlt_ token resolves to its owner and scopes the same way', async () => {
+    const usersPath = mkdtempSync(join(tmpdir(), 'makerlord-users-'));
+    process.env.MAKERLORD_USERS_PATH = usersPath;
+    const { createUser, mintToken } = await import('@makerlord/auth');
+    const owner = createUser('tokenuser');
+    const clear = mintToken(owner.id, 'test bridge');
+
+    const created = await fetch(`${base}/api/projects`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${clear}`,
+      },
+      body: JSON.stringify({ intent: 'token project' }),
+    });
+    expect(created.status).toBe(201);
+    const list = (await (await fetch(`${base}/api/projects`, {
+      headers: { authorization: `Bearer ${clear}` },
+    })).json()) as { projects: unknown[] };
+    expect(list.projects).toHaveLength(1);
+    // A bogus token dies 401 even in dev mode — mlt_ prefix means resolve or die.
+    const bogus = await fetch(`${base}/api/projects`, {
+      headers: { authorization: 'Bearer mlt_' + '0'.repeat(48) },
+    });
+    expect(bogus.status).toBe(401);
   });
 });
