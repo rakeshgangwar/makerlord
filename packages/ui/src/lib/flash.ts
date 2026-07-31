@@ -50,10 +50,11 @@ export function flashPanelState(i: FlashInputs): FlashPanel {
   return { state: 'ready' };
 }
 
-/** Which browser flasher drives this protocol. stk500v1 (Uno) is an
- *  honest pending — named in the ledger, not silently absent. */
-export function flasherFor(protocol: string): 'esptool' | null {
-  return protocol === 'esptool-js' ? 'esptool' : null;
+/** Which browser flasher drives this protocol. */
+export function flasherFor(protocol: string): 'esptool' | 'stk500' | null {
+  if (protocol === 'esptool-js') return 'esptool';
+  if (protocol === 'stk500v1') return 'stk500';
+  return null;
 }
 
 export type SerialLine =

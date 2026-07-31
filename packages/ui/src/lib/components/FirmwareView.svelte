@@ -47,11 +47,17 @@
         `projects/${app.projectId}/file?path=${encodeURIComponent(manifest.bin)}&encoding=base64`,
       );
       if (file.status !== 200) throw new Error('could not fetch the compiled bin');
-      await flashEsp(file.data.content, manifest.flash.baud ?? 115200, (p) => {
+      const onP = (p) => {
         app.flashPercent = p.percent;
         app.flashChip = p.chip ?? '';
         if (p.phase === 'done') app.flashState = 'done';
-      });
+      };
+      if (manifest.flash.protocol === 'stk500v1') {
+        const { flashStk500 } = await import('$lib/stk500.js');
+        await flashStk500(file.data.content, onP);
+      } else {
+        await flashEsp(file.data.content, manifest.flash.baud ?? 115200, onP);
+      }
     } catch (e) {
       app.flashState = 'error';
       app.flashError = e instanceof Error ? e.message : String(e);

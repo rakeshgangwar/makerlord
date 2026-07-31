@@ -29,6 +29,11 @@ export async function requestPort(): Promise<boolean> {
   return true;
 }
 
+/** The raw WebSerial port — the stk500 flasher drives it directly. */
+export function rawPort(): unknown {
+  return port;
+}
+
 export function hasPort(): boolean {
   return port !== null;
 }

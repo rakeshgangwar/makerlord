@@ -43,15 +43,14 @@ describe('flashPanelState — locked / no-bin / ready, with reasons', () => {
 
   it('a protocol with no browser flasher yet is honest about it', () => {
     const s = flashPanelState({ ...base, protocol: 'stk500v1' });
-    expect(s.state).toBe('protocol-pending');
-    expect(s.reason).toMatch(/Uno|stk500/i);
+    expect(s.state).toBe('ready');   // the Uno flasher landed 2026-07-31
   });
 });
 
 describe('flasherFor', () => {
   it('esptool-js covers the ESP family; stk500v1 is named as pending', () => {
     expect(flasherFor('esptool-js')).toBe('esptool');
-    expect(flasherFor('stk500v1')).toBeNull();
+    expect(flasherFor('stk500v1')).toBe('stk500');
   });
 });
 
@@ -98,5 +97,24 @@ describe('SerialBroker — one port, turns taken honestly', () => {
     expect(broker.holder).toBe('monitor');
     b.release();
     expect(broker.holder).toBeNull();
+  });
+});
+
+
+import { parseIntelHex } from '../src/lib/stk500.js';
+
+describe('intel hex → bytes (the Uno artifact)', () => {
+  it('parses records, honors addresses, fills gaps with 0xFF', () => {
+    const hex = [
+      ':020000040000FA',
+      ':040000000C9434006E',        // 4 bytes at 0x0000
+      ':02000800AABBEF'.replace('EF', ((0x100 - ((0x02 + 0x08 + 0xaa + 0xbb) & 0xff)) & 0xff).toString(16).toUpperCase().padStart(2, '0')),
+      ':00000001FF',
+    ].join('\n');
+    const bytes = parseIntelHex(hex);
+    expect([...bytes.slice(0, 4)]).toEqual([0x0c, 0x94, 0x34, 0x00]);
+    expect(bytes[4]).toBe(0xff);   // the gap
+    expect([...bytes.slice(8, 10)]).toEqual([0xaa, 0xbb]);
+    expect(bytes.length).toBe(10);
   });
 });
