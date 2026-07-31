@@ -123,27 +123,41 @@ export async function flashStk500(
     return body;
   }
 
-  try {
-    // Reset into optiboot: DTR pulse on a port WE opened, then sync
-    // inside its window. Clear any pre-reset sketch chatter first.
-    await port.setSignals({ dataTerminalReady: false, requestToSend: false });
+  /** One reset + sync-probe volley. Chrome's initial DTR state after
+   *  open() differs from native serial, so the caller tries BOTH edge
+   *  orders. Returns the bytes heard, for honest failure messages. */
+  async function resetAndSync(firstDtr: boolean): Promise<{ ok: boolean; heard: number[] }> {
+    await port.setSignals({ dataTerminalReady: firstDtr, requestToSend: firstDtr });
     await sleep(150);
+    await port.setSignals({ dataTerminalReady: !firstDtr, requestToSend: !firstDtr });
+    await sleep(120);
     await port.setSignals({ dataTerminalReady: true, requestToSend: true });
     await sleep(250);
     await drain(50, 400);
-
-    let synced = false;
-    for (let i = 0; i < 8 && !synced; i += 1) {
+    const heard: number[] = [];
+    for (let i = 0; i < 5; i += 1) {
       try {
         pending = [];
-        await cmd([0x30]);   // STK_GET_SYNC
-        synced = true;
-      } catch { await sleep(120); }
+        await writer.write(new Uint8Array([0x30, 0x20]));
+        const r = await readBytes(2, 600);
+        heard.push(...r);
+        if (r[0] === INSYNC && r[1] === OK) return { ok: true, heard };
+      } catch { /* silent try */ }
+      await sleep(100);
     }
-    if (!synced) {
+    return { ok: false, heard };
+  }
+
+  try {
+    let sync = await resetAndSync(true);    // assert-first (native-like)
+    if (!sync.ok) sync = await resetAndSync(false);   // deassert-first
+    if (!sync.ok) {
+      const heardHex = sync.heard.length
+        ? sync.heard.slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join(' ')
+        : 'silence';
       throw new Error(
-        'no bootloader answer — press the board\'s reset button and click '
-        + 'Flash again within a second; check nothing else holds the port');
+        `no bootloader answer (heard: ${heardHex}) — press the board's reset `
+        + 'button, then click Flash within one second');
     }
     // Late replies from the retry probes are still in flight — let the
     // line go quiet before trusting another byte.
