@@ -92,9 +92,26 @@ export async function flashStk500(
     return pending.splice(0, n);
   }
 
+  /** Read and discard until the line is quiet — late replies from
+   *  earlier probes otherwise misalign every later phase (0x53 seen
+   *  live on a genuine Uno R3). */
+  async function drain(quietMs = 80): Promise<void> {
+    for (;;) {
+      try {
+        await readBytes(1, quietMs);
+      } catch { break; }   // timeout = silence = drained
+    }
+    pending = [];
+  }
+
   async function cmd(bytes: number[], responseLen = 0): Promise<number[]> {
     await writer.write(new Uint8Array([...bytes, 0x20]));
-    const head = await readBytes(1);
+    // Scan to INSYNC rather than trusting alignment: a stray byte must
+    // not poison the whole flash.
+    let head = await readBytes(1);
+    for (let skipped = 0; head[0] !== INSYNC && skipped < 16; skipped += 1) {
+      head = await readBytes(1);
+    }
     if (head[0] !== INSYNC) throw new Error(`bootloader out of sync (0x${head[0]?.toString(16)})`);
     const body = responseLen > 0 ? await readBytes(responseLen) : [];
     const tail = await readBytes(1);
@@ -118,8 +135,14 @@ export async function flashStk500(
       } catch { await sleep(120); }
     }
     if (!synced) {
-      throw new Error('no bootloader answer — check the board is an Uno and nothing else holds the port');
+      throw new Error(
+        'no bootloader answer — press the board\'s reset button and click '
+        + 'Flash again within a second; check nothing else holds the port');
     }
+    // Late replies from the retry probes are still in flight — let the
+    // line go quiet before trusting another byte.
+    await drain();
+    await cmd([0x30]);   // one clean sync on an aligned stream
 
     // Signature check: ATmega328P is 1E 95 0F.
     const sig = await cmd([0x75], 3);   // STK_READ_SIGN

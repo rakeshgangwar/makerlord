@@ -60,7 +60,10 @@
       }
     } catch (e) {
       app.flashState = 'error';
-      app.flashError = e instanceof Error ? e.message : String(e);
+      const msg = e instanceof Error ? e.message : String(e);
+      app.flashError = /dynamically imported module|Importing a module script failed/i.test(msg)
+        ? 'the bench was updated under this tab — refresh the page and flash again'
+        : msg;
     }
   }
 

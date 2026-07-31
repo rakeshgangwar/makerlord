@@ -4,6 +4,7 @@ import adapter from '@sveltejs/adapter-node';
 export default {
   kit: {
     adapter: adapter(),
+    version: { pollInterval: 60_000 },
     files: { lib: 'src/lib', routes: 'src/routes', appTemplate: 'src/app.html' },
   },
 };

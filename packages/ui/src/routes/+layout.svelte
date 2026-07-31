@@ -1,8 +1,22 @@
 <script>
-  import { Toaster } from 'svelte-sonner';
+  import { updated } from '$app/state';
+  import { Toaster, toast } from 'svelte-sonner';
   import '$lib/kit/kit.css';
 
   let { children } = $props();
+
+  // A deploy under an open tab breaks lazy chunks (observed live: the
+  // flash button 404'd its module). Say so before it bites.
+  let warned = $state(false);
+  $effect(() => {
+    if (updated.current && !warned) {
+      warned = true;
+      toast('The bench was updated — refresh to pick it up', {
+        duration: Infinity,
+        action: { label: 'Refresh', onClick: () => location.reload() },
+      });
+    }
+  });
 </script>
 
 <a class="skip-link" href="#workspace">Skip to workspace</a>
