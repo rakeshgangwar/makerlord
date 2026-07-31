@@ -85,6 +85,7 @@ export async function flashStk500(
   let pending: number[] = [];
   let notify: (() => void) | null = null;
   let pumpDone = false;
+  const poke = (): void => { const n = notify as (() => void) | null; if (n) n(); };
 
   // ONE read pump, forever: racing reader.read() against timeouts leaves
   // a pending read that makes every later read() throw — the flasher
@@ -96,11 +97,11 @@ export async function flashStk500(
         const { value, done } = await reader.read();
         if (done) break;
         if (value) pending.push(...value);
-        notify?.();
+        poke();
       }
     } catch { /* closed/cancelled — the pump just ends */ }
     pumpDone = true;
-    notify?.();
+    poke();
   })();
 
   async function readBytes(n: number, timeoutMs = 1000): Promise<number[]> {
