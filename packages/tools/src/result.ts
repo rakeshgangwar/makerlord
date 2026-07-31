@@ -15,7 +15,8 @@ export type RefusalCode =
   | 'STALE_PROJECT'
   | 'EVIDENCE_UNFETCHED'
   | 'STIMULUS_REQUIRED'
-  | 'PROFILE_UNVERIFIED';
+  | 'PROFILE_UNVERIFIED'
+  | 'TOOL_ERROR';   // the tool itself crashed — the loop reports, never dies
 
 export type ToolResult<T> =
   | { ok: true; data: T }

@@ -211,7 +211,7 @@ export class AiSdkSession {
           } catch (e) {
             toolResult = {
               ok: false as const,
-              refused: 'TOOL_ERROR',
+              refused: 'TOOL_ERROR' as const,
               message: e instanceof Error ? e.message : String(e),
               findings: [],
             };
