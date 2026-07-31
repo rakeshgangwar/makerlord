@@ -7,6 +7,9 @@ import { GOLDEN, openProject } from './helpers.js';
  * No bridge runs on the e2e ports — the failure is real.
  */
 test('local brain explains itself when no bridge is running', async ({ page }) => {
+  // Hermetic: a developer's real mlb may own 8790 — probe a dead port.
+  // Init-script so the store reads it at page boot, before any connect.
+  await page.addInitScript(() => localStorage.setItem('makerlord.bridgePort', '8759'));
   await openProject(page, GOLDEN);
   const toggle = page.getByRole('button', { name: /local brain/ });
   await expect(toggle).not.toContainText('✓');

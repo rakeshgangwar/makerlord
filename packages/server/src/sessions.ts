@@ -27,6 +27,7 @@ interface AgentLike {
 
 interface Hosted {
   projectDir: string;
+  thread: string;
   agent: AgentLike;
   events: NumberedEvent[];
   listeners: Set<(e: NumberedEvent) => void>;
@@ -117,7 +118,7 @@ export class HostedSessions {
     }
   }
 
-  async createSession(userId: string, projectId: string): Promise<{ sessionId: string }> {
+  async createSession(userId: string, projectId: string, thread = 'main'): Promise<{ sessionId: string }> {
     const projectDir = this.projectDir(userId, projectId);
     const agent = this.opts.backend === 'acp'
       ? await this.acpAgent(projectDir)
@@ -125,6 +126,7 @@ export class HostedSessions {
     const sessionId = randomBytes(12).toString('hex');
     this.sessions.set(sessionId, {
       projectDir,
+      thread,
       agent,
       events: [],
       listeners: new Set(),
@@ -227,32 +229,64 @@ export class HostedSessions {
     return s;
   }
 
-  private transcriptPath(projectDir: string): string {
-    return join(projectDir, 'transcript.jsonl');
+  private transcriptPath(projectDir: string, thread = 'main'): string {
+    if (!/^[a-z0-9_-]{1,40}$/i.test(thread)) throw new Error('bad thread id');
+    return thread === 'main'
+      ? join(projectDir, 'transcript.jsonl')
+      : join(projectDir, 'transcripts', `${thread}.jsonl`);
   }
 
-  private appendTranscript(projectDir: string, record: unknown): void {
-    appendFileSync(this.transcriptPath(projectDir), `${JSON.stringify(record)}\n`);
+  /** The project's conversation threads: 'main' plus transcripts/*. */
+  listThreads(userId: string, projectId: string): { id: string; title: string; updatedAt: string }[] {
+    const dir = this.projectDir(userId, projectId);
+    const out: { id: string; title: string; updatedAt: string }[] = [];
+    const describe = (id: string, path: string) => {
+      try {
+        const first = readFileSync(path, 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)
+          .map((l) => JSON.parse(l) as { kind?: string; text?: string })
+          .find((r) => r.kind === 'maker');
+        out.push({
+          id,
+          title: (first?.text ?? 'new session').slice(0, 60),
+          updatedAt: statSync(path).mtime.toISOString(),
+        });
+      } catch { /* unreadable thread — skipped, not fatal */ }
+    };
+    const mainPath = this.transcriptPath(dir);
+    if (existsSync(mainPath)) describe('main', mainPath);
+    const tdir = join(dir, 'transcripts');
+    if (existsSync(tdir)) {
+      for (const f of readdirSync(tdir)) {
+        if (f.endsWith('.jsonl')) describe(f.slice(0, -6), join(tdir, f));
+      }
+    }
+    return out.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  private appendTranscript(projectDir: string, record: unknown, thread = 'main'): void {
+    const path = this.transcriptPath(projectDir, thread);
+    mkdirSync(join(projectDir, 'transcripts'), { recursive: true });
+    appendFileSync(path, `${JSON.stringify(record)}\n`);
   }
 
   /** Bridge turns happen off-server (the maker's own agent); the bridge
    *  flushes them here after each turn so a reload replays ONE history —
    *  the transcript belongs to the project, not to whichever brain drove. */
-  appendTranscriptRecords(userId: string, projectId: string, records: unknown[]): void {
+  appendTranscriptRecords(userId: string, projectId: string, records: unknown[], thread = 'main'): void {
     const dir = this.projectDir(userId, projectId);
     for (const record of records) {
       const kind = (record as { kind?: string }).kind;
       if (kind !== 'maker' && kind !== 'event') {
         throw new Error('records must be {kind: "maker"|"event", ...}');
       }
-      this.appendTranscript(dir, record);
+      this.appendTranscript(dir, record, thread);
     }
   }
 
   /** The conversation survives reloads and redeploys: it lives with the
    *  project, not with the in-memory session. */
-  readTranscript(userId: string, projectId: string): unknown[] {
-    const path = this.transcriptPath(this.projectDir(userId, projectId));
+  readTranscript(userId: string, projectId: string, thread = 'main'): unknown[] {
+    const path = this.transcriptPath(this.projectDir(userId, projectId), thread);
     if (!existsSync(path)) return [];
     return readFileSync(path, 'utf8')
       .split('\n')
@@ -265,12 +299,12 @@ export class HostedSessions {
     const s = this.get(sessionId);
     if (s.turnActive) throw new Error('a turn is already active on this session');
     s.turnActive = true;
-    this.appendTranscript(s.projectDir, { kind: 'maker', text });
+    this.appendTranscript(s.projectDir, { kind: 'maker', text }, s.thread);
     try {
       await s.agent.send(text, (event) => {
         const numbered: NumberedEvent = { id: s.events.length + 1, event };
         s.events.push(numbered);
-        this.appendTranscript(s.projectDir, { kind: 'event', event });
+        this.appendTranscript(s.projectDir, { kind: 'event', event }, s.thread);
         for (const l of s.listeners) l(numbered);
       });
     } finally {

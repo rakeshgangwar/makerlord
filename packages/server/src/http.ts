@@ -131,13 +131,14 @@ async function route(
   }
 
   if (req.method === 'POST' && path === '/api/sessions') {
-    const { projectId } = await readBody(req);
+    const { projectId, threadId } = await readBody(req);
     if (typeof projectId !== 'string') {
       json(res, 400, { error: 'projectId is required' });
       return;
     }
     try {
-      json(res, 201, await sessions.createSession(user, projectId));
+      json(res, 201, await sessions.createSession(
+        user, projectId, typeof threadId === 'string' ? threadId : 'main'));
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -237,11 +238,22 @@ async function route(
     return;
   }
 
+  // The project's conversation threads.
+  const threadsMatch = /^\/api\/projects\/([0-9a-f]+)\/threads$/.exec(path);
+  if (req.method === 'GET' && threadsMatch) {
+    try {
+      json(res, 200, { threads: sessions.listThreads(user, threadsMatch[1]!) });
+    } catch (e) {
+      json(res, 404, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
   // The conversation, persisted with the project.
   const transcriptMatch = /^\/api\/projects\/([0-9a-f]+)\/transcript$/.exec(path);
   if (req.method === 'GET' && transcriptMatch) {
     try {
-      json(res, 200, { records: sessions.readTranscript(user, transcriptMatch[1]!) });
+      json(res, 200, { records: sessions.readTranscript(user, transcriptMatch[1]!, url.searchParams.get('thread') ?? 'main') });
     } catch (e) {
       json(res, 404, { error: e instanceof Error ? e.message : String(e) });
     }
@@ -257,7 +269,7 @@ async function route(
       return;
     }
     try {
-      sessions.appendTranscriptRecords(user, transcriptMatch[1]!, records);
+      sessions.appendTranscriptRecords(user, transcriptMatch[1]!, records, url.searchParams.get('thread') ?? 'main');
       json(res, 200, { appended: records.length });
     } catch (e) {
       json(res, 400, { error: e instanceof Error ? e.message : String(e) });

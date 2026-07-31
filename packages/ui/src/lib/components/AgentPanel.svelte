@@ -1,7 +1,9 @@
 <script>
   import { toast } from 'svelte-sonner';
   import { STAGE_PURPOSE } from '$lib/postures.js';
-  import { app, sendPrompt, bridgeConnect, bridgePair, store } from '$lib/app.svelte.js';
+  import {
+    app, sendPrompt, bridgeConnect, bridgePair, store, loadThreads, newThread, switchThread,
+  } from '$lib/app.svelte.js';
   import MessageList from './MessageList.svelte';
 
   /** BYOK (2026-07-31): the maker's provider book — the active entry
@@ -82,6 +84,20 @@
     aria-label="Resize agent panel" onpointerdown={startResize}></div>
   <header class="agent-head">
     <span class="mono agent-title">agent</span>
+    <span class="threads">
+      <select class="thread-pick mono" aria-label="Conversation session"
+        value={app.threadId}
+        onchange={(e) => switchThread(e.currentTarget.value)}>
+        {#if !app.threads.some((t) => t.id === app.threadId)}
+          <option value={app.threadId}>new session</option>
+        {/if}
+        {#each app.threads as t (t.id)}
+          <option value={t.id}>{t.title}</option>
+        {/each}
+      </select>
+      <button class="thread-new" title="new session — fresh conversation, full project context"
+        aria-label="New session" onclick={newThread}>＋</button>
+    </span>
     <a class="brain brain-link" class:standby={driving} href="/settings"
       title={driving
         ? 'standby — answers again when the local brain disconnects'
@@ -184,6 +200,18 @@
     font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--ink-soft);
   }
+  .threads { display: inline-flex; align-items: center; gap: var(--s1); flex: 1; min-width: 0; margin: 0 var(--s2); }
+  .thread-pick {
+    flex: 1; min-width: 0; max-width: 11rem; font-size: var(--t-xs);
+    padding: 0.1rem var(--s1); border: 1px solid var(--line);
+    border-radius: var(--r-sm); background: var(--panel); color: var(--ink);
+  }
+  .thread-new {
+    border: 1px solid var(--line); background: transparent; cursor: pointer;
+    color: var(--ink-soft); border-radius: var(--r-sm); font-size: var(--t-sm);
+    padding: 0 0.3rem; line-height: 1.4;
+  }
+  .thread-new:hover { color: var(--mask); border-color: var(--mask); }
   .brain {
     border: none; background: transparent; cursor: pointer;
     font-size: var(--t-xs); color: var(--ink-soft); padding: var(--s1);

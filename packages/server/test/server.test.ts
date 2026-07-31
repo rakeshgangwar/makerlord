@@ -528,3 +528,28 @@ describe('BYOK-first: an instance without a key refuses kindly', () => {
     srv.close();
   });
 });
+
+describe('conversation threads — many sessions, one project', () => {
+  it('threads list, isolate their transcripts, and title from the first ask', async () => {
+    const { data: p } = await post('/api/projects', { intent: 'a lamp' });
+    const pid = p.projectId as string;
+    // main gets a record; a second thread gets its own.
+    await post(`/api/projects/${pid}/transcript`, { records: [{ kind: 'maker', text: 'main thread ask' }] });
+    const r2 = await fetch(`${base}/api/projects/${pid}/transcript?thread=t2`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ records: [{ kind: 'maker', text: 'second thread ask' }] }),
+    });
+    expect(r2.status).toBe(200);
+    const threads = (await (await fetch(`${base}/api/projects/${pid}/threads`)).json()) as
+      { threads: { id: string; title: string }[] };
+    const ids = threads.threads.map((t) => t.id).sort();
+    expect(ids).toEqual(['main', 't2']);
+    expect(threads.threads.find((t) => t.id === 't2')?.title).toBe('second thread ask');
+    // Each replay stays in its lane.
+    const main = (await (await fetch(`${base}/api/projects/${pid}/transcript`)).json()) as { records: { text?: string }[] };
+    const t2 = (await (await fetch(`${base}/api/projects/${pid}/transcript?thread=t2`)).json()) as { records: { text?: string }[] };
+    expect(main.records.map((r) => r.text)).toEqual(['main thread ask']);
+    expect(t2.records.map((r) => r.text)).toEqual(['second thread ask']);
+  });
+});

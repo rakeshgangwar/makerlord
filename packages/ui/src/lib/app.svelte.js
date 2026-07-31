@@ -28,6 +28,9 @@ export const app = $state({
   promptDraft: '',
   turnActive: false,
   lastError: '',
+  /** Conversation threads (sessions) of this project. */
+  threads: [],
+  threadId: 'main',
   // conversation
   /** @type {{role: string, text: string}[]} */
   messages: [],
@@ -190,10 +193,36 @@ export function consume(ev, replay = false) {
   }
 }
 
+export async function loadThreads() {
+  if (!app.projectId) return;
+  const r = await api(`projects/${app.projectId}/threads`);
+  if (r.status === 200) app.threads = r.data.threads;
+}
+
+/** Switch to (or create) a conversation thread. A fresh thread starts
+ *  empty but never contextless: the agent's system prompt carries the
+ *  live project summary and the tools read the real model. */
+export async function switchThread(id) {
+  app.threadId = id;
+  store.set(`makerlord.thread.${app.projectId}`, id);
+  app.messages = [];
+  app.streamingText = '';
+  app.sessionId = null;
+  store.del('makerlord.sessionId');
+  if (eventSource) { eventSource.close(); eventSource = null; }
+  await replayTranscript();
+  await loadThreads();
+}
+
+export async function newThread() {
+  const id = `t${Math.random().toString(36).slice(2, 8)}`;
+  await switchThread(id);
+}
+
 /** Rebuild the conversation from the persisted transcript. */
 async function replayTranscript() {
   if (!app.projectId) return;
-  const r = await api(`projects/${app.projectId}/transcript`);
+  const r = await api(`projects/${app.projectId}/transcript?thread=${app.threadId}`);
   if (r.status !== 200) return;
   for (const record of r.data.records ?? []) {
     if (record.kind === 'maker') {
@@ -211,7 +240,7 @@ async function ensureSession(intent) {
     store.set('makerlord.projectId', app.projectId);
   }
   if (!app.sessionId) {
-    const s = await api('sessions', { projectId: app.projectId });
+    const s = await api('sessions', { projectId: app.projectId, threadId: app.threadId });
     if (s.status !== 201 || !s.data.sessionId) {
       // BYOK-first instances have no default brain — say so, kindly.
       throw new Error(s.data.error ?? 'could not start a session');
@@ -677,11 +706,16 @@ export function bridgePair() {
 export async function boot() {
   // If this browser has paired before, quietly re-attach to the bridge.
   if (store.get('makerlord.bridgeToken')) bridgeConnect(true);
+  // The thread choice must land BEFORE the replay reads it.
+  if (app.projectId) {
+    app.threadId = store.get(`makerlord.thread.${app.projectId}`) ?? 'main';
+  }
   if (app.sessionId) openEvents();
   await replayTranscript();
   if (app.projectId) {
     refreshProjections();
     loadInventoryGap();   // also the part-title source for the tree
     loadFiles();          // the tree lists files up front now
+    loadThreads();
   } else loadProjectList();
 }
