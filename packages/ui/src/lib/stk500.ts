@@ -68,12 +68,17 @@ export async function flashStk500(
   const data = decodePayload(binBase64);
   onProgress({ percent: 0, phase: 'connecting' });
 
-  // Own the port outright: the monitor may have left it open at another
-  // baud with its own locks — then our reset pulse never lands and we
-  // read the RUNNING SKETCH's prints instead of optiboot ('S','T' of
-  // SELFTEST, observed live). Close, reopen fresh at 115200.
-  await port.close().catch(() => undefined);
-  await port.open({ baudRate: 115200 });
+  // Open directly; close-first only when needed. An unconditional
+  // close+reopen killed Chrome's receive path outright (heard: silence,
+  // observed live) — reopening a just-closed port is the flaky corner.
+  try {
+    await port.open({ baudRate: 115200 });
+  } catch (e) {
+    if (!/already open/i.test(e instanceof Error ? e.message : '')) throw e;
+    await port.close().catch(() => undefined);
+    await sleep(300);
+    await port.open({ baudRate: 115200 });
+  }
   const reader = port.readable!.getReader();
   const writer = port.writable!.getWriter();
   let pending: number[] = [];
@@ -127,12 +132,16 @@ export async function flashStk500(
    *  open() differs from native serial, so the caller tries BOTH edge
    *  orders. Returns the bytes heard, for honest failure messages. */
   async function resetAndSync(firstDtr: boolean): Promise<{ ok: boolean; heard: number[] }> {
-    await port.setSignals({ dataTerminalReady: firstDtr, requestToSend: firstDtr });
-    await sleep(150);
-    await port.setSignals({ dataTerminalReady: !firstDtr, requestToSend: !firstDtr });
-    await sleep(120);
+    // Multi-pulse: the Uno resets on a DTR edge through a cap — hammer
+    // several edges so whichever polarity Chrome starts from, one lands.
+    for (let i = 0; i < 3; i += 1) {
+      await port.setSignals({ dataTerminalReady: firstDtr, requestToSend: firstDtr });
+      await sleep(80);
+      await port.setSignals({ dataTerminalReady: !firstDtr, requestToSend: !firstDtr });
+      await sleep(80);
+    }
     await port.setSignals({ dataTerminalReady: true, requestToSend: true });
-    await sleep(250);
+    await sleep(280);
     await drain(50, 400);
     const heard: number[] = [];
     for (let i = 0; i < 5; i += 1) {
