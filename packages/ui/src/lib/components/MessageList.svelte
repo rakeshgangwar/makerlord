@@ -26,7 +26,24 @@
         out.push({ kind: 'one', m });
       }
     }
-    return out;
+    // Second pass: contiguous completed activity folds into one
+    // accordion block — the chat foregrounds words; the work is a
+    // click away. Running calls and refusals never fold.
+    const blocks = [];
+    for (const row of out) {
+      const doneTool = row.kind === 'group'
+        || (row.kind === 'one' && row.m.role === 'tool' && row.m.done && !row.m.refused);
+      const prev = blocks[blocks.length - 1];
+      if (doneTool && prev?.kind === 'block') prev.rows.push(row);
+      else if (doneTool) blocks.push({ kind: 'block', rows: [row] });
+      else blocks.push(row);
+    }
+    for (const b of blocks) {
+      if (b.kind === 'block') {
+        b.count = b.rows.reduce((n, r) => n + (r.kind === 'group' ? r.items.length : 1), 0);
+      }
+    }
+    return blocks;
   });
 
   function copyText(text) {
@@ -74,7 +91,7 @@
   </details>
 {/snippet}
 
-{#each rows as row}
+{#snippet groupRow(row)}
   {#if row.kind === 'group' && row.items.length > 1}
     <details class="tool-card tool-group">
       <summary>
@@ -88,6 +105,27 @@
     </details>
   {:else if row.kind === 'group'}
     {@render toolCard(row.items[0])}
+  {:else}
+    {@render toolCard(row.m)}
+  {/if}
+{/snippet}
+
+{#each rows as row}
+  {#if row.kind === 'block'}
+    {#if row.count === 1}
+      {@render groupRow(row.rows[0])}
+    {:else}
+      <details class="tool-card tool-block">
+        <summary>
+          <span class="tool-state mono" aria-hidden="true">⚙</span>
+          <span class="tool-name mono">{row.count} tool calls</span>
+          <span class="tool-badge mono">done</span>
+        </summary>
+        <div class="group-items">
+          {#each row.rows as r}{@render groupRow(r)}{/each}
+        </div>
+      </details>
+    {/if}
   {:else if row.m.role === 'tool'}
     {@render toolCard(row.m)}
   {:else}
@@ -178,4 +216,6 @@
   .tool-refusal { font-size: var(--t-xs); color: var(--sev-blocker); margin: var(--s1) 0 0; }
   .tool-count { color: var(--ink-soft); }
   .group-items { display: flex; flex-direction: column; gap: var(--s1); margin-top: var(--s2); }
+  .tool-block { background: transparent; border-style: dotted; }
+  .tool-block > summary .tool-name { color: var(--ink-soft); }
 </style>
