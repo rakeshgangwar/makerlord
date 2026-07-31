@@ -7,7 +7,7 @@ import { requireSession } from '../def.js';
 import { refuse, ok } from '../result.js';
 import type { Session } from '../session.js';
 
-function circuitOf(s: Session): Circuit {
+export function circuitOf(s: Session): Circuit {
   if (!s.file.project.circuit) {
     s.file.project.circuit = { boardId: 'half', parts: [], wires: [], intent: [] };
   }

@@ -23,8 +23,15 @@ export function circuitRuleContext(s: Session): RuleContext {
     const profile = bundle().profiles[part.defId];
     if (profile) footprints.set(part.defId, profile.footprint);
   }
-  const nets = deriveNetlist(board(), circuit, footprints);
-  const divergences = diffNetlists(circuit.intent, nets);
+  // D56: a freeform circuit HAS no geometry — the intent nets ARE the
+  // netlist, so every electrical rule adjudicates them directly, and
+  // there is no layout to diverge from.
+  const nets = circuit.target === 'freeform'
+    ? circuit.intent.map((n) => ({ id: n.name, holes: [], pins: n.members }))
+    : deriveNetlist(board(), circuit, footprints);
+  const divergences = circuit.target === 'freeform'
+    ? []
+    : diffNetlists(circuit.intent, nets);
   return makeContext(board(), circuit, nets, divergences, defsMap(), profilesMap());
 }
 

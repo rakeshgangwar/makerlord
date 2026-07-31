@@ -53,7 +53,9 @@ describe('freeform mode (D56)', () => {
     await run('connect', { from: 'U1.D5 PWM', to: 'LED1.anode' });
     const gate2 = await run('gate_open');
     expect(gate2.ok).toBe(false);
-    if (!gate2.ok) expect(gate2.refused).toBe('MEASUREMENT_REQUIRED');
+    // Stricter than merely demanding measurements: the intent-net rules
+    // adjudicate freeform circuits too, and this LED has no ballast.
+    if (!gate2.ok) expect(gate2.refused).toBe('BLOCKERS_UNRESOLVED');
   });
 
   it('freeform build steps speak intent, never holes', async () => {

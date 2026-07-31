@@ -5,6 +5,7 @@ import { saveSession } from './session.js';
 import { ARCHITECTURE_TOOLS } from './tools/architecture.js';
 import { CHECK_TOOLS } from './tools/checks.js';
 import { CIRCUIT_TOOLS } from './tools/circuit.js';
+import { REMOVAL_TOOLS } from './tools/removal.js';
 import { FEASIBILITY_TOOLS } from './tools/feasibility.js';
 import { GATED_TOOLS } from './tools/gated.js';
 import { HISTORY_TOOLS } from './tools/history.js';
@@ -26,6 +27,7 @@ export const ALL_TOOLS: readonly ToolDef[] = [
   ...REQUIREMENT_TOOLS,
   ...ARCHITECTURE_TOOLS,
   ...CIRCUIT_TOOLS,
+  ...REMOVAL_TOOLS,
   ...CHECK_TOOLS,
   ...GATED_TOOLS,
   ...SIM_TOOLS,
