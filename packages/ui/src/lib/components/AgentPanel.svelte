@@ -80,14 +80,18 @@
     aria-label="Resize agent panel" onpointerdown={startResize}></div>
   <header class="agent-head">
     <span class="mono agent-title">agent</span>
-    <a class="brain brain-link" href="/settings"
-      title="providers and agents — settings">
-      ◇ {active ? `${active.provider} · ${active.model}` : 'set up a brain'}
+    {@const driving = app.bridgeStatus === 'ready'}
+    <a class="brain brain-link" class:standby={driving} href="/settings"
+      title={driving
+        ? 'standby — answers again when the local brain disconnects'
+        : 'providers and agents — settings'}>
+      ◇ {active ? `${active.provider} · ${active.model}` : 'set up a brain'}{driving && active ? ' · standby' : active ? ' · driving' : ''}
     </a>
-    <button class="brain" onclick={() => bridgeConnect()}>
-      <span class="lamp-dot" class:on={app.bridgeStatus === 'ready'}></span>
-      {app.bridgeStatus === 'ready'
-        ? `local brain ✓${app.bridgeAgent ? ` · ${app.bridgeAgent}` : ''}`
+    <button class="brain" class:driving onclick={() => bridgeConnect()}
+      title={driving ? 'your local agent answers — click to disconnect' : 'connect your own agent'}>
+      <span class="lamp-dot" class:on={driving}></span>
+      {driving
+        ? `local brain${app.bridgeAgent ? ` · ${app.bridgeAgent}` : ''} · driving`
         : '⚡ local brain'}
     </button>
   </header>
@@ -225,6 +229,8 @@
 
   .agent-foot { border-top: 1px solid var(--line); padding-top: var(--s2); }
   .brain-link { text-decoration: none; }
+  .brain-link.standby { opacity: 0.55; }
+  .brain.driving { color: var(--mask); font-weight: 600; }
   .brain-pick {
     width: 100%; margin-bottom: var(--s1); font-size: var(--t-xs);
     padding: var(--s1) var(--s2); border: 1px solid var(--line);
