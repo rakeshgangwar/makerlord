@@ -83,18 +83,37 @@ export async function flashStk500(
   const reader = port.readable!.getReader();
   const writer = port.writable!.getWriter();
   let pending: number[] = [];
+  let notify: (() => void) | null = null;
+  let pumpDone = false;
+
+  // ONE read pump, forever: racing reader.read() against timeouts leaves
+  // a pending read that makes every later read() throw — the flasher
+  // then hears 'silence' while the TX LED shows optiboot answering
+  // (observed live). Bytes land in `pending`; waiters get poked.
+  void (async () => {
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (value) pending.push(...value);
+        notify?.();
+      }
+    } catch { /* closed/cancelled — the pump just ends */ }
+    pumpDone = true;
+    notify?.();
+  })();
 
   async function readBytes(n: number, timeoutMs = 1000): Promise<number[]> {
     const deadline = Date.now() + timeoutMs;
     while (pending.length < n) {
-      const race = await Promise.race([
-        reader.read(),
-        sleep(Math.max(0, deadline - Date.now())).then(() => 'timeout' as const),
-      ]);
-      if (race === 'timeout') throw new Error('bootloader timeout');
-      const { value, done } = race as { value?: Uint8Array; done: boolean };
-      if (done) throw new Error('serial closed mid-flash');
-      if (value) pending.push(...value);
+      if (pumpDone) throw new Error('serial closed mid-flash');
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw new Error('bootloader timeout');
+      await new Promise<void>((r) => {
+        notify = r;
+        setTimeout(r, remaining);
+      });
+      notify = null;
     }
     return pending.splice(0, n);
   }
@@ -194,6 +213,7 @@ export async function flashStk500(
     await cmd([0x51]);   // STK_LEAVE_PROGMODE — the sketch starts
     onProgress({ percent: 100, phase: 'done', chip });
   } finally {
+    await reader.cancel().catch(() => undefined);   // ends the pump
     reader.releaseLock();
     writer.releaseLock();
     await port.close().catch(() => undefined);
