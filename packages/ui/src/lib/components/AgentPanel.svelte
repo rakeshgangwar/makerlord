@@ -62,6 +62,8 @@
     if (log) log.scrollTop = log.scrollHeight;
   });
 
+  const driving = $derived(app.bridgeStatus === 'ready');
+
   const lastMaker = $derived(
     [...app.messages].reverse().find((m) => m.role === 'maker')?.text ?? '',
   );
@@ -80,7 +82,6 @@
     aria-label="Resize agent panel" onpointerdown={startResize}></div>
   <header class="agent-head">
     <span class="mono agent-title">agent</span>
-    {@const driving = app.bridgeStatus === 'ready'}
     <a class="brain brain-link" class:standby={driving} href="/settings"
       title={driving
         ? 'standby — answers again when the local brain disconnects'
