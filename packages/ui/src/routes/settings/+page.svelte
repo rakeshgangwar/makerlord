@@ -15,6 +15,13 @@
     ['custom', 'Custom endpoint'],
   ];
 
+  import { page } from '$app/state';
+  const handle = $derived(page.data.handle ?? '');
+  async function signOut() {
+    await fetch('/auth/logout', { method: 'POST' });
+    location.href = '/login';
+  }
+
   let providers = $state([]);
   let provider = $state('openrouter');
   let model = $state('');
@@ -86,6 +93,14 @@
     <h1>Settings</h1>
     <a class="back mono" href="/">← back to the bench</a>
   </header>
+
+  <section class="card account">
+    <h2>Account</h2>
+    <div class="account-row">
+      <span class="mono">◉ {handle}</span>
+      <button class="secondary" onclick={signOut}>Sign out</button>
+    </div>
+  </section>
 
   <section class="card">
     <h2>Model providers</h2>
@@ -198,6 +213,7 @@
     padding: var(--s4) var(--s5); margin-bottom: var(--s4);
   }
   h2 { margin: 0 0 var(--s2); font-size: var(--t-lg); }
+  .account-row { display: flex; justify-content: space-between; align-items: center; }
 
   .provider-list { list-style: none; padding: 0; margin: var(--s3) 0; }
   .provider-row {

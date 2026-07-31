@@ -34,7 +34,7 @@ test('join with an invite mints a passkey; logout + usernameless login round-tri
   await page.getByLabel('Handle').fill('cdp-maker');
   await page.getByRole('button', { name: /create passkey/i }).click();
   await page.waitForURL(`${LOCAL}/`);
-  await expect(page.getByText('◉ cdp-maker')).toBeVisible();
+  await expect(page.getByTitle(/cdp-maker/)).toBeVisible();
 
   // A burned invite refuses a second join.
   await page.request.post(`${LOCAL}/auth/join/options`, {
@@ -42,11 +42,12 @@ test('join with an invite mints a passkey; logout + usernameless login round-tri
   }).then((r) => expect(r.status()).toBe(403));
 
   // Logout, then usernameless login via the discoverable credential.
-  await page.getByRole('button', { name: 'sign out' }).click();
+  await page.goto(`${LOCAL}/settings`);
+  await page.getByRole('button', { name: /sign out/i }).click();
   await page.waitForURL(`${LOCAL}/login`);
   await page.getByRole('button', { name: /sign in with passkey/i }).click();
   await page.waitForURL(`${LOCAL}/`);
-  await expect(page.getByText('◉ cdp-maker')).toBeVisible();
+  await expect(page.getByTitle(/cdp-maker/)).toBeVisible();
 });
 
 test('the ownership property: another maker sees none of the seeded projects', async ({ page, browser }) => {

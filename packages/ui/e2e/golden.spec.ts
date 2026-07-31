@@ -40,6 +40,7 @@ test('⑤ simulate inlines the schematic with a layout engine stamp', async ({ p
 });
 
 test('the file tree lists the projected artefacts', async ({ page }) => {
+  await page.getByRole('button', { name: 'Files', exact: true }).click();
   // Design documents ship open in the tree; deeper groups are a click away.
   await expect(page.getByText('requirements.md')).toBeVisible();
   await expect(page.getByText('architecture.md')).toBeVisible();

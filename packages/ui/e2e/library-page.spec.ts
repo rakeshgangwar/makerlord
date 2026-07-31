@@ -21,7 +21,7 @@ test('the library page renders gap, inventory and the tiered catalog', async ({ 
 test('the rail links to the library page', async ({ page }) => {
   await signIn(page);
   await page.goto(`/?p=${GOLDEN}&stage=4`);
-  await page.getByRole('link', { name: /library & inventory/ }).click();
+  await page.getByRole('link', { name: 'Library and inventory' }).click();
   await expect(page).toHaveURL(/\/library/);
   await expect(page.getByRole('heading', { name: 'Library & Inventory' })).toBeVisible();
 });
