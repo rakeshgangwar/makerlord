@@ -240,10 +240,26 @@ export class AiSdkSession {
       }
       onEvent({ t: 'turn.end', reason: 'end_turn' });
     } catch (e) {
-      onEvent({
-        t: 'session.error',
-        message: e instanceof Error ? e.message : String(e),
-      });
+      onEvent({ t: 'session.error', message: makerMessage(e) });
     }
   }
+}
+
+/** Provider failures in maker language — the raw SDK error rides in
+ *  detail-position at the end, never as the headline. */
+function makerMessage(e: unknown): string {
+  const raw = e instanceof Error ? e.message : String(e);
+  if (/overloaded|429|rate.?limit/i.test(raw)) {
+    return 'your model provider is overloaded right now — try again in a '
+      + `moment, or switch brains (◇). (${raw.slice(0, 120)})`;
+  }
+  if (/401|invalid.?api.?key|authentication/i.test(raw)) {
+    return 'your provider rejected the API key — check it in Settings. '
+      + `(${raw.slice(0, 120)})`;
+  }
+  if (/402|insufficient|quota|credit/i.test(raw)) {
+    return 'your provider account is out of credit — top up or switch '
+      + `brains (◇). (${raw.slice(0, 120)})`;
+  }
+  return raw;
 }
