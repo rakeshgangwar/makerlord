@@ -66,6 +66,7 @@ export async function flashStk500(
     writable: WritableStream<Uint8Array> | null;
   };
   const data = decodePayload(binBase64);
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   onProgress({ percent: 0, phase: 'connecting' });
 
   // Open directly; close-first only when needed. An unconditional
@@ -82,8 +83,6 @@ export async function flashStk500(
   const reader = port.readable!.getReader();
   const writer = port.writable!.getWriter();
   let pending: number[] = [];
-
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   async function readBytes(n: number, timeoutMs = 1000): Promise<number[]> {
     const deadline = Date.now() + timeoutMs;
