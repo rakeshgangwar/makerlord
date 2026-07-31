@@ -206,4 +206,23 @@ async function runDaemon(): Promise<void> {
     'In the web app, click "⚡ local brain" and enter that code once.\n' +
     'The code burns on use; restart the bridge for a fresh one.\n',
   );
+
+  // Version drift bites silently: this bundle carries its own tool
+  // schemas, and a stale bundle HIDES new engine tools from the agent
+  // (observed live 2026-07-31 — removal tools invisible). Compare with
+  // the engine and say so loudly.
+  void (async () => {
+    try {
+      const res = await fetch(`${api}/healthz`);
+      const { tools } = (await res.json()) as { tools?: number };
+      const local = (await import('@makerlord/tools')).ALL_TOOLS.length;
+      if (typeof tools === 'number' && tools !== local) {
+        process.stdout.write(
+          `\n  ⚠ this bridge bundles ${local} tools but the engine has ${tools} — `
+          + 'your agent cannot see the difference.\n'
+          + '  Update: curl -fsSL https://makerlord.dev/install.sh | bash\n\n',
+        );
+      }
+    } catch { /* offline start is fine */ }
+  })();
 }

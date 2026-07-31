@@ -193,9 +193,19 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
           turnActive = true;
           // The preamble rides the first prompt only; the flush records the
           // maker's actual words, never the injected history.
+          // Spec §5 (D55/D56): the bypass is a named failure, not initiative.
+          const STANCE =
+            '[MakerLord stance] Work only through the makerlord tools. When a '
+            + 'gate refuses, tell the maker exactly what it needs and walk them '
+            + 'there — never route around the pipeline with hand-written '
+            + 'sketches or external flashing. The engine has removal tools '
+            + '(part_remove, disconnect, wire_remove, unplace, block_remove) '
+            + 'and freeform mode (circuit_target) for correcting or '
+            + 'de-boarding a circuit. If a tool you expect is missing, the '
+            + 'bridge is stale: the maker should rerun the installer.\n';
           const wired = contextPreamble
-            ? `${contextPreamble}\n${frame.text}`
-            : frame.text;
+            ? `${STANCE}${contextPreamble}\n${frame.text}`
+            : `${STANCE}${frame.text}`;
           contextPreamble = '';
           const records: unknown[] = [{ kind: 'maker', text: frame.text }];
           try {
