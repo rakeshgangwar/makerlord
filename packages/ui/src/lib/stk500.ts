@@ -68,9 +68,12 @@ export async function flashStk500(
   const data = decodePayload(binBase64);
   onProgress({ percent: 0, phase: 'connecting' });
 
-  await port.open({ baudRate: 115200 }).catch((e: Error) => {
-    if (!/already open/i.test(e.message)) throw e;
-  });
+  // Own the port outright: the monitor may have left it open at another
+  // baud with its own locks — then our reset pulse never lands and we
+  // read the RUNNING SKETCH's prints instead of optiboot ('S','T' of
+  // SELFTEST, observed live). Close, reopen fresh at 115200.
+  await port.close().catch(() => undefined);
+  await port.open({ baudRate: 115200 });
   const reader = port.readable!.getReader();
   const writer = port.writable!.getWriter();
   let pending: number[] = [];
@@ -95,8 +98,9 @@ export async function flashStk500(
   /** Read and discard until the line is quiet — late replies from
    *  earlier probes otherwise misalign every later phase (0x53 seen
    *  live on a genuine Uno R3). */
-  async function drain(quietMs = 80): Promise<void> {
-    for (;;) {
+  async function drain(quietMs = 80, maxMs = 600): Promise<void> {
+    const stop = Date.now() + maxMs;   // a chattering sketch must not trap us
+    while (Date.now() < stop) {
       try {
         await readBytes(1, quietMs);
       } catch { break; }   // timeout = silence = drained
@@ -120,11 +124,13 @@ export async function flashStk500(
   }
 
   try {
-    // Reset into optiboot: DTR pulse, then sync inside its window.
+    // Reset into optiboot: DTR pulse on a port WE opened, then sync
+    // inside its window. Clear any pre-reset sketch chatter first.
     await port.setSignals({ dataTerminalReady: false, requestToSend: false });
-    await sleep(120);
+    await sleep(150);
     await port.setSignals({ dataTerminalReady: true, requestToSend: true });
-    await sleep(220);
+    await sleep(250);
+    await drain(50, 400);
 
     let synced = false;
     for (let i = 0; i < 8 && !synced; i += 1) {
