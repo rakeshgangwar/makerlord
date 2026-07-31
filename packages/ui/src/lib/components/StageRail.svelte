@@ -14,6 +14,13 @@
   const current = $derived(stage ?? app.stage);
   // Phones get one row — the 17-chip cloud buried the hero (audit §6).
   let railOpen = $state(false);
+  // Desktop collapse — the workbench takes the room (2026-07-31).
+  let collapsed = $state(
+    typeof localStorage !== 'undefined' && localStorage.getItem('makerlord.railCollapsed') === '1');
+  function toggleCollapse() {
+    collapsed = !collapsed;
+    try { localStorage.setItem('makerlord.railCollapsed', collapsed ? '1' : '0'); } catch {}
+  }
   let tokenDialogOpen = $state(false);
   let mintedToken = $state('');
 
@@ -79,7 +86,10 @@
   const basename = (p) => p.split('/').pop();
 </script>
 
-<nav class="rail" class:open={railOpen} aria-label="Project">
+<nav class="rail" class:open={railOpen} class:collapsed aria-label="Project">
+  <button class="collapse-tab mono" onclick={toggleCollapse}
+    aria-label={collapsed ? 'Expand project tree' : 'Collapse project tree'}
+    title={collapsed ? 'expand' : 'collapse'}>{collapsed ? '›' : '‹'}</button>
   <div class="rail-top">
     <div class="wordmark">Maker<span>Lord</span></div>
     <button class="theme-toggle" onclick={toggleTheme}
@@ -206,7 +216,17 @@
 
 <style>
   /* ── the project tree: phases carry their resistor colour band ── */
-  .rail { display: flex; flex-direction: column; min-width: 13.5rem; max-width: 15rem; }
+  .rail { display: flex; flex-direction: column; min-width: 13.5rem; max-width: 15rem; position: relative; }
+  .rail.collapsed { min-width: 1.4rem; max-width: 1.4rem; overflow: hidden; }
+  .rail.collapsed > :global(*:not(.collapse-tab)) { display: none; }
+  .collapse-tab {
+    position: absolute; top: 0.1rem; right: 0; z-index: 6;
+    border: 1px solid var(--line); background: var(--panel); cursor: pointer;
+    color: var(--ink-soft); border-radius: var(--r-sm); font-size: var(--t-sm);
+    padding: 0 0.3rem; line-height: 1.5;
+  }
+  .collapse-tab:hover { color: var(--mask); border-color: var(--mask); }
+  @media (max-width: 700px) { .collapse-tab { display: none; } }
   .tree { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
   .rail-top { display: flex; align-items: baseline; justify-content: space-between; }
   .rail-toggle { display: none; }
