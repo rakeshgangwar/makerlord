@@ -121,7 +121,33 @@ export class AiSdkSession {
     );
   }
 
+  /** Self-heal a session whose last round died mid-tools: any assistant
+   *  tool-call still missing its result gets a synthetic error result,
+   *  so the provider's message validation passes again. */
+  private repairDanglingCalls(): void {
+    const called = new Map<string, string>();
+    const answered = new Set<string>();
+    for (const m of this.messages) {
+      const content = Array.isArray(m.content) ? m.content : [];
+      for (const part of content as { type?: string; toolCallId?: string; toolName?: string }[]) {
+        if (part.type === 'tool-call' && part.toolCallId) called.set(part.toolCallId, part.toolName ?? '');
+        if (part.type === 'tool-result' && part.toolCallId) answered.add(part.toolCallId);
+      }
+    }
+    const dangling = [...called].filter(([id]) => !answered.has(id));
+    if (dangling.length === 0) return;
+    this.messages.push({
+      role: 'tool',
+      content: dangling.map(([toolCallId, toolName]) => ({
+        type: 'tool-result' as const, toolCallId, toolName, input: {},
+        output: { type: 'json' as const, value: { ok: false, refused: 'TOOL_ERROR', message: 'the turn was interrupted before this tool returned' } },
+        dynamic: true as const,
+      })),
+    } as ModelMessage);
+  }
+
   async send(text: string, onEvent: (event: SessionEvent) => void): Promise<void> {
+    this.repairDanglingCalls();
     this.messages.push({ role: 'user', content: text });
     const p = this.opts.toolSession.file.project;
     const system = assemblePrompt({
@@ -175,7 +201,21 @@ export class AiSdkSession {
         const results = [];
         for (const call of calls) {
           const ctx: ToolCtx = { session: this.opts.toolSession, cwd: this.opts.cwd };
-          const toolResult = await runTool(call.toolName, call.input, ctx);
+          // A throwing tool must become a RESULT, not a dead turn: an
+          // abandoned round leaves the assistant's tool-call dangling
+          // and the provider rejects every later request ("Tool result
+          // is missing…") — observed live 2026-07-31, 101 calls lost.
+          let toolResult;
+          try {
+            toolResult = await runTool(call.toolName, call.input, ctx);
+          } catch (e) {
+            toolResult = {
+              ok: false as const,
+              refused: 'TOOL_ERROR',
+              message: e instanceof Error ? e.message : String(e),
+              findings: [],
+            };
+          }
           onEvent({ t: 'tool.end', callId: call.toolCallId, result: toolResult });
           results.push({
             type: 'tool-result' as const,

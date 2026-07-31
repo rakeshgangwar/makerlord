@@ -41,11 +41,13 @@ beforeEach(async () => {
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       round += 1;
       if (round === 1) {
-        // A tool round: call parts_search through the declared tools.
+        // A tool round — a bogus tool when the prompt asks for the
+        // impossible (runTool throws), parts_search otherwise.
+        const bogus = body.includes('impossible');
         res.end(sse([
           chunk({ role: 'assistant', tool_calls: [{
             index: 0, id: 'call_1', type: 'function',
-            function: { name: 'parts_search', arguments: '' },
+            function: { name: bogus ? 'no_such_tool' : 'parts_search', arguments: '' },
           }] }),
           chunk({ tool_calls: [{ index: 0, function: { arguments: '{"query":"led"}' } }] }),
           chunk({}, 'tool_calls'),
@@ -116,4 +118,25 @@ describe('AiSdkSession — any provider, same engine, same gates', () => {
     await session.send('hello', (e) => events.push(e));
     expect(events.at(-1)?.t).toBe('session.error');
   }, 30_000);
+});
+
+describe('a throwing tool never wedges the session', () => {
+  it('the error becomes a result; the next round and turn still run', async () => {
+    // Round 1 calls a tool that does not exist (runTool throws);
+    // round 2 must still receive a tool result and answer in text.
+    const toolSession = initProjectFile(join(dir, 'project.json'), 'a lamp');
+    const session = new AiSdkSession({
+      model: resolveModel({ provider: 'custom', model: 'fake', apiKey: 'k', baseURL }),
+      toolSession, cwd: dir, pack: loadPack(dir), stage: 6, bundle: bundle(),
+    });
+    requests.length = 0;
+    // Monkey-patch the fake: first round calls a bogus tool.
+    const events: SessionEvent[] = [];
+    await session.send('do the impossible', (e) => events.push(e));
+    const ends = events.filter((e) => e.t === 'tool.end');
+    expect(ends.length).toBe(events.filter((e) => e.t === 'tool.start').length);
+    expect(events.at(-1)?.t).toBe('turn.end');
+    const second = requests[1] as { messages: { role: string }[] };
+    expect(second.messages.some((m) => m.role === 'tool')).toBe(true);
+  });
 });
