@@ -3,6 +3,37 @@
   import { md } from '$lib/md.js';
   import SvgViewer from '$lib/SvgViewer.svelte';
 
+  /** Shiki, lazily: the highlighter loads the first time a code file
+   *  opens, renders both themes, and the page's data-theme picks one. */
+  const LANGS = {
+    h: 'cpp', cpp: 'cpp', c: 'c', ino: 'cpp', js: 'javascript', mjs: 'javascript',
+    ts: 'typescript', json: 'json', yaml: 'yaml', yml: 'yaml', cir: 'spice',
+    jsonl: 'json', sh: 'bash', md: 'markdown',
+  };
+  let highlighted = $state('');
+  let highlighter = null;
+
+  async function highlight(path, content) {
+    highlighted = '';
+    const ext = path.split('.').pop();
+    const lang = LANGS[ext];
+    if (!lang || ext === 'md') return;
+    const { createHighlighter } = await import('shiki');
+    highlighter ??= await createHighlighter({
+      themes: ['github-light', 'github-dark'],
+      langs: [...new Set(Object.values(LANGS))].filter((l) => l !== 'spice'),
+    });
+    const useLang = lang === 'spice' ? 'text' : lang;
+    highlighted = highlighter.codeToHtml(content, {
+      lang: useLang,
+      themes: { light: 'github-light', dark: 'github-dark' },
+    });
+  }
+
+  $effect(() => {
+    if (app.fileOpen) highlight(app.fileOpen.path, app.fileOpen.content);
+  });
+
   /**
    * A file opens in the workbench, like an editor tab — not a modal.
    * The tree stays clickable, the agent stays at hand; ✕ (or Escape)
@@ -21,6 +52,8 @@
         <div class="md file-doc">{@html md(app.fileOpen.content)}</div>
       {:else if app.fileOpen.path.endsWith('.svg')}
         <SvgViewer content={app.fileOpen.content} alt={app.fileOpen.path} />
+      {:else if highlighted}
+        <div class="file-code">{@html highlighted}</div>
       {:else}
         <pre class="file-raw">{app.fileOpen.content}</pre>
       {/if}
@@ -56,4 +89,14 @@
     white-space: pre-wrap; word-break: break-all; margin: 0;
   }
   .file-doc { font-size: var(--t-sm); max-width: 46rem; }
+  .file-code :global(pre.shiki) {
+    font-family: var(--font-mono); font-size: var(--t-xs); line-height: 1.6;
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    padding: var(--s3); overflow: auto; margin: 0;
+  }
+  :global(html[data-theme='dark']) .file-code :global(.shiki),
+  :global(html[data-theme='dark']) .file-code :global(.shiki span) {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
 </style>
