@@ -10,6 +10,25 @@
    */
   let { list, streaming = '', cursor = false, onretry = null } = $props();
 
+  /** Consecutive completed calls of the same tool collapse into one
+   *  row (place ✓ ×14) — refusals and in-flight calls always stand
+   *  alone. Grouping is display-only; the timeline stays intact. */
+  const rows = $derived.by(() => {
+    const out = [];
+    for (const m of list) {
+      const groupable = m.role === 'tool' && m.done && !m.refused;
+      const prev = out[out.length - 1];
+      if (groupable && prev?.kind === 'group' && prev.name === m.name) {
+        prev.items.push(m);
+      } else if (groupable) {
+        out.push({ kind: 'group', name: m.name, items: [m] });
+      } else {
+        out.push({ kind: 'one', m });
+      }
+    }
+    return out;
+  });
+
   function copyText(text) {
     navigator.clipboard?.writeText(text);
     toast('Copied');
@@ -29,32 +48,50 @@
   }
 </script>
 
-{#each list as m}
-  {#if m.role === 'tool'}
-    <details class="tool-card" class:refused={m.refused} class:running={!m.done} open={!!m.refused}>
+{#snippet toolCard(m)}
+  <details class="tool-card" class:refused={m.refused} class:running={!m.done} open={!!m.refused}>
+    <summary>
+      <span class="tool-state mono" aria-hidden="true">
+        {m.done ? (m.refused ? '⛔' : '✓') : '◌'}
+      </span>
+      <span class="tool-name mono">{toolName(m.name)}</span>
+      <span class="tool-badge mono" class:bad={m.refused}>
+        {m.done ? (m.refused ? m.refused : 'done') : 'running'}
+      </span>
+    </summary>
+    {#if m.input !== undefined && m.input !== null && fmt(m.input) !== '{}'}
+      <p class="tool-io-label mono">input</p>
+      <pre class="tool-io mono">{fmt(m.input)}</pre>
+    {/if}
+    {#if m.result !== undefined && m.result !== null && fmt(m.result) !== '{}'}
+      <p class="tool-io-label mono">{m.refused ? 'findings' : 'result'}</p>
+      <pre class="tool-io mono">{fmt(m.result)}</pre>
+    {/if}
+    {#if m.refused}
+      <p class="tool-refusal">The engine refused this — the finding strip below
+        has the rule and the fix.</p>
+    {/if}
+  </details>
+{/snippet}
+
+{#each rows as row}
+  {#if row.kind === 'group' && row.items.length > 1}
+    <details class="tool-card tool-group">
       <summary>
-        <span class="tool-state mono" aria-hidden="true">
-          {m.done ? (m.refused ? '⛔' : '✓') : '◌'}
-        </span>
-        <span class="tool-name mono">{toolName(m.name)}</span>
-        <span class="tool-badge mono" class:bad={m.refused}>
-          {m.done ? (m.refused ? m.refused : 'done') : 'running'}
-        </span>
+        <span class="tool-state mono" aria-hidden="true">✓</span>
+        <span class="tool-name mono">{toolName(row.name)} <span class="tool-count">×{row.items.length}</span></span>
+        <span class="tool-badge mono">done</span>
       </summary>
-      {#if m.input !== undefined && m.input !== null && fmt(m.input) !== '{}'}
-        <p class="tool-io-label mono">input</p>
-        <pre class="tool-io mono">{fmt(m.input)}</pre>
-      {/if}
-      {#if m.result !== undefined && m.result !== null && fmt(m.result) !== '{}'}
-        <p class="tool-io-label mono">{m.refused ? 'findings' : 'result'}</p>
-        <pre class="tool-io mono">{fmt(m.result)}</pre>
-      {/if}
-      {#if m.refused}
-        <p class="tool-refusal">The engine refused this — the finding strip below
-          has the rule and the fix.</p>
-      {/if}
+      <div class="group-items">
+        {#each row.items as m}{@render toolCard(m)}{/each}
+      </div>
     </details>
+  {:else if row.kind === 'group'}
+    {@render toolCard(row.items[0])}
+  {:else if row.m.role === 'tool'}
+    {@render toolCard(row.m)}
   {:else}
+    {@const m = row.m}
     <div class="msg {m.role}">
       <span class="who">{m.role}</span>
       {#if m.role === 'agent'}<div class="md">{@html md(m.text)}</div>{:else}{m.text}{/if}
@@ -139,4 +176,6 @@
     white-space: pre-wrap; word-break: break-word; max-height: 14rem; overflow-y: auto;
   }
   .tool-refusal { font-size: var(--t-xs); color: var(--sev-blocker); margin: var(--s1) 0 0; }
+  .tool-count { color: var(--ink-soft); }
+  .group-items { display: flex; flex-direction: column; gap: var(--s1); margin-top: var(--s2); }
 </style>
