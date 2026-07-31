@@ -210,6 +210,12 @@ export async function switchThread(id) {
   app.sessionId = null;
   store.del('makerlord.sessionId');
   if (eventSource) { eventSource.close(); eventSource = null; }
+  // A connected local brain gets a FRESH agent conversation on the new
+  // thread — a new session means new context on every path.
+  if (app.bridgeStatus === 'ready' && bridgeWs) {
+    app.bridgeSessionReady = false;
+    bridgeWs.send(JSON.stringify({ t: 'session.new', projectId: app.projectId, threadId: id }));
+  }
   await replayTranscript();
   await loadThreads();
 }
@@ -654,7 +660,7 @@ export function bridgeConnect(quiet = false) {
       app.bridgeStatus = 'ready';
       app.bridgeAgent = f.agent ?? '';
       app.bridgeError = '';
-      if (app.projectId) ws.send(JSON.stringify({ t: 'session.new', projectId: app.projectId }));
+      if (app.projectId) ws.send(JSON.stringify({ t: 'session.new', projectId: app.projectId, threadId: app.threadId }));
     } else if (f.t === 'session.ready') {
       app.bridgeSessionReady = true;
     } else if (f.t === 'event') {

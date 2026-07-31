@@ -7,6 +7,8 @@ Type=simple
 WorkingDirectory=/opt/makerlord
 EnvironmentFile=/opt/makerlord/.env
 Environment=MAKERLORD_USERS_PATH=/opt/makerlord/users
+# arduino-cli resolves its data dir from $HOME; systemd does not set it.
+Environment=HOME=/root
 Environment=PORT=8787
 Environment=MAKERLORD_PROJECTS_ROOT=/opt/makerlord/projects
 ExecStart=/opt/node-v22/bin/node packages/server/dist/main.js

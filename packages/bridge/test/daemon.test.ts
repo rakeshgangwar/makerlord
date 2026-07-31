@@ -148,7 +148,7 @@ describe('the paired path: local brain, hosted authority', () => {
     // The turn was flushed into the HOSTED transcript: one continuous
     // history whichever brain drove — a reload replays this turn.
     await new Promise((r) => setTimeout(r, 300));
-    const flush = flushed.find((f) => f.url === '/api/projects/abc123/transcript');
+    const flush = flushed.find((f) => f.url.startsWith('/api/projects/abc123/transcript'));
     expect(flush).toBeDefined();
     expect(flush!.auth).toBe('Bearer test-token');
     const kinds = flush!.body.records.map((r) => r.kind);

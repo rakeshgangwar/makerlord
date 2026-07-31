@@ -35,7 +35,7 @@ export interface Daemon {
 type Frame =
   | { t: 'pair'; code: string }
   | { t: 'auth'; token: string }
-  | { t: 'session.new'; projectId: string }
+  | { t: 'session.new'; projectId: string; threadId?: string }
   | { t: 'prompt'; text: string };
 
 function send(ws: WebSocket, data: unknown): void {
@@ -69,6 +69,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
     let projectId: string | undefined;
     let turnActive = false;
     let contextPreamble = '';
+    let threadId = 'main';
 
     /** Flush a completed turn into the hosted transcript so a reload
      *  replays one continuous history. Best-effort: a flush failure must
@@ -76,7 +77,7 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
     const flushTranscript = async (records: unknown[]): Promise<void> => {
       if (!projectId) return;
       try {
-        await fetch(`${opts.api}/api/projects/${projectId}/transcript`, {
+        await fetch(`${opts.api}/api/projects/${projectId}/transcript?thread=${encodeURIComponent(threadId)}`, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
@@ -127,6 +128,8 @@ export function startDaemon(opts: DaemonOptions): Promise<Daemon> {
             send(ws, { t: 'error', message: 'bad project id' });
             return;
           }
+          threadId = typeof frame.threadId === 'string'
+            && /^[a-z0-9_-]{1,40}$/i.test(frame.threadId) ? frame.threadId : 'main';
           const startOpts: Parameters<typeof AcpAgent.start>[0] = {
             command: opts.agentCommand,
             args: opts.agentArgs ?? [],
