@@ -152,7 +152,17 @@ const gateOpen: ToolDef = {
         blocked.blocking,
       );
     }
-    if (s.file.build.measurements.length === 0) {
+    // D56's empty-circuit exemption, engine-computed: a bare self-powered
+    // module with no nets has nothing wired to burn — the danger this
+    // gate guards cannot exist, and refusing teaches makers to route
+    // around the pipeline. One extra part or net restores the demand.
+    const c = s.file.project.circuit;
+    const bareModule =
+      (c?.parts.length ?? 0) <= 1 &&
+      (c?.intent.length ?? 0) === 0 &&
+      (c?.parts.length === 0 ||
+        profilesMap().get(c!.parts[0]!.defId)?.fqbn !== undefined);
+    if (!bareModule && s.file.build.measurements.length === 0) {
       return refuse(
         'MEASUREMENT_REQUIRED',
         'no measurements recorded — the gate collects readings, never consent. ' +

@@ -16,7 +16,8 @@ export type RefusalCode =
   | 'EVIDENCE_UNFETCHED'
   | 'STIMULUS_REQUIRED'
   | 'PROFILE_UNVERIFIED'
-  | 'TOOL_ERROR';   // the tool itself crashed — the loop reports, never dies
+  | 'TOOL_ERROR'   // the tool itself crashed — the loop reports, never dies
+  | 'BOARD_TARGET';   // a placement tool on a freeform circuit (D56)
 
 export type ToolResult<T> =
   | { ok: true; data: T }

@@ -87,6 +87,7 @@ describe('golden end-to-end: front door to circuit, no LLM', () => {
     const plan = await step('fw_pin_plan');
     expect(plan.roles).toEqual([
       { role: 'INDICATOR', ref: ledRef, pin: 'anode', mcuPin: 'D5 PWM', mode: 'OUTPUT' },
+      { role: 'BUILTIN_LED', ref: 'MCU1', pin: 'D13/SCK', mcuPin: 'D13/SCK', mode: 'OUTPUT' },
     ]);
     const fwCheck = await step('check_firmware');
     expect(fwCheck.findings).toEqual([]);

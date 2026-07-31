@@ -38,6 +38,38 @@ function railHoles(ctx: RuleContext): { supply: string[]; ground: string[] } {
 }
 
 export function buildSequence(ctx: RuleContext): BuildStep[] {
+  // D56: a freeform circuit has no board — steps speak intent. A bare
+  // module (no nets) needs only the power-on choreography.
+  if (ctx.circuit.target === 'freeform') {
+    const steps: Omit<BuildStep, 'index'>[] = [{
+      kind: 'POWER_OFF',
+      instruction:
+        'Keep everything unpowered — no USB, no battery — while you connect.',
+      holes: [],
+    }];
+    for (const n of ctx.circuit.intent) {
+      const ends = n.members.map((p) => `${p.ref}.${p.pin}`);
+      steps.push({
+        kind: 'ROUTE_SIGNAL',
+        instruction: `Connect ${ends.join(' to ')} with a jumper.`,
+        holes: [],
+      });
+    }
+    steps.push({
+      kind: 'GATE',
+      instruction: ctx.circuit.intent.length === 0
+        ? 'Nothing external is wired — the gate opens on this bare module without meter readings.'
+        : 'Before power: continuity-check your supply pin against ground, then record the readings.',
+      holes: [],
+    });
+    steps.push({
+      kind: 'POWER_ON',
+      instruction: 'Connect USB. The module powers; watch for anything warm.',
+      holes: [],
+    });
+    return steps.map((st, index) => ({ ...st, index }));
+  }
+
   const steps: Omit<BuildStep, 'index'>[] = [];
 
   steps.push({

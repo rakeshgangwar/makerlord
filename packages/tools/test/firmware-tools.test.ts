@@ -49,8 +49,10 @@ describe('fw_behavior_set + fw_pin_plan', () => {
       set: { id: 'lamp', kind: 'drive', role: 'R1', to: 'HIGH' },
     });
     const plan = await data('fw_pin_plan');
+    // BUILTIN_LED rides along since D56 — the Uno's D13 LED needs no wiring.
     expect(plan.roles).toEqual([
       { role: 'R1', ref: 'R1', pin: 'Pin 0', mcuPin: 'D5 PWM', mode: 'OUTPUT' },
+      { role: 'BUILTIN_LED', ref: 'U1', pin: 'D13/SCK', mcuPin: 'D13/SCK', mode: 'OUTPUT' },
     ]);
     expect(plan.unbound).toEqual([]);
 

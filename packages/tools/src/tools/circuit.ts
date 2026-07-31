@@ -4,7 +4,7 @@ import { resolvePins } from '@makerlord/circuit';
 import { board, bundle } from '../data.js';
 import type { ToolDef } from '../def.js';
 import { requireSession } from '../def.js';
-import { ok } from '../result.js';
+import { refuse, ok } from '../result.js';
 import type { Session } from '../session.js';
 
 function circuitOf(s: Session): Circuit {
@@ -88,6 +88,23 @@ const connect: ToolDef = {
   },
 };
 
+const circuitTarget: ToolDef = {
+  name: 'circuit_target',
+  summary:
+    'Call this to declare where the circuit lives: breadboard (default, ' +
+    'placement and wiring on the board) or freeform — intent nets are the ' +
+    'whole truth, for onboard-only firmware, module jumpers, perfboard (D56).',
+  input: z.object({ target: z.enum(['breadboard', 'freeform']) }),
+  mutates: true,
+  gated: false,
+  handler(input, ctx) {
+    const s = requireSession(ctx);
+    const c = circuitOf(s);
+    c.target = (input as { target: 'breadboard' | 'freeform' }).target;
+    return ok({ target: c.target });
+  },
+};
+
 const place: ToolDef = {
   name: 'place',
   summary:
@@ -104,6 +121,10 @@ const place: ToolDef = {
   gated: false,
   handler(input, ctx) {
     const s = requireSession(ctx);
+    if (circuitOf(s).target === 'freeform') {
+      return refuse('BOARD_TARGET',
+        'this circuit is freeform — intent nets are the whole truth; there is no board to place on');
+    }
     const { ref, hole, orientation } = input as {
       ref: string; hole: string; orientation: 0 | 90 | 180 | 270;
     };
@@ -136,6 +157,10 @@ const wire: ToolDef = {
   gated: false,
   handler(input, ctx) {
     const s = requireSession(ctx);
+    if (circuitOf(s).target === 'freeform') {
+      return refuse('BOARD_TARGET',
+        'this circuit is freeform — there is no board to route wires on');
+    }
     const { from, to, color } = input as { from: string; to: string; color: string };
     requireHole(from);
     requireHole(to);
@@ -145,4 +170,5 @@ const wire: ToolDef = {
   },
 };
 
-export const CIRCUIT_TOOLS: ToolDef[] = [partAdd, connect, place, wire];
+export const CIRCUIT_TOOLS: ToolDef[] = [
+  circuitTarget,partAdd, connect, place, wire];

@@ -84,6 +84,21 @@ export function derivePinPlan(
     }
   }
 
+  // The MCU's own builtin LED needs no wiring — a role for free (D56's
+  // onboard-only case; profile gpio pins flag builtinLed).
+  for (const [pinName, caps] of Object.entries(gpio)) {
+    if ((caps as { builtinLed?: boolean }).builtinLed && !taken.has('BUILTIN_LED')) {
+      taken.add('BUILTIN_LED');
+      roles.push({
+        role: 'BUILTIN_LED',
+        ref: mcu.ref,
+        pin: pinName,
+        mcuPin: pinName,
+        mode: wanted.get('BUILTIN_LED') ?? 'OUTPUT',
+      });
+    }
+  }
+
   const known = new Set(roles.map((r) => r.role));
   const unbound: PinPlan['unbound'] = [];
   for (const b of behaviors) {

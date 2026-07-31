@@ -45,6 +45,9 @@ export interface Circuit {
   intent: IntentNet[];
   /** Defaults to 'none' when absent. */
   mainsTier?: MainsTier;
+  /** D56: 'freeform' circuits are intent-net truth — no breadboard
+   *  geometry. Defaults to 'breadboard' when absent. */
+  target?: 'breadboard' | 'freeform';
 }
 
 export function pinKey(p: PinRef): string {
