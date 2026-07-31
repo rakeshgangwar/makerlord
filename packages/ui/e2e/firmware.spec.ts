@@ -15,12 +15,14 @@ test.beforeEach(async ({ page }) => {
 test('the lens shows the seeded behavior and the derived pin plan', async ({ page }) => {
   await expect(page.getByText('⑦ Firmware', { exact: false })).toBeVisible();
   await expect(page.locator('.beh-id')).toHaveText('blink-on');
-  const row = page.locator('.plan-table tbody tr');
-  await expect(row).toHaveCount(1);
-  await expect(row.locator('.role')).toHaveText('INDICATOR');
+  const rows = page.locator('.plan-table tbody tr');
+  // INDICATOR from the wiring + BUILTIN_LED for free (D56).
+  await expect(rows).toHaveCount(2);
+  await expect(rows.first().locator('.role')).toHaveText('INDICATOR');
+  await expect(page.getByText('BUILTIN_LED')).toBeVisible();
   // The pin column is visibly locked — derived, never edited (D46).
-  await expect(row.locator('.pin-locked')).toContainText('D5 PWM');
-  await expect(row.locator('input')).toHaveCount(0);
+  await expect(rows.first().locator('.pin-locked')).toContainText('D5 PWM');
+  await expect(rows.locator('input')).toHaveCount(0);
 });
 
 test('the flash panel renders the locked reason, not a flash control (D47)', async ({ page }) => {
