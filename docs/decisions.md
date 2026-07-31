@@ -1236,3 +1236,36 @@ global: a part verified once is verified for everyone (curation spec
 
 **Rejected — per-user libraries:** they starve the communal demand
 signal and fork the ground truth D50 tiers depend on.
+
+---
+
+## D55 — Construction gets its inverse
+
+*2026-07-31. Freeform & removal spec §2–§3.*
+
+`part_remove`, `disconnect`, `wire_remove`, `unplace`, `block_remove`,
+`block_unlink` — removal as ordinary mutation, re-adjudicated by
+`check_circuit`, with cascade semantics that never leave a
+half-removed part in the model. Still no `dismiss_finding`: geometry
+is removable, verdicts are not.
+
+**Rejected — git-revert undo:** coarse and hands the agent history as
+a steering wheel. **Rejected — edit-in-place:** remove+add compose.
+
+---
+
+## D56 — The board is a target, not an assumption
+
+*2026-07-31. Freeform & removal spec §2, §4.*
+
+`circuit.target: 'breadboard' | 'freeform'`. Freeform circuits are
+intent-net truth (already what simulation consumes); placement tools
+refuse; build steps go intent-level. The gate stands (D47), fed by
+intent predictions — with one engine-computed exemption: a bare
+self-powered module with no nets opens without measurements, because
+the danger the gate guards cannot exist there and refusing teaches
+bypass.
+
+**Rejected — sketch-only project type:** forks every consumer.
+**Rejected — auto-detected freeform:** a forgotten placement must stay
+an error, not a mode switch.

@@ -35,6 +35,7 @@ Start at the top. Each document assumes the ones above it.
 | 14b | [superpowers/specs/2026-07-30-debug-design.md](superpowers/specs/2026-07-30-debug-design.md) | **The design spec** for stage ⑧ — faults as mutations, the guided search | After the firmware spec |
 | 14c | [superpowers/specs/2026-07-30-curation-pipeline-design.md](superpowers/specs/2026-07-30-curation-pipeline-design.md) | **The design spec** for the curation pipeline — tiers, proposals, human-only promotion | When growing the library |
 | 14d | [superpowers/specs/2026-07-30-auth-design.md](superpowers/specs/2026-07-30-auth-design.md) | **The design spec** for auth — invites, passkeys, per-user projects (D52–D54) | When touching identity or ownership |
+| 14e | [superpowers/specs/2026-07-31-freeform-and-removal.md](superpowers/specs/2026-07-31-freeform-and-removal.md) | **The design spec** for removal tools & freeform mode (D55–D56) | When growing the circuit model |
 | 15 | [superpowers/plans/2026-07-28-slices-0-and-1.md](superpowers/plans/2026-07-28-slices-0-and-1.md) | Implementation plan for the prototype stage, 25 TDD tasks | When you start building |
 | 16 | [superpowers/plans/2026-07-29-front-door.md](superpowers/plans/2026-07-29-front-door.md) | Implementation plan for the front door, 12 TDD tasks | After Slices 0-1 |
 | 16b | [superpowers/plans/2026-07-30-firmware.md](superpowers/plans/2026-07-30-firmware.md) | Implementation plan for stage ⑦, 18 TDD tasks in three slices | With the firmware spec |
